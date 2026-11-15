@@ -25,7 +25,9 @@ function build(win, send) {
       { label: 'Home', accelerator: 'CmdOrCtrl+H', click: () => send('home') },
       { label: 'Schermo intero', accelerator: mac ? 'Ctrl+Cmd+F' : 'F11', click: () => win.setFullScreen(!win.isFullScreen()) },
       { type: 'separator' },
-      { role: 'zoomIn', label: 'Ingrandisci' }, { role: 'zoomOut', label: 'Riduci' }, { role: 'resetZoom', label: 'Dimensione normale' },
+      // zoom dell'interfaccia (stessa impostazione di Impostazioni › Aspetto)
+      { label: 'Ingrandisci interfaccia', accelerator: 'CmdOrCtrl+Plus', click: () => send('zoomin') }, { label: 'Ingrandisci interfaccia', accelerator: 'CmdOrCtrl+=', visible: false, click: () => send('zoomin') },
+      { label: 'Riduci interfaccia', accelerator: 'CmdOrCtrl+-', click: () => send('zoomout') }, { label: 'Dimensione automatica', accelerator: 'CmdOrCtrl+0', click: () => send('zoomreset') },
       { type: 'separator' },
       { role: 'toggleDevTools', label: 'Strumenti sviluppatore' }
     ]

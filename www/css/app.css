@@ -352,7 +352,6 @@ body.layA .home .brand{display:none}
 .ri .ic{width:1.75rem;height:1.75rem;flex:none;color:#ff7fd0}
 .ri span{margin-left:1rem;font-size:1.15rem;opacity:0}
 #rail.open .ri span{opacity:1}
-.ri.last{margin-top:auto}
 .ri.cur:before{content:"";position:absolute;left:-.7rem;top:.8rem;bottom:.8rem;width:.28rem;border-radius:0 .2rem .2rem 0;background:#ff4fb8}
 .ri.cur{color:#fff}
 .ri.focused{background:#c2268f;color:#fff}.ri.focused .ic{color:#fff}
@@ -427,3 +426,20 @@ body:not(.lowpower) .pinfo.show,body:not(.lowpower) .pclock.show{animation:fadeI
 body:not(.lowpower) .pmsg.show{animation:fadeIn .2s ease-out}
 body:not(.lowpower) #toast.show{animation:slideUp .25s cubic-bezier(.2,.8,.2,1)}
 body:not(.lowpower) .screen.player.mini{animation:popIn .25s cubic-bezier(.2,.8,.2,1)}
+
+/* 2.3: barra con nome e versione, voci raggruppate e centrate */
+.rhead{display:flex;align-items:center;flex:none;white-space:nowrap;overflow:hidden}
+.rhead .rlogo{margin:0 0 0 .4rem}
+.rtx{margin-left:1rem;opacity:0}
+#rail.open .rtx{opacity:1}
+.rname{font-size:1.3rem;font-weight:700;letter-spacing:.04em}
+.rver{font-size:.8rem;color:#b3a2b8;margin-top:.1rem}
+.rlist{margin:auto 0;display:flex;flex-direction:column}
+body.layA #ver{display:none}
+body:not(.lowpower) .rtx{transition:opacity .18s ease .05s}
+/* pannelli del player: aperti restano dentro lo schermo */
+.pdrawer.left.show,.pdrawer.right.show{transform:none}
+/* pulsanti affiancati sempre distanziati */
+.hbr>.btn+.btn,.hd-r>.btn+.btn{margin-left:.8rem}
+.btn+.btn{margin-left:.8rem}
+.ebtns .btn+.btn,.dbtns .btn+.btn,.facts .btn+.btn,.pbtns .btn+.btn{margin-left:0}

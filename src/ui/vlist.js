@@ -3,6 +3,12 @@
 import { h } from '../core/util.js';
 import { Sel } from './sound.js';
 
+const LISTS = [];
+// dopo un cambio di dimensione dell'interfaccia: ricalcola le liste visibili (e dimentica quelle chiuse)
+export function relayoutAll() {
+  for (let i = LISTS.length - 1; i >= 0; i--) { const l = LISTS[i]; if (!document.body.contains(l.el)) LISTS.splice(i, 1); else l.render(); }
+}
+
 export class VList {
   /**
    * opts: { cols=1, rowH (px o function(width)->px), build(): node, fill(node,item,index), onSelect(item,i), onChange(item,i), onEdge(dir), onMenu(item,i) }
@@ -11,6 +17,7 @@ export class VList {
     this.o = opts; this.cols = opts.cols || 1;
     this.items = []; this.sel = 0; this.top = 0; this.active = false;
     this.pool = [];
+    LISTS.push(this);
     this.inner = h('div', { class: 'vl-in' });
     this.el = h('div', { class: 'vl' + (this.cols > 1 ? ' vl-grid' : '') }, this.inner);
     this.W = 0; this.H = 0; this.rowH = 60;

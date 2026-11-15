@@ -47,6 +47,11 @@ function createWindow() {
     }
   });
   if (st.max) win.maximize();
+  // Windows/Linux: "Massimizza" porta a schermo intero (comodo durante la riproduzione); uscendo dallo schermo intero si torna alla finestra
+  if (process.platform !== 'darwin') {
+    win.on('maximize', () => { if (!win.isFullScreen()) win.setFullScreen(true); });
+    win.on('leave-full-screen', () => { if (win.isMaximized()) win.unmaximize(); });
+  }
   win.once('ready-to-show', () => win.show());
   require('electron').Menu.setApplicationMenu(menu.build(win, cmd => win && win.webContents.send('menu', cmd)));
   win.loadFile(path.join(__dirname, '..', 'www', 'index.html'));
