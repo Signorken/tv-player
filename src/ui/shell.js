@@ -12,7 +12,7 @@ export const VERSION = typeof __VERSION__ !== 'undefined' ? __VERSION__ : 'dev';
 const ITEMS = [
   ['home', 'home', 'Home', hm => { }],
   ['live', 'tv', 'TV in diretta', hm => hm.openLive()],
-  ['ondemand', 'film', 'On Demand', hm => hm.openVod('movie')],
+  ['ondemand', 'film', 'On Demand', hm => hm.openVod('movie', 'all')],
   ['files', 'folder', 'File di rete', hm => hm.openFiles()],
   ['favs', 'star', 'Preferiti', hm => hm.openFavs()],
   ['set', 'gear', 'Impostazioni', hm => hm.openSettings()]
@@ -95,10 +95,11 @@ export function applyShell() {
 }
 
 export function initShell() {
-  rail = h('div', { id: 'rail' }, h('img', { class: 'rlogo', src: 'icon.png', alt: '' }));
+  const list = h('div', { class: 'rlist' });
+  rail = h('div', { id: 'rail' }, h('div', { class: 'rhead' }, h('img', { class: 'rlogo', src: 'icon.png', alt: '' }), h('div', { class: 'rtx' }, h('div', { class: 'rname', text: 'MAXENTA' }), h('div', { class: 'rver', text: 'v' + VERSION }))), list);
   items = [{ id: 'now', icon: 'play', label: 'In riproduzione' }].concat(MENU).map(m => {
     const e = h('div', { class: 'ri' + (m.id === 'set' ? ' last' : '') + (m.id === 'now' ? ' now' : ''), onclick: () => { if (Rail.active) Rail.exit(); if (m.id === 'now') { if (Rail.expandMini) Rail.expandMini(); } else goSection(m.id); } }, icon(m.icon), h('span', { text: m.label }));
-    e._id = m.id; rail.appendChild(e); return e;
+    e._id = m.id; list.appendChild(e); return e;
   });
   rail.addEventListener('mouseenter', () => { if (document.body.classList.contains('mouse')) rail.classList.add('open'); });
   rail.addEventListener('mouseleave', () => { if (!Rail.active) rail.classList.remove('open'); });

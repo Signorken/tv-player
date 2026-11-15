@@ -211,10 +211,11 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   await page.evaluate(() => { window.__app.router.current.el.querySelectorAll('.tile')[4].click(); });
   await sleep(500); await shot('21-impostazioni');
   const scs = (await page.$$eval('.scat', c => c.map(x => x.textContent))).join('|'); ok('impostazioni: macrocategorie a sinistra', scs === 'Sorgenti|Riproduzione|Aspetto|Rete e telefono|Guida e dati|Informazioni', scs);
-  await page.setViewport({ width: 1280, height: 330 }); await sleep(300);
-  await key('ArrowDown'); await key('ArrowRight'); await key('ArrowDown', 5); await sleep(300);
+  await page.evaluate(() => { window.__app.store.settings().uiScale = 150; window.__app.applyUi(); });
+  await page.setViewport({ width: 1280, height: 300 }); await sleep(300);
+  await key('ArrowDown', 2); await key('ArrowRight'); await key('ArrowDown', 6); await sleep(300);
   ok('impostazioni: l\'elenco scorre se le voci superano lo schermo', await page.evaluate(() => { const p = document.querySelector('.spanel'), f = document.querySelector('.srow.focused'); if (!p || !f) return false; const a = p.getBoundingClientRect(), b = f.getBoundingClientRect(); return p.scrollTop > 0 && b.top >= a.top - 2 && b.bottom <= a.bottom + 2; }));
-  await key('ArrowLeft'); await key('ArrowUp'); await page.setViewport({ width: 1920, height: 1080 }); await sleep(300);
+  await key('ArrowLeft'); await key('ArrowUp', 2); await page.evaluate(() => { window.__app.store.settings().uiScale = 100; }); await page.setViewport({ width: 1920, height: 1080 }); await sleep(300);
   await key('ArrowDown', 3); await key('ArrowRight'); await key('ArrowDown'); await key('Enter'); await sleep(900); await shot('22-abbinamento-telefono');
   ok('abbinamento: QR generato', await page.$('.qr svg') !== null);
   await key('Escape'); await sleep(300); await key('Escape'); await sleep(300); await key('Escape'); await sleep(500);

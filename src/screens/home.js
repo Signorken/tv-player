@@ -191,8 +191,8 @@ export class HomeScreen {
   }
 
   async openLive() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new LiveScreen(s)); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
-  async openSport() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, 'movie', { sport: true })); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
-  async openVod(mode) { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, mode)); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
+  async openSport() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, 'movie', { mix: 'sport' })); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
+  async openVod(mode, mix) { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, mode, { mix: mix })); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
   playMeta(r) { return playMeta(r); }
   openFavs() { router.push(new FavsScreen()); }
   openSettings() { router.push(new SettingsScreen()); }

@@ -44,6 +44,8 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   await key('ArrowLeft'); await key('ArrowDown', 2); await key('Enter');
   ok('barra: On Demand apre la griglia dei film', await wait(() => document.querySelectorAll('.cell').length > 2, 15000) && (await cur()) === 'ondemand');
   await sleep(800);
+  ok('On Demand dalla barra: film e serie insieme (scheda Tutto)', await page.evaluate(() => { const c = window.__app.router.current; return c.mix === 'all' && /Tutto/.test(document.querySelector('.tab.on').textContent) && c.catList.some(k => k.parts && k.parts.length === 2); }));
+  ok('Tutto: nella griglia ci sono sia film sia serie', await wait(() => { const c = window.__app.router.current; return c.items && c.items.some(i => i._mode === 'series') && c.items.some(i => i._mode === 'movie'); }, 8000) || await page.evaluate(() => { const c = window.__app.router.current; const k = c.catList.find(x => x.parts && x.parts.length === 2); c.cats.select(c.catList.indexOf(k)); return false; }));
   ok('barra: sezione corrente evidenziata', await page.evaluate(() => /On Demand/.test(document.querySelector('.ri.cur').textContent)));
   // dalla prima colonna (categorie) Sinistra entra nella barra
   await key('ArrowLeft'); await sleep(150); await key('ArrowLeft'); await sleep(250);
@@ -166,7 +168,7 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   const snd1 = await page.evaluate(() => window.__snd.move);
   ok('suoni: spostarsi tra gli elementi produce il suono di navigazione', snd1 >= 2, 'suoni=' + snd1);
   await key('ArrowUp', 3); await sleep(200);
-  ok('On Demand: in alto le schede Film / Serie TV / Sport', /Film/.test(await page.evaluate(() => document.querySelector('.focused').textContent)) && await page.evaluate(() => document.querySelectorAll('.hd .tab').length === 3));
+  ok('On Demand: in alto le schede Tutto / Film / Serie TV / Sport', /Film/.test(await page.evaluate(() => document.querySelector('.focused').textContent)) && await page.evaluate(() => document.querySelectorAll('.hd .tab').length === 4));
   await key('ArrowRight'); await key('Enter');
   ok('scheda Serie TV: stessa schermata, elenco delle serie', await wait(() => window.__app.router.current.mode === 'series' && window.__app.router.current.loaded, 15000) && await page.evaluate(() => /Serie/.test(document.querySelector('.tab.on').textContent) && window.__app.router.depth === 2));
   await shot('09-ondemand-serie');
@@ -192,6 +194,22 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   await page.evaluate(() => window.__app.router.current.liveX.click()); await sleep(300);
   ok('Rimuovi riga nasconde i canali recenti', await page.evaluate(() => getComputedStyle(document.querySelector('.liverow')).display === 'none'));
 
+  // --- 2.3: pannelli del player interi, barra con nome e versione, dimensione proporzionata
+  ok('barra: nome e versione accanto al logo', await page.evaluate(() => /MAXENTA/.test(document.querySelector('.rname').textContent) && /^v\d/.test(document.querySelector('.rver').textContent)));
+  const fs1 = await page.evaluate(() => parseFloat(document.documentElement.style.fontSize));
+  await page.setViewport({ width: 1920, height: 700 }); await sleep(300);
+  const fs2 = await page.evaluate(() => parseFloat(document.documentElement.style.fontSize));
+  ok('dimensione automatica: si adatta anche all\'altezza della finestra', fs2 < fs1, fs1 + ' -> ' + fs2);
+  await page.setViewport({ width: 1920, height: 1080 }); await sleep(300);
+  await page.evaluate(() => window.__app.router.current.openLive && window.__app.router.current.openLive());
+  await wait(() => window.__app.router.current.all, 15000); await sleep(300);
+  await key('Enter'); await wait(() => { const v = document.querySelector('video.pv'); return v && v.currentTime > 0.2; }, 15000); await sleep(5600);
+  await key('ArrowLeft'); await sleep(600);
+  ok('pannello Canali tutto dentro lo schermo', await page.evaluate(() => { const r = document.querySelector('.pdrawer').getBoundingClientRect(); return r.left >= 0; }));
+  await key('Escape'); await sleep(300);
+  await key('ArrowRight'); await sleep(600);
+  ok('pannello Opzioni tutto dentro lo schermo', await page.evaluate(() => { const r = document.querySelector('.pdrawer').getBoundingClientRect(); return r.right <= window.innerWidth + 1; }));
+  await page.evaluate(() => window.__app.router.current._exit()); await sleep(300);
   console.log('Errori JS: ' + errs.length, errs.slice(0, 5));
   const f = res.filter(x => !x).length; console.log('RISULTATO: ' + (res.length - f) + '/' + res.length);
   await browser.close();

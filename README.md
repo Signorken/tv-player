@@ -239,3 +239,10 @@ Il ramo `updates` viene pubblicato dalla CI a ogni release. Reinstallare il pacc
 il guscio, i permessi, l'icona o i file statici (font, sfondi, librerie): in quel caso `minShell` in `version.json`
 aumenta e le TV con il guscio vecchio restano sulla versione inclusa finché non lo reinstalli.
 Prova: `node test/shell-test.js`.
+
+## 2.3
+- On Demand si apre su **Tutto**: film e serie insieme (le categorie con lo stesso nome sono unite, le serie hanno l'etichetta SERIE); le schede Film, Serie TV e Sport restano come filtri.
+- Dimensione automatica proporzionata a larghezza **e** altezza dello schermo, ricalcolata a ogni ridimensionamento; zoom manuale in Aspetto (70–150%) o con Ctrl +/−/0.
+- Pulsanti affiancati sempre distanziati; pannelli Canali/Opzioni del player non più tagliati.
+- Desktop (Windows/Linux): "Massimizza" passa a schermo intero; uscendo si torna alla finestra.
+- Barra laterale: nome e versione accanto al logo, voci raggruppate e centrate.

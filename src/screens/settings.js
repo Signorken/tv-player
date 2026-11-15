@@ -3,7 +3,7 @@ import { h, loadScript } from '../core/util.js';
 import * as store from '../core/store.js';
 import * as nav from '../core/nav.js';
 import { router } from '../core/router.js';
-import { VList } from '../ui/vlist.js';
+import { VList, relayoutAll } from '../ui/vlist.js';
 import { header, hints, remPx } from '../ui/chrome.js';
 import { icon } from '../ui/icons.js';
 import { promptText } from '../ui/keyboard.js';
@@ -22,10 +22,15 @@ export function applyUi() {
   const s = store.settings();
   const k = (s.uiScale || 100) / 100;
   // TV: dimensioni proporzionali alla larghezza (si guarda da lontano). Desktop: px con minimo leggibile.
-  if (platform.isDesktop) document.documentElement.style.fontSize = Math.max(13, Math.min(26, window.innerWidth * 0.0105)) * k + 'px';
-  else document.documentElement.style.fontSize = (1.05 * k) + 'vw';
+  // dimensione automatica: proporzionata allo schermo in larghezza E in altezza (finestre basse, portatili, TV),
+  // poi il fattore manuale scelto in Aspetto (o con Ctrl +/-)
+  const W = window.innerWidth || 1280, H = window.innerHeight || 720;
+  let base = Math.min(W * 0.0105, H * 0.0187);
+  if (platform.isDesktop) base = Math.max(12, Math.min(28, base));
+  document.documentElement.style.fontSize = (base * k).toFixed(2) + 'px';
   document.body.classList.toggle('lowpower', !!s.lowPower);
   applyShell();
+  relayoutAll();
   applyWallpaper();
 }
 
@@ -224,7 +229,7 @@ export class SettingsScreen {
         choice('Orologio', 'clock', [['24', '24 ore (21:45)'], ['12', '12 ore (9:45 PM)']], null, applyUi),
         choice('Schermata all\'avvio', 'startScreen', [['home', 'Home'], ['live', 'TV in diretta'], ['movie', 'On Demand: Film'], ['series', 'On Demand: Serie TV'], ['sport', 'On Demand: Sport'], ['favs', 'Preferiti'], ['last', 'Ultimo canale visto']]),
         choice('Sfondo', 'wallpaper', WALLPAPERS, null, applyUi),
-        choice('Dimensione interfaccia', 'uiScale', [[80, 'Piccola (80%)'], [90, '90%'], [100, 'Normale (100%)'], [115, 'Grande (115%)'], [130, 'Molto grande (130%)']], null, applyUi),
+        choice('Dimensione interfaccia', 'uiScale', [[70, '70%'], [80, 'Piccola (80%)'], [90, '90%'], [100, 'Automatica (100%)'], [110, '110%'], [115, '115%'], [120, '120%'], [130, 'Grande (130%)'], [150, 'Molto grande (150%)']], null, applyUi),
         toggle('Suoni di navigazione', 'sounds'),
         toggle('Risparmio risorse (niente animazioni)', 'lowPower', applyUi)] },
       { id: 'net', label: platform.isDesktop ? 'Rete' : 'Rete e telefono', icon: 'cloud', items: list(

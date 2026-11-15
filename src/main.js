@@ -112,9 +112,19 @@ window.addEventListener('mousemove', e => {
   const t = e.target && e.target.closest ? e.target.closest('[data-f]') : null;
   if (t && t !== nav.getFocus()) { const m = Modal.top(); if (m) { if (m.el.contains(t)) { nav.focus(t, true); Sound.move(); } } else if (nav.getScope().contains(t) && !t.hasAttribute('data-off')) { nav.focus(t, true); Sound.move(); } }
 }, true);
+// zoom manuale dell'interfaccia (Ctrl +/-/0 sul computer; sempre anche da Impostazioni › Aspetto)
+const ZOOM = [70, 80, 90, 100, 110, 120, 130, 150];
+function zoomUi(cmd) {
+  const s = store.settings(), i = ZOOM.indexOf(s.uiScale || 100);
+  s.uiScale = cmd === 'zoomreset' ? 100 : ZOOM[Math.max(0, Math.min(ZOOM.length - 1, (i < 0 ? 3 : i) + (cmd === 'zoomin' ? 1 : -1)))];
+  store.save(); applyUi();
+  Modal.toast('Dimensione interfaccia: ' + s.uiScale + '%', 1200);
+}
+window.addEventListener('resize', applyUi);
+// browser (TV o PC): Ctrl +/-/0 regolano la dimensione dell'interfaccia
+window.addEventListener('keydown', e => { if (!(e.ctrlKey || e.metaKey) || window.desktop) return; const k = e.key; if (k === '+' || k === '=') zoomUi('zoomin'); else if (k === '-') zoomUi('zoomout'); else if (k === '0') zoomUi('zoomreset'); else return; e.preventDefault(); }, true);
 if (platform.isDesktop) {
   document.body.classList.add('desktop');
-  window.addEventListener('resize', applyUi);
   // Incolla (Ctrl/Cmd+V) ovunque, fuori dai campi di testo: riconosce da solo il tipo di sorgente
   document.addEventListener('paste', e => {
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') && !t.readOnly) return;
@@ -143,6 +153,7 @@ if (platform.isDesktop) {
         case 'folder': addFolderFlow(); break;
         case 'add': addSourceFlow(); break;
         case 'home': router.home(); break;
+        case 'zoomin': case 'zoomout': case 'zoomreset': zoomUi(cmd); break;
         case 'update': window.desktop.updateCheck(); break;
         case 'settings': import('./screens/settings.js').then(m => router.push(new m.SettingsScreen())); break;
       }
