@@ -1,6 +1,6 @@
 // TV Player per computer (Windows, macOS, Linux): stesso codice dell'app per TV dentro una finestra Electron.
 'use strict';
-const { app, BrowserWindow, ipcMain, dialog, clipboard, session, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, clipboard, session, shell, powerSaveBlocker } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { discover } = require('./discover');
@@ -65,6 +65,13 @@ function setupUserAgent() {
 
 // ---- IPC
 ipcMain.on('renderer-ready', () => { readyForPaths = true; pendingPaths.splice(0).forEach(openPath); });
+// schermo e sistema restano attivi finché un video è in riproduzione
+let awakeId = null;
+ipcMain.handle('power:keep', (e, on) => {
+  if (on && awakeId === null) awakeId = powerSaveBlocker.start('prevent-display-sleep');
+  else if (!on && awakeId !== null) { try { powerSaveBlocker.stop(awakeId); } catch (er) { /* */ } awakeId = null; }
+  return awakeId !== null;
+});
 ipcMain.handle('discover', (e, ms) => discover(ms));
 ipcMain.handle('dlna:browse', (e, control, id) => {
   if (!/^https?:\/\//i.test(String(control))) throw new Error('Indirizzo DLNA non valido');

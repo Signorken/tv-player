@@ -133,6 +133,8 @@ const dl = http.createServer((req, res2) => {
   await page.click('.mini-x'); await sleep(500);
   ok('la X della finestrella chiude il player', await page.evaluate(() => !document.querySelector('video.pv')));
 
+  ok('schermo sempre acceso durante la riproduzione (powerSaveBlocker)', await page.evaluate(async () => { const a = await window.desktop.keepAwake(true); const b = await window.desktop.keepAwake(false); return a === true && b === false; }));
+
   // 6. DLNA (SOAP + parser) via bridge
   const dres = await page.evaluate(async () => { const a = await window.desktop.dlnaBrowse('http://localhost:9200/ctl', '0'); const b = await window.desktop.dlnaBrowse('http://localhost:9200/ctl', 'v'); return { a, b }; });
   ok('DLNA: Browse SOAP + DIDL (contenitore e file con url)', dres.a[0].dir && dres.a[0].title === 'Video' && dres.b[0].url === 'http://localhost:9100/media/movie.mp4' && dres.b[0].mime === 'video/mp4', JSON.stringify(dres.b[0]));

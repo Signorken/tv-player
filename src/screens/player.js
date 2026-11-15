@@ -51,6 +51,9 @@ export class PlayerScreen {
     v.addEventListener('waiting', () => { clearTimeout(this.spinT); this.spinT = setTimeout(() => this.spin.classList.add('show'), 600); });
     v.addEventListener('playing', () => { clearTimeout(this.spinT); this.spin.classList.remove('show'); this._tickBar(); });
     v.addEventListener('timeupdate', () => this._onTime());
+    const awake = on => { if (window.desktop && window.desktop.keepAwake) window.desktop.keepAwake(on); };
+    v.addEventListener('playing', () => awake(true)); v.addEventListener('pause', () => awake(false)); v.addEventListener('ended', () => awake(false));
+    this._awakeOff = () => awake(false);
     v.addEventListener('pause', () => { if (!this.live) { this.showInfo(true); } });
     v.addEventListener('ended', () => this._ended());
     this.clockT = setInterval(() => { this.clock.textContent = fmtClock(Date.now()); if (this.shown) this._tickBar(); }, 1000);
@@ -96,6 +99,7 @@ export class PlayerScreen {
   _play() { const p = this.video.play(); if (p && p.catch) p.catch(() => { }); }
   _toggle() { const v = this.video; if (v.paused) this._play(); else v.pause(); this.showInfo(); }
   _vol(d) { const v = this.video; v.muted = false; v.volume = Math.max(0, Math.min(1, v.volume + d / 100)); this.say('Volume ' + Math.round(v.volume * 100) + '%', '', 900); }
+  _prevChannel() { if (this.prevI === undefined) { this.say('Nessun canale precedente', '', 1500); return; } this.play(this.prevI); }
   _step(d) { const n = this.i + d; if (this.live) this.play(n); else if (n >= 0 && n < this.o.list.length) this.play(n); }
 
   onShow() {
@@ -121,6 +125,7 @@ export class PlayerScreen {
   destroy() {
     clearInterval(this.clockT); clearTimeout(this.hideT); clearTimeout(this.loadT); clearTimeout(this.seekT); clearTimeout(this.numT); clearTimeout(this.spinT);
     this._saveProgress(true);
+    if (this._awakeOff) this._awakeOff();
     this.engine.destroy();
     if (this.o.onClose) this.o.onClose(this.i);
   }
@@ -129,7 +134,9 @@ export class PlayerScreen {
   play(i) {
     const list = this.o.list;
     if (!list.length) return;
-    this.i = (i + list.length) % list.length;
+    const ni = (i + list.length) % list.length;
+    if (this.live && this.cur && ni !== this.i) this.prevI = this.i;
+    this.i = ni;
     const item = list[this.i];
     const r = this.cur = this.o.resolve(item);
     this.finished = false; this.fetching = false;
@@ -176,10 +183,10 @@ export class PlayerScreen {
     const t = this._t(), d = this._d();
     if (this.live || !this.cur || !this.cur.key || !d || this.finished) return;
     if (t > 20) {
-      if (t > d - 45) store.clearProgress(this.cur.key); else store.setProgress(this.cur.key, t, d);
+      if (t > d - 45) { store.clearProgress(this.cur.key); store.markWatched(this.cur.key); } else store.setProgress(this.cur.key, t, d);
     }
   }
-  _clearProgress() { this.finished = true; if (this.cur && this.cur.key) store.clearProgress(this.cur.key); }
+  _clearProgress() { this.finished = true; if (this.cur && this.cur.key) { store.clearProgress(this.cur.key); store.markWatched(this.cur.key); } }
 
   // ---- overlay informativo
   _renderInfo() {
@@ -248,12 +255,14 @@ export class PlayerScreen {
       if (c === '+' || c === '=') { this._vol(5); return true; }
       if (c === '-') { this._vol(-5); return true; }
       if (c === 'i') { if (this.shown) this.hideInfo(); else this.showInfo(); return true; }
+      if (c === 'p' && this.live) { this._prevChannel(); return true; }
       return true;
     }
     if (this.live) {
       if (k === 'up' || k === 'chup') { this.play(this.i + 1); return true; }
       if (k === 'down' || k === 'chdown') { this.play(this.i - 1); return true; }
       if (k === 'num') { this._digit(a.d); return true; }
+      if (k === 'prev') { this._prevChannel(); return true; }
       if (k === 'left' || k === 'right') { this.showInfo(); return true; }
     } else {
       if (k === 'left' || k === 'rw') { this._seek(k === 'rw' ? -30 : -10); return true; }
@@ -339,6 +348,7 @@ export class PlayerScreen {
     const items = [{ label: this.cur && this.cur.key && store.isFav(this.cur.key) ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti', value: 'fav', icon: 'star' },
       { label: 'Audio e sottotitoli', value: 'tracks', icon: 'list' },
       { label: this.video.style.objectFit === 'cover' ? 'Formato: adatta allo schermo' : 'Formato: riempi schermo', value: 'fit', icon: 'tv' }];
+    if (this.live && this.prevI !== undefined) items.push({ label: 'Canale precedente', value: 'prevch', icon: 'refresh' });
     if (this.cur && this.cur.alt) items.push({ label: 'Prova flusso alternativo (TS/HLS)', value: 'alt', icon: 'refresh' });
     if (!this.live) items.push({ label: 'Riparti dall\'inizio', value: 'restart', icon: 'refresh' });
     if (!this.live && this.engine.ffAvailable()) items.push({ label: this.engine.ff ? 'Usa il lettore nativo (senza conversione)' : 'Non va / non scorre? Usa il convertitore video', value: 'ff', icon: 'refresh' });
@@ -348,6 +358,7 @@ export class PlayerScreen {
     if (r === 'fav') this.toggleFav();
     else if (r === 'tracks') this.trackMenu();
     else if (r === 'fit') this.video.style.objectFit = this.video.style.objectFit === 'cover' ? 'contain' : 'cover';
+    else if (r === 'prevch') this._prevChannel();
     else if (r === 'alt') { this.engine.load(this.cur.alt, { live: this.live }); }
     else if (r === 'restart') { if (this.cur.key) store.clearProgress(this.cur.key); this.engine.seekTo(0); }
     else if (r === 'ff') { this.engine.load(this.cur.url, { live: false, ff: !this.engine.ff, startAt: this._t() }); this.say(this.engine.ff ? 'Passo al lettore nativo' : 'Uso il convertitore video…', '', 2500); }

@@ -21,6 +21,7 @@ const DEFAULTS = {
   },
   favorites: {},  // key -> {name, logo, kind, src, id}
   recents: [],    // [{key, ...}]
+  watched: {},    // key -> timestamp (film/episodi visti fino alla fine)
   contClearedAt: 0, // la riga "Continua a guardare" mostra solo ciò che è stato guardato dopo questo istante
   progress: {}    // key -> {pos, dur, t}
 };
@@ -118,6 +119,8 @@ export function setProgress(key, pos, dur) {
   get().progress[key] = { pos: Math.floor(pos), dur: Math.floor(dur), t: Date.now() };
   save();
 }
+export function markWatched(key) { get().watched[key] = Date.now(); save(); }
+export function isWatched(key) { return !!get().watched[key]; }
 export function getProgress(key) { return get().progress[key] || null; }
 export function clearProgress(key) { delete get().progress[key]; save(); }
 

@@ -81,6 +81,9 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   await key('ArrowUp'); await sleep(900);
   const t2 = await text('.pt');
   ok('player: zapping con freccia su cambia canale', t1 !== t2, t1 + ' -> ' + t2);
+  await key('p'); await sleep(900);
+  ok('player: tasto P = canale precedente', (await text('.pt')) === t1, t2 + ' -> ' + (await text('.pt')));
+  await key('p'); await sleep(900);
   await key('Escape'); await sleep(500);
   ok('player: Indietro lo riduce a finestrella e mostra la lista', await page.$('.screen.live') !== null && await page.$('.screen.player.mini') !== null);
   const miniPlaying = await page.evaluate(() => { const v = document.querySelector('.screen.player.mini video'); return !!v && !v.paused; });
@@ -200,6 +203,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   const after = await page.evaluate(() => ({ rec: window.__app.store.get().recents.length, prog: Object.keys(window.__app.store.get().progress).length, cards: document.querySelectorAll('.screen.home .ccard').length }));
   ok('home: tasto giallo rimuove la riga ma non recenti né progressi', after.cards === 0 && after.rec === before.rec && after.prog === before.prog, JSON.stringify({ before, after }));
 
+  ok('visto: segna e legge i contenuti completati', await page.evaluate(() => { const s = window.__app.store; s.markWatched('k|movie|9'); return s.isWatched('k|movie|9') && !s.isWatched('k|movie|8'); }));
   console.log('\nErrori JS rilevati: ' + errors.length); errors.slice(0, 12).forEach(e => console.log('  ' + e));
   const fails = results.filter(r => !r[1]);
   console.log('\nRISULTATO: ' + (results.length - fails.length) + '/' + results.length + ' ok');

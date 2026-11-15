@@ -94,8 +94,9 @@ export class DetailScreen {
       build: () => { const r = h('div', { class: 'row eprow' }, h('span', { class: 'en' }), h('div', { class: 'et' }, h('div', { class: 'e1' }), h('div', { class: 'e2' })), h('span', { class: 'ed' }), h('div', { class: 'cbar' }, h('div', { class: 'cfill' }))); r._n = r.firstChild; r._1 = r.querySelector('.e1'); r._2 = r.querySelector('.e2'); r._d = r.querySelector('.ed'); r._b = r.lastChild; return r; },
       fill: (n, ep) => {
         n._n.textContent = ep.num; n._1.textContent = ep.title; n._2.textContent = ep.plot ? ep.plot.slice(0, 110) : '';
-        n._d.textContent = ep.duration ? Math.round(ep.duration / 60) + ' min' : '';
-        const p = store.getProgress(store.favKey(this.src.id, 'ep', ep.id));
+        const ek = store.favKey(this.src.id, 'ep', ep.id);
+        n._d.textContent = (store.isWatched(ek) ? '✓ visto  ' : '') + (ep.duration ? Math.round(ep.duration / 60) + ' min' : '');
+        const p = store.getProgress(ek);
         n._b.style.display = p ? '' : 'none'; if (p) n._b.firstChild.style.width = Math.min(100, p.pos / p.dur * 100) + '%';
       },
       onSelect: (ep, i) => this.playEpisode(i),
