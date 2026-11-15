@@ -83,7 +83,7 @@ window.addEventListener('mousemove', e => {
   if (!document.body.classList.contains('mouse')) document.body.classList.add('mouse');
   // hover = focus per gli elementi navigabili (non nelle liste virtuali, che gestiscono da sole)
   const t = e.target && e.target.closest ? e.target.closest('[data-f]') : null;
-  if (t && !Modal.top() ? nav.focusables().indexOf(t) >= 0 : t && Modal.top() && Modal.top().el.contains(t)) nav.focus(t, true);
+  if (t && t !== nav.getFocus()) { const m = Modal.top(); if (m) { if (m.el.contains(t)) nav.focus(t, true); } else if (nav.getScope().contains(t) && !t.hasAttribute('data-off')) nav.focus(t, true); }
 }, true);
 if (platform.isDesktop) {
   document.body.classList.add('desktop');
