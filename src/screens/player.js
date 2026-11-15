@@ -44,7 +44,7 @@ export class PlayerScreen {
     this.el.addEventListener('click', e => { if (this.mini && !(e.target.classList && e.target.classList.contains('mini-x'))) { e.stopPropagation(); this.expand(); } }, true);
     this.engine = new Engine(this.video);
     this.engine.onPlaying = () => { this.spin.classList.remove('show'); clearTimeout(this.spinT); this.msg.classList.remove('show'); };
-    this.engine.onFail = why => { this.spin.classList.remove('show'); this.say(this.live ? 'Canale non raggiungibile' : 'Impossibile riprodurre il file', (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live)' : 'Dettagli: ' + (why || 'sconosciuto')) + (why ? '' : '')); this.showInfo(); };
+    this.engine.onFail = why => { this.spin.classList.remove('show'); this.say(this.live ? 'Canale non raggiungibile' : 'Impossibile riprodurre il file', (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live). Se la playlist è in uso su un altro dispositivo, il provider potrebbe consentire una sola connessione' : 'Dettagli: ' + (why || 'sconosciuto')) + (why ? '' : '')); this.showInfo(); };
     this.hideT = null; this.loadT = null; this.numT = null; this.seekT = null; this.pend = 0; this.lastSave = 0;
     this.cur = null; this.finished = false;
     const v = this.video;

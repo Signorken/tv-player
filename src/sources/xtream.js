@@ -33,6 +33,11 @@ export class XtreamSource {
     if (!info || !info.user_info) throw new Error('Risposta Xtream non valida');
     if (info.user_info.auth === 0) throw new Error('Credenziali non valide');
     this.info = info;
+    const u = info.user_info;
+    if (u.status && /disabled|banned|expired/i.test(u.status)) throw new Error('Account ' + u.status.toLowerCase() + ': contatta il provider');
+    if (u.exp_date && u.exp_date !== 'null' && u.exp_date * 1000 < Date.now()) throw new Error('Abbonamento scaduto il ' + new Date(u.exp_date * 1000).toLocaleDateString());
+    const max = +u.max_connections || 0, act = +u.active_cons || 0;
+    this.limit = max && act >= max ? { active: act, max: max } : null; // connessioni esaurite: il provider potrebbe rifiutare nuovi flussi
     return this;
   }
 

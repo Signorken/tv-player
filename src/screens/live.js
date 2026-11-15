@@ -13,11 +13,12 @@ import { Engine } from '../ui/engine.js';
 import { startEpg, epgStatus, liveOpts, showLoading, hideLoading } from '../core/session.js';
 import { PlayerScreen } from './player.js';
 
+import { isSportChannel } from '../core/sport.js';
 export class LiveScreen {
   constructor(src, opts) {
     this.src = src; this.opts = opts || {};
     this.zone = 'chs'; this.query = ''; this.catId = '__all';
-    this.hd = header('TV in diretta', src.name, [
+    this.hd = header(this.opts.sport ? 'Sport in diretta' : 'TV in diretta', src.name, [
       { icon: 'search', label: 'Cerca', onclick: () => this.search() },
       { icon: 'list', label: 'Sorgente', onclick: () => this.switchSource() }
     ]);
@@ -74,6 +75,7 @@ export class LiveScreen {
       hideLoading();
       if (Epg.srcId !== this.src.id) Epg.reset();
       this.all = live.items; this.baseCats = live.cats;
+      if (this.opts.sport) { this.all = this.all.filter(isSportChannel); const g = {}; this.all.forEach(c => { g[c.group] = (g[c.group] || 0) + 1; }); this.baseCats = this.baseCats.filter(c => g[c.id]).map(c => Object.assign({}, c, { count: g[c.id] })); }
       this.byGroup = {};
       this.all.forEach(c => { (this.byGroup[c.group] = this.byGroup[c.group] || []).push(c); c._k = c.name.toLowerCase(); });
       this.rebuildCats();

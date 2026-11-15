@@ -341,3 +341,8 @@ body.desktop .home .t1{font-size:1.05rem}
 #bg{will-change:transform;-webkit-transform:translateZ(0);transform:translateZ(0)}
 .vl-row,.srow,.scat,.ccard,.tile{contain:layout paint style}
 .row.sel,.srow,.tile,.empty{background-color:#1d0c28}
+/* 7 tessere in Home + tasto rapido TV */
+.tiles .tile{flex:1 1 0;width:auto;min-width:0}
+body.desktop .home .tiles .tile{flex:0 0 auto}
+.btn.accent{background:#ff4fb8;color:#1f0615;font-weight:700}
+.btn.accent.focused{background:#ff7fcb;color:#1f0615}

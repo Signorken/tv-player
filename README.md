@@ -185,3 +185,9 @@ Modifica `src/`, poi `./build.sh` → `www/app.js`.
 - **DLNA/UPnP e SMB** non sono accessibili da una web app pura (servono socket UDP/TCP): sulle **TV** usa WebDAV/HTTP (o un plugin nativo su Android); sul **computer** DLNA/UPnP è supportato dall'app Electron e SMB si usa montando la condivisione dal sistema operativo.
 - Niente DRM, catch‑up/timeshift, registrazioni, profili multipli; interfaccia solo in italiano.
 - Nota: l'app non contiene né fornisce contenuti; usa solo playlist/servizi che hai il diritto di usare.
+
+## Sport, accesso rapido alla TV e connessioni multiple
+
+- **Sport**: nuova tessera in Home. Riconosce da nome di gruppo/canale/categoria (calcio, Serie A, Champions, F1, NBA, DAZN, Sky Sport, Eurosport, tennis, UFC…) le dirette e gli eventi on demand di playlist M3U e account Xtream, e li mostra in un menu con "Dirette sportive", "Eventi on demand" e "Programmi e serie sportive".
+- **TV in diretta**: pulsante rapido in alto nella Home e tasto verde / Guida / CH+ / CH- del telecomando.
+- **Limite connessioni**: con Xtream l'app legge `max_connections`/`active_cons` e avvisa quando sono tutte in uso; gli errori HTTP 401/403/429/458/509/884 hanno ora un messaggio comprensibile. Se la stessa playlist è attiva su un altro dispositivo e il provider consente una sola connessione, il flusso viene rifiutato dal provider (non dall'app).

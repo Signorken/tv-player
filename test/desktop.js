@@ -156,7 +156,7 @@ const dl = http.createServer((req, res2) => {
   await sleep(300);
   await page.evaluate(() => { const T = window.__app.router.current; T.tSet.click(); });
   await sleep(600);
-  const setl = await page.evaluate(() => Array.from(document.querySelectorAll('.setrow .sl')).map(x => x.textContent));
+  const setl = await page.evaluate(() => { const out = []; document.querySelectorAll('.scat').forEach(c => { c.click(); document.querySelectorAll('.srow .sl').forEach(x => out.push(x.textContent)); }); return out; });
   ok('impostazioni desktop senza companion/telefono, con identità lettore', !setl.some(x => /companion|Telefono/i.test(x)) && setl.some(x => /Identità/.test(x)), setl.join(' | '));
   await page.screenshot({ path: OUT + '/d5-impostazioni.png' });
 

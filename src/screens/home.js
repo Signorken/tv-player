@@ -16,6 +16,7 @@ import { SettingsScreen, SourcesScreen } from './settings.js';
 import { addSourceFlow, addFromClipboard, pickPlaylistFile, discoverFlow, addFolderFlow } from './addflow.js';
 import { DetailScreen } from './detail.js';
 import { PlayerScreen } from './player.js';
+import { openSport } from './sport.js';
 import { TYPE_LABEL } from '../sources/index.js';
 
 const DEMO = '#EXTM3U\n' +
@@ -91,10 +92,11 @@ export class HomeScreen {
     this.tLive = T('tv', 'TV in diretta', 'Canali e guida programmi', () => this.openLive());
     this.tVod = T('film', 'Film', 'Locandine, trama, cast', () => this.openVod('movie'));
     this.tSer = T('series', 'Serie TV', 'Stagioni ed episodi', () => this.openVod('series'));
+    this.tSport = T('trophy', 'Sport', 'Dirette ed eventi', () => this.openSport());
     this.tNas = T('folder', 'File di rete', 'NAS / server locali', () => this.openFiles());
     this.tFav = T('star', 'Preferiti', 'I tuoi contenuti', () => router.push(new FavsScreen()));
     this.tSet = T('gear', 'Impostazioni', 'Sorgenti, telefono, opzioni', () => router.push(new SettingsScreen()));
-    [this.tLive, this.tVod, this.tSer, this.tNas, this.tFav, this.tSet].forEach(t => this.tiles.appendChild(t));
+    [this.tLive, this.tVod, this.tSer, this.tSport, this.tNas, this.tFav, this.tSet].forEach(t => this.tiles.appendChild(t));
     this.cont = h('div', { class: 'contbox' });
     this.contT = h('div', { class: 'contt', text: 'Continua a guardare' });
     this.contX = h('div', { class: 'btn small', 'data-f': 1, title: 'Rimuovi la riga dalla Home (i progressi restano salvati)', onclick: () => this.clearRow() }, icon('x'), h('span', { text: 'Rimuovi riga' }));
@@ -102,9 +104,9 @@ export class HomeScreen {
     this.contHd = h('div', { class: 'conthd' }, this.contT, h('span', { class: 'contnote', text: 'Solo film e serie' }), h('div', { class: 'flex1' }), this.contX);
     this.empty = h('div', { class: 'empty' });
     this.el = h('div', { class: 'screen home' },
-      h('div', { class: 'hbar' }, h('div', { class: 'brand' }, icon('tv'), h('span', { text: 'TV Player' })), h('div', { class: 'hbr' }, platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: 'Aggiungi sorgente (Ctrl+V per incollare un link)', onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: 'Aggiungi' })) : null, this.srcBtn, this.clock)),
+      h('div', { class: 'hbar' }, h('div', { class: 'brand' }, icon('tv'), h('span', { text: 'TV Player' })), h('div', { class: 'hbr' }, h('div', { class: 'btn small accent', 'data-f': 1, title: 'Lista canali (tasto verde)', onclick: () => this.openLive() }, icon('tv'), h('span', { text: 'TV in diretta' })), platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: 'Aggiungi sorgente (Ctrl+V per incollare un link)', onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: 'Aggiungi' })) : null, this.srcBtn, this.clock)),
       this.tiles, this.hero, this.empty, this.contHd, this.cont,
-      hints([['ok', 'Apri'], ['yellow', 'Rimuovi riga'], ['back', 'Esci']]));
+      hints([['ok', 'Apri'], ['green', 'TV in diretta'], ['yellow', 'Rimuovi riga'], ['back', 'Esci']]));
     this.clockT = setInterval(() => { this.clock.textContent = fmtClock(Date.now()); }, 20000);
   }
   onShow(first) {
@@ -175,6 +177,7 @@ export class HomeScreen {
   }
 
   async openLive() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new LiveScreen(s)); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
+  async openSport() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); await openSport(s); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
   async openVod(mode) { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, mode)); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
   async openFiles() {
     const list = store.fileSources();
@@ -191,6 +194,7 @@ export class HomeScreen {
 
   onKey(a) {
     if (a.a === 'back') { this.confirmExit(); return true; }
+    if (a.a === 'green' || a.a === 'guide' || a.a === 'chup' || a.a === 'chdown') { this.openLive(); return true; }
     if (a.a === 'yellow' || a.a === 'del') { const f = nav.getFocus(); if (a.a === 'yellow' || (f && this.cont.contains(f))) { this.clearRow(); return true; } }
     return false;
   }
