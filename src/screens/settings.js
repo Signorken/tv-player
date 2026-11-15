@@ -1,5 +1,5 @@
 // Impostazioni, gestione sorgenti, form di inserimento dati, abbinamento telefono
-import { h } from '../core/util.js';
+import { h, loadScript } from '../core/util.js';
 import * as store from '../core/store.js';
 import * as nav from '../core/nav.js';
 import { router } from '../core/router.js';
@@ -157,7 +157,7 @@ export class SourcesScreen {
 // ---------------- abbinamento telefono ----------------
 export class PairScreen {
   constructor() {
-    this.hd = header('Telefono come tastiera e telecomando', '', []);
+    this.hd = header('Telefono', 'Tastiera e telecomando dal telefono', []);
     this.body = h('div', { class: 'pair' });
     this.el = h('div', { class: 'screen pairscr' }, this.hd.el, this.body, hints([['ok', 'Seleziona'], ['back', 'Indietro']]));
     this.h = m => { if (m.t === 'hello' && this.el.parentNode) this.render(); };
@@ -173,7 +173,7 @@ export class PairScreen {
       this.body.appendChild(h('div', { class: 'p2', text: 'Senza companion puoi comunque usare una tastiera Bluetooth/USB, la tastiera a schermo, oppure la tastiera del telefono tramite l\'app telecomando del produttore (Google TV, SmartThings, LG ThinQ, Hisense RemoteNOW) col pulsante “Tastiera di sistema”.' }));
     } else {
       const qr = h('div', { class: 'qr' });
-      try { const q = window.qrcode(0, 'M'); q.addData(Remote.pairUrl()); q.make(); qr.innerHTML = q.createSvgTag(6, 8); } catch (e) { qr.textContent = 'QR non disponibile'; }
+      loadScript('vendor/qrcode.js').then(() => { const q = window.qrcode(0, 'M'); q.addData(Remote.pairUrl()); q.make(); qr.innerHTML = q.createSvgTag(6, 8); }).catch(() => { qr.textContent = 'QR non disponibile'; });
       this.body.appendChild(h('div', { class: 'pcols' }, qr, h('div', { class: 'pinfo2' },
         h('div', { class: 'p1', text: 'Inquadra il codice con la fotocamera del telefono (stessa rete Wi-Fi) oppure apri questo indirizzo:' }),
         h('div', { class: 'purl', text: Remote.pairUrl() }),

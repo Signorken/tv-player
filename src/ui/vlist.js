@@ -39,6 +39,9 @@ export class VList {
     if (!W || !H) return false;
     this.W = W; this.H = H;
     const rh = typeof this.o.rowH === 'function' ? this.o.rowH(W) : this.o.rowH;
+    // dimensioni invariate e nodi già pronti: niente da riscrivere (evita ricalcoli di stile a ogni tasto)
+    if (rh === this.rowH && W === this._mW && H === this._mH && this.pool.length) return true;
+    this._mW = W; this._mH = H;
     this.rowH = rh;
     this.visRows = Math.max(1, Math.floor(H / rh));
     const need = (Math.ceil(H / rh) + 1) * this.cols;
@@ -88,9 +91,10 @@ export class VList {
       const node = this.pool[k];
       const row = top + Math.floor(k / cols), col = k % cols;
       const idx = row * cols + col;
-      if (idx >= n || row >= totalRows) { node.style.display = 'none'; continue; }
-      node.style.display = '';
-      node.style.transform = 'translate(' + (col * cw) + 'px,' + ((row - top) * this.rowH) + 'px)';
+      if (idx >= n || row >= totalRows) { if (!node._hid) { node._hid = true; node.style.display = 'none'; } continue; }
+      if (node._hid !== false) { node._hid = false; node.style.display = ''; }
+      const tx = 'translate(' + (col * cw) + 'px,' + ((row - top) * this.rowH) + 'px)';
+      if (node._tx !== tx) { node._tx = tx; node.style.transform = tx; }
       this.o.fill(node, this.items[idx], idx);
       const on = this.active && idx === this.sel;
       if (node._on !== on) { node._on = on; node.classList.toggle('focused', on); }

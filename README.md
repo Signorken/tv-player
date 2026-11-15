@@ -191,3 +191,32 @@ Modifica `src/`, poi `./build.sh` → `www/app.js`.
 - **Sport**: nuova tessera in Home. Riconosce da nome di gruppo/canale/categoria (calcio, Serie A, Champions, F1, NBA, DAZN, Sky Sport, Eurosport, tennis, UFC…) le dirette e gli eventi on demand di playlist M3U e account Xtream, e li mostra in un menu con "Dirette sportive", "Eventi on demand" e "Programmi e serie sportive".
 - **TV in diretta**: pulsante rapido in alto nella Home e tasto verde / Guida / CH+ / CH- del telecomando.
 - **Limite connessioni**: con Xtream l'app legge `max_connections`/`active_cons` e avvisa quando sono tutte in uso; gli errori HTTP 401/403/429/458/509/884 hanno ora un messaggio comprensibile. Se la stessa playlist è attiva su un altro dispositivo e il provider consente una sola connessione, il flusso viene rifiutato dal provider (non dall'app).
+
+## MAXENTA 2.0
+
+**Aspetto** (Impostazioni › Aspetto › Disposizione)
+- **A (predefinito)**: barra laterale a sole icone; si allarga con i nomi quando ci entri (Sinistra dal primo elemento di qualsiasi schermata, Destra o Indietro per uscire). Mostra la sezione corrente e, se c'è un video in finestrella, la voce "In riproduzione".
+- **B**: pulsanti in alto a sola icona; quello selezionato mostra il nome.
+- Orologio al centro (12/24 ore, fuso della TV), versione in basso a destra, scelta della schermata all'avvio (Home, TV, Film, Serie, Sport, Preferiti, ultimo canale).
+- Home: "Riprendi", "Continua a guardare" (locandine verticali) e "Canali visti di recente"; OK lungo su una locandina per toglierla dalla riga.
+
+**Player pensato per telecomandi senza numeri né tasti colorati** (es. Samsung SolarCell)
+
+| Tasto | Diretta | Film / episodi |
+|---|---|---|
+| Su / Giù | cambia canale | — |
+| Sinistra | pannello Canali | pannello Episodi · con le informazioni visibili: −10 s (tenuto premuto accelera) |
+| Destra | pannello Opzioni (audio, sottotitoli, preferiti, formato, flusso alternativo, finestrella…) | pannello Opzioni · con le informazioni visibili: +10 s |
+| OK | informazioni, poi pausa / riprendi | informazioni, poi pausa / riprendi |
+| OK lungo | pannello Opzioni | pannello Opzioni |
+| Indietro | finestrella | finestrella |
+| ▶‖ | — | — |
+
+La finestrella si riporta a schermo intero con ▶‖, dalla voce "In riproduzione" della barra o selezionandola col cursore (Giù dal fondo della pagina). Riaprire lo stesso film, episodio o canale la riespande senza ricaricare. L'OK lungo ora funziona anche sui telecomandi che non ripetono il tasto (timer invece dei keydown ripetuti). La tastiera a schermo ha Shift (una maiuscola) e blocco maiuscole (Shift due volte).
+
+**Leggerezza**
+- Guida programmi caricata solo a canale aperto (niente download/parse dell'XMLTV scorrendo la lista).
+- Righe delle liste e sfondo non sono più livelli grafici separati: nella lista canali si passa da ~30 livelli (7 megapixel da comporre) a 2.
+- Libreria QR caricata solo quando serve; immagini decodificate in modo asincrono; meno scritture di stile a ogni tasto nelle liste.
+
+Icone: [Solar](https://github.com/480-Design/Solar-Icon-Set) di 480 Design (CC BY 4.0). Font: Plus Jakarta Sans (SIL OFL).
