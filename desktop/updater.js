@@ -63,7 +63,7 @@ function check(silent) {
 }
 function download() {
   if (!autoUpdater) return;
-  if (process.platform === 'darwin' && repo && info && info.version) { shell.openExternal('https://github.com/' + repo.owner + '/' + repo.repo + '/releases/download/v' + info.version + '/TV-Player-' + info.version + '-mac-universal.dmg'); return; }
+  if (process.platform === 'darwin' && repo && info && info.version) { shell.openExternal('https://github.com/' + repo.owner + '/' + repo.repo + '/releases/download/v' + info.version + '/MAXENTA-' + info.version + '-mac-universal.dmg'); return; }
   if (!canAuto()) { const u = releasesUrl(); if (u) shell.openExternal(u); return; } // .deb/.rpm: aggiornamento manuale
   state = 'downloading'; autoUpdater.downloadUpdate().catch(() => { });
 }

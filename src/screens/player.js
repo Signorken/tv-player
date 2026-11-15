@@ -43,8 +43,8 @@ export class PlayerScreen {
     this.el = h('div', { class: 'screen player' }, this.video, this.clock, this.numBox, this.seekBox, this.msg, this.spin, this.info, this.miniUi);
     this.el.addEventListener('click', e => { if (this.mini && !(e.target.classList && e.target.classList.contains('mini-x'))) { e.stopPropagation(); this.expand(); } }, true);
     this.engine = new Engine(this.video);
-    this.engine.onPlaying = () => { this.spin.classList.remove('show'); clearTimeout(this.spinT); this.msg.classList.remove('show'); };
-    this.engine.onFail = why => { this.spin.classList.remove('show'); this.say(this.live ? 'Canale non raggiungibile' : 'Impossibile riprodurre il file', (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live). Se la playlist è in uso su un altro dispositivo, il provider potrebbe consentire una sola connessione' : 'Dettagli: ' + (why || 'sconosciuto')) + (why ? '' : '')); this.showInfo(); };
+    this.engine.onPlaying = () => { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); clearTimeout(this.spinT); this.msg.classList.remove('show'); };
+    this.engine.onFail = why => { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); this.say(this.live ? 'Canale non raggiungibile' : 'Impossibile riprodurre il file', (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live). Se la playlist è in uso su un altro dispositivo, il provider potrebbe consentire una sola connessione' : 'Dettagli: ' + (why || 'sconosciuto')) + (why ? '' : '')); this.showInfo(); };
     this.hideT = null; this.loadT = null; this.numT = null; this.seekT = null; this.pend = 0; this.lastSave = 0;
     this.cur = null; this.finished = false;
     const v = this.video;
@@ -143,6 +143,12 @@ export class PlayerScreen {
     if (this.o.onIndex) this.o.onIndex(this.i, item);
     this.msg.classList.remove('show');
     this.spin.classList.add('show');
+    this.ptxt = this.ptxt || this.spin.querySelector('.ptxt'); this.ptxt.textContent = 'Caricamento…';
+    clearTimeout(this.slowT1); clearTimeout(this.slowT2);
+    if (!this.live) {
+      this.slowT1 = setTimeout(() => { this.ptxt.textContent = 'Il server risponde lentamente…'; }, 8000);
+      this.slowT2 = setTimeout(() => { this.ptxt.textContent = 'Ancora in attesa. Se la playlist è in uso su un altro dispositivo il provider può bloccare il flusso (Indietro per annullare)'; }, 20000);
+    }
     this._renderInfo();
     this.showInfo();
     if (r.key) store.addRecent(r.key, Object.assign({ name: r.title, logo: r.logo || '', sub: r.sub || '' }, r.meta || {}));

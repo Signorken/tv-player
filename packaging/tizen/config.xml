@@ -6,7 +6,7 @@
   <content src="index.html"/>
   <feature name="http://tizen.org/feature/screen.size.all"/>
   <icon src="icon.png"/>
-  <name>TV Player</name>
+  <name>MAXENTA</name>
   <tizen:profile name="tv"/>
   <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
   <!-- rete e telecomando (tasti colorati/multimediali) -->

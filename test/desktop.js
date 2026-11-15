@@ -48,8 +48,9 @@ const dl = http.createServer((req, res2) => {
   // 1. bridge + modalità desktop
   const info = await page.evaluate(() => ({ d: !!window.desktop, cls: document.body.className, fs: getComputedStyle(document.documentElement).fontSize, back: !!document.querySelector('.backbtn') }));
   ok('bridge window.desktop presente e body.desktop', info.d && /desktop/.test(info.cls), JSON.stringify(info));
+  await wait(() => document.querySelectorAll('.ebtns .btn').length > 0, 8000);
   const emptyBtns = await page.evaluate(() => Array.from(document.querySelectorAll('.ebtns .btn')).map(b => b.textContent));
-  ok('schermata iniziale desktop con azioni senza digitare', emptyBtns.length === 6 && /Incolla/.test(emptyBtns[0]), emptyBtns.join(' | '));
+  ok('schermata iniziale desktop con azioni senza digitare', emptyBtns.length === 7 && /Incolla/.test(emptyBtns[0]), emptyBtns.join(' | '));
   await page.screenshot({ path: OUT + '/d1-home-vuota.png' });
 
   // 2. incolla un URL Xtream (get.php) -> riconosciuto da solo
@@ -146,6 +147,10 @@ const dl = http.createServer((req, res2) => {
   ok('lettura file non consentiti bloccata (/etc/passwd)', sec === 'bloccato');
   const lst = await page.evaluate(async p => (await window.desktop.listDir(p)).map(x => x.name).sort().join(','), tmp);
   ok('listDir dal main process', lst === 'Film,lista.m3u', lst);
+  const smb = await page.evaluate(async p => { try { return (await window.desktop.smbResolve(p)).path; } catch (e) { return 'err ' + e.message; } }, tmp);
+  ok('percorso NAS/cartella risolto dal main process', smb === tmp, smb);
+  const smbBad = await page.evaluate(async () => { try { await window.desktop.smbResolve('abc'); return 'ok'; } catch (e) { return 'err'; } });
+  ok('percorso NAS non valido rifiutato', smbBad === 'err');
 
   // 8. discover non crasha (nel sandbox non ci sono dispositivi)
   const dsc = await page.evaluate(async () => { try { const r = await window.desktop.discover(1800); return Array.isArray(r) ? 'ok' : 'x'; } catch (e) { return 'err ' + e.message; } });

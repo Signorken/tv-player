@@ -125,7 +125,7 @@ if (platform.isDesktop) {
     });
     window.desktop.onUpdate(async m => {
       if (m.state === 'available') {
-        const ok = await Modal.confirm('Aggiornamento disponibile: versione ' + m.version, (m.notes ? m.notes + '\n\n' : '') + (m.auto ? 'Si scarica in background e si installa al riavvio.' : (/Mac/.test(navigator.platform) ? 'Su Mac scarico il file .dmg: aprilo e trascina TV Player in Applicazioni sostituendo la versione precedente.' : 'Questa installazione (.deb/.rpm) si aggiorna a mano: apro la pagina di download.')), m.auto ? 'Scarica' : 'Apri pagina', 'Più tardi');
+        const ok = await Modal.confirm('Aggiornamento disponibile: versione ' + m.version, (m.notes ? m.notes + '\n\n' : '') + (m.auto ? 'Si scarica in background e si installa al riavvio.' : (/Mac/.test(navigator.platform) ? 'Su Mac scarico il file .dmg: aprilo e trascina MAXENTA in Applicazioni sostituendo la versione precedente.' : 'Questa installazione (.deb/.rpm) si aggiorna a mano: apro la pagina di download.')), m.auto ? 'Scarica' : 'Apri pagina', 'Più tardi');
         if (ok) { window.desktop.updateDownload(); if (m.auto) Modal.toast('Scarico l\'aggiornamento…', 4000); }
       } else if (m.state === 'progress') { Modal.toast('Scarico l\'aggiornamento… ' + m.percent + '%', 1500); }
       else if (m.state === 'ready') {

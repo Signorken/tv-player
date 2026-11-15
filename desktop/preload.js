@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('desktop', {
   discover: ms => ipcRenderer.invoke('discover', ms),
   dlnaBrowse: (control, id) => ipcRenderer.invoke('dlna:browse', control, id),
   pickFolder: () => ipcRenderer.invoke('pick-folder'),
+  smbResolve: t => ipcRenderer.invoke('smb:resolve', t),
+  smbShares: h => ipcRenderer.invoke('smb:shares', h),
   listDir: dir => ipcRenderer.invoke('fs:list', dir),
   readText: p => ipcRenderer.invoke('fs:read', p),
   readClipboard: () => ipcRenderer.invoke('clipboard:read'),

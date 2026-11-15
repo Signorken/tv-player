@@ -99,6 +99,8 @@ export class Engine {
   _probeAudio() {
     const a = this.attempts[this.ai], gen = this.gen;
     if (!a || a.eng !== 'native' || this.live || this.ff || !this.ffAvailable() || this.probedFor === a.u || (this.v.audioTracks && this.v.audioTracks.length)) return;
+    // sui server IPTV (percorsi /movie/ /series/) una seconda connessione parallela può far rifiutare o bloccare il flusso: niente lettura tracce
+    if (/^https?:\/\/[^/]+\/(movie|series)\//i.test(a.u)) return;
     this.probedFor = a.u;
     window.desktop.ffProbe(a.u).then(info => {
       if (gen !== this.gen || this.ff || !info || !info.audio || info.audio.length < 2) return;
@@ -158,7 +160,7 @@ export class Engine {
     const a = this.attempts[this.ai], gen = this.gen, v = this.v;
     v.muted = this.muted;
     // se dopo 18 s non parte, prova il metodo successivo
-    this.timer = setTimeout(() => { if (gen === this.gen) this._next('timeout'); }, this.live ? 18000 : 60000);
+    this.timer = setTimeout(() => { if (gen === this.gen) this._next('timeout'); }, this.live ? 18000 : (a.eng === 'native' ? 25000 : 60000));
     const url = mediaUrl(a.u);
     const startAt = this.startAt;
     const seekOnMeta = () => { if (startAt > 0) { try { v.currentTime = startAt; } catch (e) { /* */ } } };

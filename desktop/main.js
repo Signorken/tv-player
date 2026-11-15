@@ -1,4 +1,4 @@
-// TV Player per computer (Windows, macOS, Linux): stesso codice dell'app per TV dentro una finestra Electron.
+// MAXENTA per computer (Windows, macOS, Linux): stesso codice dell'app per TV dentro una finestra Electron.
 'use strict';
 const { app, BrowserWindow, ipcMain, dialog, clipboard, session, shell, powerSaveBlocker } = require('electron');
 const path = require('path');
@@ -9,6 +9,8 @@ const menu = require('./menu');
 const updater = require('./updater');
 const transcode = require('./transcode');
 
+// l'app si chiama MAXENTA, ma i dati restano nella cartella storica 'TV Player' (sorgenti, preferiti e progressi non si perdono)
+if (!app.commandLine.hasSwitch('user-data-dir')) app.setPath('userData', path.join(app.getPath('appData'), 'TV Player'));
 let win = null, readyForPaths = false, pendingPaths = [], userAgent = '';
 const PLAYLIST_EXT = /\.(m3u8?|txt)$/i;
 const READABLE_EXT = /\.(nfo|m3u8?|txt|xml)$/i;
@@ -36,7 +38,7 @@ function createWindow() {
   const st = loadState(), b = st.bounds || {};
   win = new BrowserWindow({
     width: b.width || 1280, height: b.height || 720, x: b.x, y: b.y, minWidth: 900, minHeight: 560,
-    backgroundColor: '#0a0e15', title: 'TV Player', show: false, autoHideMenuBar: true,
+    backgroundColor: '#0a0e15', title: 'MAXENTA', show: false, autoHideMenuBar: true,
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true,
@@ -80,6 +82,43 @@ ipcMain.handle('dlna:browse', (e, control, id) => {
 ipcMain.handle('pick-folder', async () => {
   const r = await dialog.showOpenDialog(win, { title: 'Scegli la cartella con i tuoi film e video', properties: ['openDirectory'] });
   return r.canceled || !r.filePaths.length ? '' : r.filePaths[0];
+});
+// ---- condivisioni di rete SMB (NAS visibili in "Rete" di Windows / Finder)
+function smbParse(t) {
+  t = String(t || '').trim().replace(/^smb:\/\//i, '').replace(/\\/g, '/').replace(/^\/+/, '');
+  const parts = t.split('/').filter(Boolean);
+  return { host: parts[0] || '', share: parts[1] || '', rest: parts.slice(2) };
+}
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('Il NAS non risponde (timeout)')), ms))]);
+ipcMain.handle('smb:shares', async (e, host) => {
+  host = smbParse(host).host;
+  if (!/^[\w.-]+$/.test(host) || process.platform !== 'win32') return [];
+  return new Promise(res => require('child_process').execFile('net', ['view', '\\\\' + host], { timeout: 12000, windowsHide: true, encoding: 'latin1' }, (err, out) => {
+    if (err && !out) return res([]);
+    const names = [];
+    String(out).split(/\r?\n/).forEach(l => { const m = /^(\S.*?)\s{2,}(Disk|Disco|Platte|Disque|Schijf|Dysk)\b/i.exec(l); if (m && !/\$$/.test(m[1].trim())) names.push(m[1].trim()); });
+    res(names);
+  }));
+});
+ipcMain.handle('smb:resolve', async (e, text) => {
+  const t = String(text || '').trim();
+  if (/^(\/|[a-z]:[\\/])/i.test(t) && !/^smb:/i.test(t)) { await withTimeout(fs.promises.readdir(t), 10000); return { path: t }; }
+  const { host, share, rest } = smbParse(t);
+  if (!host || !share) throw new Error('Scrivi l\'indirizzo completo, ad esempio \\\\NAS\\video');
+  let p;
+  if (process.platform === 'win32') p = '\\\\' + host + '\\' + [share].concat(rest).join('\\');
+  else if (process.platform === 'darwin') {
+    p = '/Volumes/' + [share].concat(rest).join('/');
+    if (!fs.existsSync('/Volumes/' + share)) { shell.openExternal('smb://' + host + '/' + share); await new Promise(r => setTimeout(r, 6000)); }
+  } else {
+    const uid = process.getuid ? process.getuid() : 1000;
+    p = '/run/user/' + uid + '/gvfs/smb-share:server=' + host + ',share=' + share + (rest.length ? '/' + rest.join('/') : '');
+    if (!fs.existsSync(p)) { try { require('child_process').execFile('gio', ['mount', 'smb://' + host + '/' + share], { timeout: 15000 }, () => { }); } catch (err) { /* */ } await new Promise(r => setTimeout(r, 4000)); }
+  }
+  try { await withTimeout(fs.promises.readdir(p), 12000); } catch (err) {
+    throw new Error(process.platform === 'darwin' ? 'Cartella non raggiungibile. Se è comparsa una richiesta di accesso nel Finder, inserisci le credenziali e riprova' : 'Cartella non raggiungibile (' + (err.code || err.message) + '). Controlla nome, condivisione e credenziali salvate nel sistema');
+  }
+  return { path: p };
 });
 ipcMain.handle('fs:list', async (e, dir) => {
   const names = await fs.promises.readdir(String(dir), { withFileTypes: true });

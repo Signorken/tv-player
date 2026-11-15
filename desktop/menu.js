@@ -5,7 +5,7 @@ const { Menu } = require('electron');
 function build(win, send) {
   const mac = process.platform === 'darwin';
   const tpl = [];
-  if (mac) tpl.push({ label: 'TV Player', submenu: [{ role: 'about', label: 'Informazioni su TV Player' }, { type: 'separator' }, { role: 'hide', label: 'Nascondi' }, { role: 'hideOthers', label: 'Nascondi altri' }, { role: 'unhide', label: 'Mostra tutto' }, { type: 'separator' }, { role: 'quit', label: 'Esci da TV Player' }] });
+  if (mac) tpl.push({ label: 'MAXENTA', submenu: [{ role: 'about', label: 'Informazioni su MAXENTA' }, { type: 'separator' }, { role: 'hide', label: 'Nascondi' }, { role: 'hideOthers', label: 'Nascondi altri' }, { role: 'unhide', label: 'Mostra tutto' }, { type: 'separator' }, { role: 'quit', label: 'Esci da MAXENTA' }] });
   tpl.push({
     label: 'File', submenu: [
       { label: 'Incolla link o playlist dagli appunti', accelerator: 'CmdOrCtrl+Shift+V', click: () => send('paste') },

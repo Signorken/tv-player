@@ -7,6 +7,7 @@ import { detect, hostName } from '../core/detect.js';
 import { platform } from '../core/platform.js';
 import { createSource, TYPE_LABEL } from '../sources/index.js';
 import { showLoading, hideLoading } from '../core/session.js';
+import { promptText } from '../ui/keyboard.js';
 import { PlayerScreen } from './player.js';
 import { sourceForm } from './settings.js';
 import { PairScreen } from './settings.js';
@@ -111,6 +112,33 @@ export async function addFolderFlow() {
   Modal.toast('Cartella aggiunta: ' + name + ' — la trovi in “File di rete”', 4000);
 }
 
+// Cartella di rete (NAS visibile come \\NOME\condivisione o smb://nome/condivisione): Windows, macOS, Linux
+export async function addNetworkFolderFlow(host) {
+  if (!window.desktop || !window.desktop.smbResolve) { Modal.toast('Disponibile solo nell\'app per computer'); return; }
+  let text = host ? '\\\\' + host : '';
+  if (host && window.desktop.smbShares) {
+    showLoading('Cerco le condivisioni di ' + host + '…');
+    let sh = []; try { sh = await window.desktop.smbShares(host); } catch (e) { /* */ }
+    hideLoading();
+    if (sh.length) {
+      const v = await Modal.menu('Condivisioni su ' + host, sh.map(n => ({ label: n, value: n, icon: 'folder' })).concat([{ label: 'Altro percorso…', value: '', icon: 'plus' }]));
+      if (v === undefined || v === null) return;
+      if (v) text = '\\\\' + host + '\\' + v;
+    }
+  }
+  if (!/^\\\\[^\\]+\\[^\\]+/.test(text) && !/^smb:\/\/[^/]+\/[^/]+/i.test(text)) {
+    text = await promptText({ title: 'Indirizzo del NAS', value: text || '\\\\NAS\\video', hint: 'Esempi: \\\\NAS\\video   oppure   smb://NAS/video   (nome o IP, poi la condivisione)', quick: false });
+    if (!text) return;
+  }
+  showLoading('Mi collego al NAS…', 'Può comparire una richiesta di credenziali del sistema');
+  let r;
+  try { r = await window.desktop.smbResolve(text); } catch (e) { hideLoading(); Modal.toast(String(e.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, ''), 8000); return; }
+  hideLoading();
+  const name = r.path.split(/[\\/]/).filter(Boolean).slice(-2).join(' › ') || r.path;
+  store.addSource({ id: uid(), type: 'local', name: name, path: r.path }); refreshCurrent();
+  Modal.toast('NAS collegato: ' + name + ' — lo trovi in “File di rete”', 5000);
+}
+
 // Ricerca automatica di NAS (WebDAV/HTTP via mDNS) e server DLNA/UPnP
 export async function discoverFlow() {
   if (!window.desktop || !window.desktop.discover) { Modal.toast('La ricerca in rete richiede l\'app per computer'); return; }
@@ -128,7 +156,7 @@ export async function discoverFlow() {
   if (pick == null) return;
   const f = found[pick];
   if (f.kind === 'smb') {
-    if (await Modal.confirm('Condivisione Windows (SMB)', 'Le condivisioni SMB non si leggono direttamente: aprila dal sistema (Esplora risorse, Finder o file manager) in modo che compaia come cartella, poi scegli quella cartella qui.', 'Scegli cartella', 'Annulla')) addFolderFlow();
+    addNetworkFolderFlow(f.host || f.name);
     return;
   }
   const cfg = { id: uid(), type: f.kind, name: f.name };
@@ -151,6 +179,7 @@ export async function addSourceFlow(preType) {
       items.push({ label: 'Incolla un link o una playlist dagli appunti', sub: 'Riconosco da solo M3U, Xtream (anche da get.php?username=…) e NAS', value: 'clip', icon: 'clip' });
       items.push({ label: 'Scegli un file playlist (.m3u / .m3u8)…', sub: 'Oppure trascinalo nella finestra', value: 'file', icon: 'list' });
       items.push({ label: 'Cerca NAS e server nella rete locale', sub: 'DLNA/UPnP, WebDAV: nessun indirizzo da scrivere', value: 'discover', icon: 'cloud' });
+      items.push({ label: 'NAS in rete Windows (\\\\NAS\\cartella)', sub: 'Il NAS che vedi in “Rete”: scrivi il nome o scegli tra le condivisioni', value: 'smb', icon: 'folder' });
       items.push({ label: 'Cartella del computer o NAS già montato', sub: 'Esplora risorse / Finder / SMB montato', value: 'folder', icon: 'folder' });
     }
     if (d) items.push({ label: d ? 'Xtream Codes — inserimento guidato' : 'Xtream Codes (server + utente + password)', sub: 'Live, film, serie con locandine e trame', value: 'xtream', icon: 'cloud' });
@@ -167,6 +196,7 @@ export async function addSourceFlow(preType) {
   if (t === 'file') return pickPlaylistFile();
   if (t === 'discover') return discoverFlow();
   if (t === 'folder') return addFolderFlow();
+  if (t === 'smb') return addNetworkFolderFlow();
   if (t === 'phone') { router.push(new PairScreen()); return; }
   sourceForm(t, null);
 }
