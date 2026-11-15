@@ -229,3 +229,13 @@ Icone: [Solar](https://github.com/480-Design/Solar-Icon-Set) di 480 Design (CC B
 - Home: "Rimuovi riga" anche per i canali visti di recente.
 - Suoni di navigazione (sintetizzati, nessun file) disattivabili in Aspetto; muti dentro il player.
 - Transizioni più morbide (schermate, pulsanti, pannelli del player, finestrella, avvisi); restano spente con "Risparmio risorse".
+
+## Aggiornamento automatico sulle TV (dalla 2.2)
+I pacchetti per **Tizen, webOS, VIDAA e Android TV** sono un "guscio": a ogni avvio leggono
+`https://raw.githubusercontent.com/<repo>/updates/version.json` e, se c'è una versione più nuova, scaricano
+`app.js` e `app.css` (circa 200 KB), li salvano sulla TV e li avviano. Senza rete si usa l'ultima copia salvata
+(o quella inclusa nel pacchetto); se una versione scaricata non parte entro 9 secondi viene scartata.
+Il ramo `updates` viene pubblicato dalla CI a ogni release. Reinstallare il pacchetto serve solo quando cambiano
+il guscio, i permessi, l'icona o i file statici (font, sfondi, librerie): in quel caso `minShell` in `version.json`
+aumenta e le TV con il guscio vecchio restano sulla versione inclusa finché non lo reinstalli.
+Prova: `node test/shell-test.js`.

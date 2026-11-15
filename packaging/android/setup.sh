@@ -9,6 +9,7 @@ npm init -y >/dev/null
 npm i @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacitor/keyboard
 cp ../packaging/android/capacitor.config.json .
 rm -rf www && cp -r ../www www
+node ../scripts/shell.js www   # guscio auto-aggiornante
 npx cap add android
 # icona e banner MAXENTA (banner 320x180 per il launcher TV; icone launcher dal logo 512x512)
 mkdir -p android/app/src/main/res/drawable-xhdpi
