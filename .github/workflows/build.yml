@@ -74,3 +74,50 @@ jobs:
             release/*.rpm
             release/latest*.yml
           if-no-files-found: error
+
+  # Pacchetti per le TV: Android TV/Google TV/Fire OS (.apk), LG webOS (.ipk), Samsung Tizen (.wgt), Hisense VIDAA (.zip)
+  tv:
+    runs-on: ubuntu-latest
+    needs: build
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - name: Versione
+        run: |
+          V="0.0.0"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then V="${GITHUB_REF_NAME#v}"; elif [[ -n "${{ inputs.version }}" ]]; then V="${{ inputs.version }}"; fi
+          echo "VER=$V" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npm run build
+      - name: webOS (.ipk), Tizen (.wgt), VIDAA (.zip)
+        run: |
+          mkdir -p out
+          ./scripts/dist.sh
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VER\"/" dist/webos/appinfo.json
+          sed -i "s/ version=\"1.0.0\"/ version=\"$VER\"/" dist/tizen/config.xml
+          npm i -g @webos-tools/cli
+          ares-package dist/webos -o out
+          for f in out/*.ipk; do mv "$f" "out/MAXENTA-$VER-webos.ipk"; done
+          (cd dist/tizen && zip -qr "../../out/MAXENTA-$VER-tizen-unsigned.wgt" .)
+          (cd dist/vidaa && zip -qr "../../out/MAXENTA-$VER-vidaa.zip" .)
+      - name: Android TV / Google TV / Fire OS (.apk)
+        run: |
+          pip install pillow
+          sh packaging/android/setup.sh
+          cd android-tv/android
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "../../out/MAXENTA-$VER-android-tv.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tv-packages
+          path: out/*
+          if-no-files-found: error
+      - name: Allega alla Release
+        if: env.VER != '0.0.0'
+        run: gh release upload "v$VER" out/* --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
