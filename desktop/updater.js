@@ -42,7 +42,7 @@ function init(sendFn) {
     else autoUpdater.setFeedURL({ provider: 'github', owner: repo.owner, repo: repo.repo });
     autoUpdater.on('update-available', i => {
       info = i; state = 'available';
-      send({ state: 'available', version: i.version, auto: canAuto(), notes: typeof i.releaseNotes === 'string' ? i.releaseNotes.replace(/<[^>]+>/g, '').slice(0, 400) : '' });
+      send({ state: 'available', version: i.version, auto: canAuto(), notes: typeof i.releaseNotes === 'string' ? i.releaseNotes.replace(/<[^>]+>/g, '').split(/\n/).filter(l => l.trim() && !/^(Co-Authored-By|Claude-Session)/i.test(l.trim()))[0] || '' : '' });
     });
     autoUpdater.on('update-not-available', () => { state = 'idle'; if (manual) send({ state: 'none', version: app.getVersion() }); manual = false; });
     autoUpdater.on('download-progress', p => send({ state: 'progress', percent: Math.round(p.percent) }));
