@@ -18,6 +18,7 @@ const send = (req, res2, file, mime, range) => {
 const srv = http.createServer((req, res2) => {
   if (req.url.indexOf('/range.mp4') === 0) return send(req, res2, M + '/movie.mp4', 'video/mp4', true);
   if (req.url.indexOf('/norange.mp4') === 0) return send(req, res2, M + '/movie.mp4', 'video/mp4', false);
+  if (req.url.indexOf('/multi.mkv') === 0) return send(req, res2, M + '/multi.mkv', 'video/x-matroska', true);
   if (req.url.indexOf('/hevc.mkv') === 0) return send(req, res2, M + '/hevc-ac3.mkv', 'video/x-matroska', true);
   res2.writeHead(404); res2.end();
 }).listen(9301);
@@ -67,6 +68,23 @@ const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'tvp-ud-'));
   await page.evaluate(() => window.__app.router.current.engine.seekTo(9)); const sk3 = await wait(() => window.__app.router.current.engine.time() >= 9, 30000);
   ok('  seek anche qui', sk3, JSON.stringify(await state()));
   await close();
+
+  // 3b. file con due lingue audio (ita, eng): elenco tracce e cambio lingua
+  await play('http://localhost:9301/multi.mkv');
+  await wait(() => window.__app.router.current.engine.time() > 0.8, 20000);
+  const trk = await wait(() => window.__app.router.current.engine.tracks().audio.length === 2, 15000);
+  const lbl = await page.evaluate(() => window.__app.router.current.engine.tracks().audio.map(a => a.label + '|' + a.lang));
+  ok('file multi-audio: elenca 2 tracce con lingua leggibile', trk && /Italiano/.test(lbl[0]) && /English/.test(lbl[1]), JSON.stringify(lbl));
+  await page.evaluate(() => window.__app.router.current.engine.setAudio(1));
+  const sw = await wait(() => { const e = window.__app.router.current.engine; return e.ff && e.ff.ai === 1 && e.time() > 0.5; }, 25000);
+  ok('  scegliendo English passa al convertitore con la traccia 2', sw, JSON.stringify(await state()));
+  await close();
+  await page.evaluate(() => { window.__app.store.settings().audioLang = 'en'; });
+  await play('http://localhost:9301/multi.mkv');
+  const auto = await wait(() => { const e = window.__app.router.current.engine; return e.ff && e.ff.ai === 1 && e.time() > 0.5; }, 30000);
+  ok('lingua preferita (en) applicata da sola all\'avvio', auto, JSON.stringify(await state()));
+  await close();
+  await page.evaluate(() => { window.__app.store.settings().audioLang = ''; });
 
   // 4. impostazione "Mai": niente convertitore, errore con dettagli
   await page.evaluate(() => { window.__app.store.settings().transcode = 'never'; });

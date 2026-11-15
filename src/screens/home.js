@@ -96,11 +96,14 @@ export class HomeScreen {
     this.tSet = T('gear', 'Impostazioni', 'Sorgenti, telefono, opzioni', () => router.push(new SettingsScreen()));
     [this.tLive, this.tVod, this.tSer, this.tNas, this.tFav, this.tSet].forEach(t => this.tiles.appendChild(t));
     this.cont = h('div', { class: 'contbox' });
+    this.contT = h('div', { class: 'contt', text: 'Continua a guardare' });
+    this.contX = h('div', { class: 'btn small', 'data-f': 1, title: 'Rimuovi la riga dalla Home (i progressi restano salvati)', onclick: () => this.clearRow() }, icon('x'), h('span', { text: 'Rimuovi riga' }));
+    this.contHd = h('div', { class: 'conthd' }, this.contT, h('span', { class: 'contnote', text: 'Solo film e serie' }), h('div', { class: 'flex1' }), this.contX);
     this.empty = h('div', { class: 'empty' });
     this.el = h('div', { class: 'screen home' },
       h('div', { class: 'hbar' }, h('div', { class: 'brand' }, icon('tv'), h('span', { text: 'TV Player' })), h('div', { class: 'hbr' }, platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: 'Aggiungi sorgente (Ctrl+V per incollare un link)', onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: 'Aggiungi' })) : null, this.srcBtn, this.clock)),
-      this.tiles, this.empty, h('div', { class: 'contt', text: 'Continua a guardare' }), this.cont,
-      hints([['ok', 'Apri'], ['back', 'Esci']]));
+      this.tiles, this.empty, this.contHd, this.cont,
+      hints([['ok', 'Apri'], ['yellow', 'Rimuovi riga'], ['back', 'Esci']]));
     this.clockT = setInterval(() => { this.clock.textContent = fmtClock(Date.now()); }, 20000);
   }
   onShow(first) {
@@ -138,16 +141,24 @@ export class HomeScreen {
 
   renderCont() {
     this.cont.innerHTML = '';
-    const rec = store.get().recents.slice(0, 10);
-    this.el.querySelector('.contt').style.display = rec.length ? '' : 'none';
+    const rec = store.contItems(10);
+    this.contHd.style.display = rec.length ? '' : 'none';
     rec.forEach(r => {
       const p = store.getProgress(r.key);
       const im = img(); setImg(im, r.logo || r.poster);
       const card = h('div', { class: 'ccard', 'data-f': 1, onclick: () => playMeta(r) },
-        h('div', { class: 'cthumb' }, im, h('div', { class: 'cknd', text: r.kind === 'live' ? 'LIVE' : '' }), p && p.dur ? h('div', { class: 'cbar' }, h('div', { class: 'cfill', style: 'width:' + Math.min(100, p.pos / p.dur * 100) + '%' })) : null),
+        h('div', { class: 'cthumb' }, im, p && p.dur ? h('div', { class: 'cbar' }, h('div', { class: 'cfill', style: 'width:' + Math.min(100, p.pos / p.dur * 100) + '%' })) : null),
         h('div', { class: 'cname', text: r.name }), h('div', { class: 'csub', text: r.sub || '' }));
       this.cont.appendChild(card);
     });
+  }
+  async clearRow() {
+    if (!store.contItems(1).length) return;
+    const f = nav.getFocus();
+    store.clearContRow();
+    this.renderCont();
+    Modal.toast('Riga rimossa. I progressi di film e serie restano salvati.');
+    if (!f || !document.body.contains(f)) nav.focus(this.tLive);
   }
 
   async openLive() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new LiveScreen(s)); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
@@ -167,6 +178,7 @@ export class HomeScreen {
 
   onKey(a) {
     if (a.a === 'back') { this.confirmExit(); return true; }
+    if (a.a === 'yellow' || a.a === 'del') { const f = nav.getFocus(); if (a.a === 'yellow' || (f && this.cont.contains(f))) { this.clearRow(); return true; } }
     return false;
   }
   async confirmExit() { if (await Modal.confirm('Uscire dall\'app?', '', 'Esci', 'Resta')) exitApp(); }

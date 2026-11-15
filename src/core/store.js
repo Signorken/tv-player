@@ -6,6 +6,8 @@ const DEFAULTS = {
   sources: [], activeSource: null,
   settings: {
     previewVideo: false,     // anteprima video mentre si scorrono i canali (consuma risorse)
+    audioLang: '',           // lingua audio preferita (it, en…): ricordata quando la scegli nel player
+    miniPlayer: true,        // Indietro dal player = finestrella in un angolo (continua a guardare mentre navighi)
     lowPower: true,          // niente animazioni/ombre
     liveFormat: 'm3u8',      // m3u8 | ts  (per Xtream)
     uiScale: 100,
@@ -19,6 +21,8 @@ const DEFAULTS = {
   },
   favorites: {},  // key -> {name, logo, kind, src, id}
   recents: [],    // [{key, ...}]
+  watched: {},    // key -> timestamp (film/episodi visti fino alla fine)
+  contClearedAt: 0, // la riga "Continua a guardare" mostra solo ciò che è stato guardato dopo questo istante
   progress: {}    // key -> {pos, dur, t}
 };
 
@@ -104,10 +108,19 @@ export function addRecent(key, info) {
   get().recents = r.slice(0, 30);
   save();
 }
+// "Continua a guardare": solo contenuti VOD (film, episodi, file), mai canali live.
+// Rimuovere la riga non cancella né recenti né progressi.
+export function contItems(max) {
+  const c = get().contClearedAt || 0;
+  return get().recents.filter(r => r.kind !== 'live' && r.t > c).slice(0, max || 12);
+}
+export function clearContRow() { get().contClearedAt = Date.now(); save(); }
 export function setProgress(key, pos, dur) {
   get().progress[key] = { pos: Math.floor(pos), dur: Math.floor(dur), t: Date.now() };
   save();
 }
+export function markWatched(key) { get().watched[key] = Date.now(); save(); }
+export function isWatched(key) { return !!get().watched[key]; }
 export function getProgress(key) { return get().progress[key] || null; }
 export function clearProgress(key) { delete get().progress[key]; save(); }
 

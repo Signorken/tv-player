@@ -12,11 +12,23 @@ export const router = {
   push(screen) {
     const cur = this.current;
     if (cur) { cur._lf = nav.getFocus(); cur.el.style.display = 'none'; if (cur.onHide) cur.onHide(); }
-    box.appendChild(screen.el);
+    if (screen.el.parentNode !== box) box.appendChild(screen.el);
     stack.push(screen);
     nav.setScope(screen.el);
     if (screen.onShow) screen.onShow(true);
     return screen;
+  },
+
+  // toglie la schermata corrente dalla pila SENZA distruggerla (es. player ridotto a finestrella)
+  detach(screen) {
+    if (this.current !== screen || stack.length < 2) return false;
+    stack.pop();
+    const p = this.current;
+    p.el.style.display = '';
+    nav.setScope(p.el);
+    if (p.onShow) p.onShow(false);
+    if (p._lf && document.body.contains(p._lf)) nav.focus(p._lf, true);
+    return true;
   },
 
   back() {

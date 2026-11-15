@@ -9,4 +9,5 @@ ffmpeg -hide_banner -loglevel error -y -f lavfi -i testsrc2=size=640x360:rate=25
 cat media/hls1/seg*.ts > media/live.ts
 for i in 1 2 3 4; do ffmpeg -hide_banner -loglevel error -y -f lavfi -i "color=c=0x$(printf '%02x%02x%02x' $((i*50)) $((120-i*20)) $((200-i*30))):size=400x600" -frames:v 1 media/img/p$i.jpg; done
 for i in 1 2 3; do ffmpeg -hide_banner -loglevel error -y -f lavfi -i "color=c=0x$(printf '%02x%02x%02x' $((i*60)) 90 $((250-i*50))):size=200x120" -frames:v 1 media/img/l$i.png; done
+ffmpeg -hide_banner -loglevel error -y -i media/movie.mp4 -f lavfi -i "sine=frequency=440:duration=20" -f lavfi -i "sine=frequency=880:duration=20" -map 0:v -map 1:a -map 2:a -c:v copy -c:a aac -metadata:s:a:0 language=ita -metadata:s:a:1 language=eng -shortest media/multi.mkv
 echo "media generati"

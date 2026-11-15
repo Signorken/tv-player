@@ -38,7 +38,8 @@ export class VodScreen {
       },
       fill: (n, it) => {
         if (n._it !== it) { n._it = it; n._t.textContent = it.name; setImg(n._p, it.poster); n._b.textContent = it.rating && +it.rating ? '★ ' + it.rating : ''; }
-        const done = this.mode === 'movie' ? store.getProgress(store.favKey(this.src.id, 'movie', it.id)) : null;
+        const mk = store.favKey(this.src.id, 'movie', it.id);
+        const done = this.mode === 'movie' ? (store.getProgress(mk) || store.isWatched(mk)) : null;
         n.classList.toggle('seen', !!done);
       },
       onChange: it => this.onItem(it),

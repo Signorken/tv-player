@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('desktop', {
   ffProbe: u => ipcRenderer.invoke('ff:probe', u),
   ffUrl: (u, o) => ipcRenderer.invoke('ff:url', u, o),
   ffStop: () => ipcRenderer.invoke('ff:stop'),
+  keepAwake: on => ipcRenderer.invoke('power:keep', !!on),
   appVersion: () => ipcRenderer.invoke('update:version'),
   updateCheck: () => ipcRenderer.invoke('update:check'),
   updateDownload: () => ipcRenderer.invoke('update:download'),
