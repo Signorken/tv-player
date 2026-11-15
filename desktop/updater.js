@@ -6,7 +6,8 @@ const fs = require('fs');
 const path = require('path');
 
 let autoUpdater = null, send = () => { }, repo = null, manual = false, state = 'idle', info = null;
-const canAuto = () => process.platform === 'win32' || process.platform === 'darwin' || !!process.env.APPIMAGE || !!process.env.UPDATE_FEED_URL;
+// macOS: l'app non è firmata con un certificato Apple, quindi Squirrel.Mac rifiuta l'installazione automatica: aggiornamento manuale dal .dmg
+const canAuto = () => process.platform === 'win32' || !!process.env.APPIMAGE || !!process.env.UPDATE_FEED_URL;
 
 const cfgFile = () => path.join(app.getPath('userData'), 'update.json');
 function repoFromUser() {
@@ -62,6 +63,7 @@ function check(silent) {
 }
 function download() {
   if (!autoUpdater) return;
+  if (process.platform === 'darwin' && repo && info && info.version) { shell.openExternal('https://github.com/' + repo.owner + '/' + repo.repo + '/releases/download/v' + info.version + '/TV-Player-' + info.version + '-mac-universal.dmg'); return; }
   if (!canAuto()) { const u = releasesUrl(); if (u) shell.openExternal(u); return; } // .deb/.rpm: aggiornamento manuale
   state = 'downloading'; autoUpdater.downloadUpdate().catch(() => { });
 }
