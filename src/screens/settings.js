@@ -235,7 +235,7 @@ export class SettingsScreen {
         choice('Guida programmi (finestra)', 'epgHours', [[6, '6 ore'], [12, '12 ore'], [24, '24 ore'], [48, '48 ore']]),
         { label: 'Svuota cache e guida programmi', value: () => '', act: async () => { await store.idbClear(); Epg.reset(); Modal.toast('Cache svuotata'); } }] },
       { id: 'info', label: 'Informazioni', icon: 'info', items: list(
-        platform.isDesktop ? { label: 'Versione', value: () => 'v' + VERSION, button: { label: 'Verifica aggiornamenti', act: () => window.desktop.updateCheck() } } : { label: 'Versione', value: () => 'v' + VERSION },
+        platform.isDesktop ? { label: 'Versione', value: () => 'v' + VERSION, button: { label: 'Verifica aggiornamenti', act: () => window.desktop.updateCheck() } } : window.__shell ? { label: 'Versione', value: () => 'v' + VERSION + ' · aggiornamento automatico attivo', button: { label: 'Verifica aggiornamenti', act: () => { Modal.toast('Riavvio e controllo gli aggiornamenti…', 1500); setTimeout(() => location.reload(), 600); } } } : { label: 'Versione', value: () => 'v' + VERSION },
         { label: 'Crediti', value: () => 'Icone Solar (480 Design, CC BY 4.0) · Font Plus Jakarta Sans (OFL)' },
         { label: 'Piattaforma e comandi', value: () => platform.name, act: () => Modal.confirm('MAXENTA', 'Piattaforma rilevata: ' + platform.name + (platform.isDesktop ? '\nMouse: clic per aprire, tasto destro = opzioni, rotella = scorri.\nTastiera: Ctrl+V incolla un link/playlist, Spazio pausa, F schermo intero, M muto, ← → ±10 s, Esc indietro.' : '\nTasti: frecce + OK; OK lungo = menu; Rosso = preferito; Verde = cerca; Blu = audio/sottotitoli/finestrella; Giallo = rimuovi riga; numeri = canale.'), 'OK', '') }) }
     ];

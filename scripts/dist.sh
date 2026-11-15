@@ -8,6 +8,8 @@ for p in tizen webos vidaa web; do
   mkdir -p "dist/$p"
   cp -r www/. "dist/$p/"
   [ -d "packaging/$p" ] && cp -r packaging/$p/* "dist/$p/" 2>/dev/null || true
+  # TV: guscio che si aggiorna da solo (vedi packaging/shell/loader.js)
+  [ "$p" != web ] && node scripts/shell.js "dist/$p"
 done
 echo "OK:"
 ls dist

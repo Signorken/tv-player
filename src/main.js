@@ -90,6 +90,7 @@ installKeys(dispatch);
 Remote.onMessage(onRemote);
 Remote.start();
 router.push(new HomeScreen());
+if (window.__shell && window.__shell.updatedFrom) setTimeout(() => Modal.toast('MAXENTA aggiornata alla versione ' + window.__shell.version, 5000), 800);
 // schermata all'avvio scelta nelle impostazioni
 (function () {
   const st = store.settings().startScreen;
