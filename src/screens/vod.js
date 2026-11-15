@@ -1,3 +1,4 @@
+import { isSportGroup } from '../core/sport.js';
 // Film e Serie TV: categorie | griglia locandine | scheda informativa
 import { h, debounce } from '../core/util.js';
 import * as store from '../core/store.js';
@@ -12,7 +13,8 @@ import { DetailScreen } from './detail.js';
 
 export class VodScreen {
   // mode: 'movie' | 'series'
-  constructor(src, mode) {
+  constructor(src, mode, opts) {
+    this.opts = opts || {};
     this.src = src; this.mode = mode; this.zone = 'grid'; this.query = '';
     this.title = mode === 'movie' ? 'Film' : 'Serie TV';
     this.hd = header(this.title, src.name, [
@@ -61,15 +63,18 @@ export class VodScreen {
     if (first) {
       showLoading('Caricamento ' + this.title.toLowerCase() + '…', this.src.name);
       try {
-        const cats = await (this.mode === 'movie' ? this.src.vodCats() : this.src.seriesCats());
+        let cats = await (this.mode === 'movie' ? this.src.vodCats() : this.src.seriesCats());
         hideLoading();
+        const sp = this.opts.sport;
+        if (sp) cats = cats.filter(c => isSportGroup(c.name));
         this.baseCats = cats;
         const list = [{ id: '', name: 'Tutti' }, { id: '__fav', name: 'Preferiti' }, { id: '__cont', name: 'Continua a guardare' }].concat(cats);
         if (this.mode === 'series') list.splice(2, 1);
+        if (sp) { const i = list.findIndex(c => c.id === '__cont'); if (i >= 0) list.splice(i, 1); }
         this.catList = list;
         this.cats.setItems(list);
         this.loaded = true;
-        this.cats.sel = list.length > 3 && this.src.cfg.type === 'xtream' ? 3 : 0;
+        this.cats.sel = !sp && list.length > 3 && this.src.cfg.type === 'xtream' ? 3 : 0;
         this.cats.render();
         await this.pickCat(list[this.cats.sel]);
         this.setZone('grid');
@@ -91,6 +96,10 @@ export class VodScreen {
       const out = []; const prog = store.get().progress;
       store.get().recents.forEach(r => { if (r.src === this.src.id && r.kind === 'movie' && prog[r.key]) out.push({ id: r.id, name: r.name, poster: r.poster || r.logo, ext: r.ext, url: r.url }); });
       return out;
+    }
+    if (this.opts.sport && c.id === '') {
+      const parts = await Promise.all(this.baseCats.map(k => m ? this.src.vodItems(k.id) : this.src.seriesItems(k.id)));
+      return [].concat.apply([], parts);
     }
     return m ? this.src.vodItems(c.id) : this.src.seriesItems(c.id);
   }

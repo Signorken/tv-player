@@ -73,7 +73,7 @@ const res = []; const ok = (n, c, x) => { res.push(c); console.log((c ? 'PASS ' 
   ok('film: pulsante "Riprendi da" se c\'è un avanzamento', /Riprendi da 0:40/.test(b || ''), b);
   await page.screenshot({ path: OUT + '/dettaglio-riprendi.png' });
   await goHome();
-  await page.evaluate(() => window.__app.router.current.el.querySelectorAll('.tile')[4].click()); await sleep(600);
+  await page.evaluate(() => window.__app.router.current.el.querySelectorAll('.tile')[5].click()); await sleep(600);
   ok('schermata Preferiti elenca il canale', (await page.$$eval('.favrow', r => r.filter(x => x.style.display !== 'none').length)) === 1);
   await page.screenshot({ path: OUT + '/preferiti.png' });
   console.log('Errori JS: ' + errs.length, errs.slice(0, 5));

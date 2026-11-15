@@ -57,7 +57,10 @@ export async function request(url, o) {
       res = await attempt(viaProxy(url, { auth: o.auth, gunzip: o.gunzip }), ph);
     }
   }
-  if (!res.ok && res.status !== 207) throw new Error('HTTP ' + res.status);
+  if (!res.ok && res.status !== 207) {
+    const hint = { 401: 'credenziali non valide', 403: 'accesso negato (limite connessioni, IP o app non consentiti dal provider)', 404: 'risorsa non trovata', 429: 'troppe richieste o connessioni simultanee', 458: 'limite connessioni raggiunto', 509: 'limite connessioni raggiunto', 884: 'limite connessioni raggiunto' }[res.status];
+    const e = new Error('HTTP ' + res.status + (hint ? ' - ' + hint : '')); e.status = res.status; throw e;
+  }
   return res;
 }
 

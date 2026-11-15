@@ -1,5 +1,6 @@
 // Icone SVG inline (nessun font di icone/emoji: sulle TV spesso mancano)
 const P = {
+  trophy: 'M7 3h10v2h3v3a4 4 0 01-4 4h-.3A5 5 0 0113 14.9V17h3v2H8v-2h3v-2.1A5 5 0 018.3 12H8a4 4 0 01-4-4V5h3zm0 4H6v1a2 2 0 001 1.7zm10 0v2.7A2 2 0 0018 8V7z',
   tv: 'M3 5h18a1 1 0 011 1v11a1 1 0 01-1 1h-7l1 2H9l1-2H3a1 1 0 01-1-1V6a1 1 0 011-1zm1 2v9h16V7z',
   film: 'M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1zm1 2v2h2V6zm0 4v2h2v-2zm0 4v2h2v-2zm12-8v2h2V6zm0 4v2h2v-2zm0 4v2h2v-2zM9 6v12h6V6z',
   series: 'M4 6h13v2H4zm0 4h13v2H4zm0 4h9v2H4zm13 0l5 3-5 3z',

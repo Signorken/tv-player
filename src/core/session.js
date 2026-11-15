@@ -2,6 +2,7 @@
 import { createSource } from '../sources/index.js';
 import * as store from './store.js';
 import { Epg } from './epg.js';
+import * as Modal from '../ui/modal.js';
 
 const ready = {};
 let ld = null;
@@ -22,6 +23,7 @@ export async function openSource(cfg, force) {
   try {
     if (s.init) await s.init(p => setLoading(Math.round(p * 100) + '%'), force);
     ready[cfg.id] = true;
+    if (s.limit) setTimeout(() => Modal.toast('Connessioni in uso ' + s.limit.active + '/' + s.limit.max + ': se la playlist è attiva su un altro dispositivo il provider potrebbe rifiutare i flussi', 9000), 300);
     return s;
   } finally { hideLoading(); }
 }

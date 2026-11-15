@@ -10,6 +10,7 @@ import { promptText } from '../ui/keyboard.js';
 import * as Modal from '../ui/modal.js';
 import { Remote } from '../core/remote.js';
 import { platform } from '../core/platform.js';
+import { LANG } from '../ui/engine.js';
 import { createSource, forget, TYPE_LABEL, isFileType } from '../sources/index.js';
 import { normalizeXtream } from '../core/detect.js';
 import { addSourceFlow } from './addflow.js';
@@ -195,35 +196,85 @@ export class PairScreen {
 export class SettingsScreen {
   constructor() {
     this.hd = header('Impostazioni', 'TV Player', []);
-    this.list = new VList({
-      rowH: () => Math.round(remPx() * 3.3),
-      build: () => { const r = h('div', { class: 'row setrow' }, h('span', { class: 'sl' }), h('span', { class: 'sv' })); r._l = r.firstChild; r._v = r.lastChild; return r; },
-      fill: (n, it) => { n._l.textContent = it.label; n._v.textContent = it.value ? it.value() : ''; },
-      onSelect: it => it.act(), onEdge: () => true
+    this.catBox = h('div', { class: 'scats' });
+    this.panel = h('div', { class: 'spanel', 'data-scroll': 1 });
+    this.el = h('div', { class: 'screen sets' }, this.hd.el, h('div', { class: 'sbody' }, this.catBox, this.panel), hints([['ok', 'Cambia'], ['back', 'Indietro']]));
+    const S = store.settings, self = this;
+    const toggle = (label, key, after, sub) => ({ label: label, sub: sub, value: () => S()[key] ? 'Sì' : 'No', act: () => { S()[key] = !S()[key]; store.save(); if (after) after(); self.sync(); } });
+    const choice = (label, key, opts, fmt, after, sub) => ({ label: label, sub: sub, value: () => { const c = opts.find(o => o[0] === S()[key]); return c ? c[1] : String(S()[key]); }, act: async () => { const r = await Modal.menu(label, opts.map(o => ({ label: o[1], value: o[0] }))); if (r != null) { S()[key] = r; store.save(); if (after) after(); self.sync(); } } });
+    const list = (...x) => x.filter(Boolean);
+    const UA = [['', 'Predefinita'], ['VLC/3.0.20 LibVLC/3.0.20', 'VLC'], ['Kodi/21.0 (Windows NT 10.0; Win64; x64)', 'Kodi'], ['okhttp/4.12.0', 'Android (okhttp)'], ['Mozilla/5.0 (SMART-TV; Linux; Tizen 7.0) AppleWebKit/537.36 (KHTML, like Gecko) Version/7.0 TV Safari/537.36', 'Smart TV Samsung']];
+    const langs = [['', 'Automatica (come nel file)']].concat(Object.keys(LANG).map(k => [k, LANG[k]]));
+    this.cats = [
+      { id: 'src', label: 'Sorgenti', icon: 'list', items: [
+        { label: 'Sorgenti (playlist, Xtream, NAS)', value: () => store.get().sources.length + ' configurate', act: () => router.push(new SourcesScreen()) },
+        { label: 'Aggiungi una sorgente', value: () => '', act: () => addSourceFlow() }] },
+      { id: 'play', label: 'Riproduzione', icon: 'play', items: list(
+        choice('Formato canali live Xtream', 'liveFormat', [['m3u8', 'HLS (.m3u8) — consigliato'], ['ts', 'MPEG-TS (.ts)']]),
+        choice('Lingua audio preferita', 'audioLang', langs, null, null),
+        toggle('Indietro dal player = finestrella (navighi mentre guardi)', 'miniPlayer'),
+        toggle('Anteprima video scorrendo i canali (usa più risorse)', 'previewVideo'),
+        choice('Buffer di riproduzione', 'bufferSec', [[10, '10 secondi (poca RAM)'], [20, '20 secondi'], [40, '40 secondi (connessione instabile)']]),
+        platform.isDesktop ? choice('Convertitore video (film/serie)', 'transcode', [['auto', 'Automatico: solo se serve (consigliato)'], ['always', 'Sempre (codec strani, timeline bloccata)'], ['never', 'Mai (solo lettore nativo)']]) : null) },
+      { id: 'look', label: 'Aspetto', icon: 'tv', items: [
+        choice('Sfondo', 'wallpaper', WALLPAPERS, null, applyUi),
+        choice('Dimensione interfaccia', 'uiScale', [[80, 'Piccola (80%)'], [90, '90%'], [100, 'Normale (100%)'], [115, 'Grande (115%)'], [130, 'Molto grande (130%)']], null, applyUi),
+        toggle('Risparmio risorse (niente animazioni)', 'lowPower', applyUi)] },
+      { id: 'net', label: platform.isDesktop ? 'Rete' : 'Rete e telefono', icon: 'cloud', items: list(
+        platform.isDesktop ? choice('Identità del lettore (se il provider blocca)', 'userAgent', UA, null, () => window.desktop && window.desktop.setUserAgent && window.desktop.setUserAgent(S().userAgent)) : toggle('Video tramite proxy (se il server blocca CORS)', 'proxyMedia'),
+        platform.isDesktop ? null : { label: 'Telefono come tastiera / telecomando', value: () => Remote.configured() ? (Remote.phoneSeen ? 'collegato' : 'pronto') : 'non configurato', act: () => router.push(new PairScreen()) },
+        platform.isDesktop ? null : { label: 'Server companion (proxy CORS + relay telefono)', value: () => S().companion || 'non impostato', act: async () => { const r = await promptText({ title: 'Indirizzo del companion', value: S().companion || 'http://', hint: 'Esempio: http://192.168.1.10:8787 — lascia vuoto per disattivare' }); if (r !== null) { S().companion = r === 'http://' ? '' : r.replace(/\/+$/, ''); store.save(); Remote.start(); self.sync(); } } }) },
+      { id: 'data', label: 'Guida e dati', icon: 'clock', items: [
+        choice('Guida programmi (finestra)', 'epgHours', [[6, '6 ore'], [12, '12 ore'], [24, '24 ore'], [48, '48 ore']]),
+        { label: 'Svuota cache e guida programmi', value: () => '', act: async () => { await store.idbClear(); Epg.reset(); Modal.toast('Cache svuotata'); } }] },
+      { id: 'info', label: 'Informazioni', icon: 'info', items: list(
+        platform.isDesktop ? { label: 'Versione', value: () => 'v' + (window.__ver || '…'), button: { label: 'Verifica aggiornamenti', act: () => window.desktop.updateCheck() } } : null,
+        { label: 'Piattaforma e comandi', value: () => platform.name, act: () => Modal.confirm('TV Player', 'Piattaforma rilevata: ' + platform.name + (platform.isDesktop ? '\nMouse: clic per aprire, tasto destro = opzioni, rotella = scorri.\nTastiera: Ctrl+V incolla un link/playlist, Spazio pausa, F schermo intero, M muto, ← → ±10 s, Esc indietro.' : '\nTasti: frecce + OK; OK lungo = menu; Rosso = preferito; Verde = cerca; Blu = audio/sottotitoli/finestrella; Giallo = rimuovi riga; numeri = canale.'), 'OK', '') }) }
+    ];
+    this.catEls = this.cats.map((c, i) => {
+      const e = h('div', { class: 'scat', 'data-f': 1, onclick: () => { this.show(i); this.toPanel(); } }, icon(c.icon), h('span', { text: c.label }));
+      e.onfocusnav = () => this.show(i);
+      this.catBox.appendChild(e); return e;
     });
-    this.el = h('div', { class: 'screen sets' }, this.hd.el, h('div', { class: 'single' }, this.list.el), hints([['ok', 'Cambia'], ['back', 'Indietro']]));
-    const S = store.settings;
-    const toggle = (label, key, after) => ({ label: label, value: () => S()[key] ? 'Sì' : 'No', act: () => { S()[key] = !S()[key]; store.save(); if (after) after(); this.list.render(); } });
-    const choice = (label, key, opts, fmt, after) => ({ label: label, value: () => { const c = opts.find(o => o[0] === S()[key]); return c ? c[1] : String(S()[key]); }, act: async () => { const r = await Modal.menu(label, opts.map(o => ({ label: o[1], value: o[0] }))); if (r != null) { S()[key] = r; store.save(); if (after) after(); this.list.render(); } } });
-    this.items = [
-      { label: 'Sorgenti (playlist, Xtream, NAS)', value: () => store.get().sources.length + ' configurate', act: () => router.push(new SourcesScreen()) },
-      platform.isDesktop ? null : { label: 'Telefono come tastiera / telecomando', value: () => Remote.configured() ? (Remote.phoneSeen ? 'collegato' : 'pronto') : 'non configurato', act: () => router.push(new PairScreen()) },
-      platform.isDesktop ? null : { label: 'Server companion (proxy CORS + relay telefono)', value: () => S().companion || 'non impostato', act: async () => { const r = await promptText({ title: 'Indirizzo del companion', value: S().companion || 'http://', hint: 'Esempio: http://192.168.1.10:8787 — lascia vuoto per disattivare' }); if (r !== null) { S().companion = r === 'http://' ? '' : r.replace(/\/+$/, ''); store.save(); Remote.start(); this.list.render(); } } },
-      platform.isDesktop ? choice('Identità del lettore (se il provider blocca)', 'userAgent', [['', 'Predefinita'], ['VLC/3.0.20 LibVLC/3.0.20', 'VLC'], ['Kodi/21.0 (Windows NT 10.0; Win64; x64)', 'Kodi'], ['okhttp/4.12.0', 'Android (okhttp)'], ['Mozilla/5.0 (SMART-TV; Linux; Tizen 7.0) AppleWebKit/537.36 (KHTML, like Gecko) Version/7.0 TV Safari/537.36', 'Smart TV Samsung']], null, () => window.desktop && window.desktop.setUserAgent && window.desktop.setUserAgent(S().userAgent)) : toggle('Video tramite proxy (se il server blocca CORS)', 'proxyMedia'),
-      choice('Formato canali live Xtream', 'liveFormat', [['m3u8', 'HLS (.m3u8) — consigliato'], ['ts', 'MPEG-TS (.ts)']]),
-      toggle('Indietro dal player = finestrella (navighi mentre guardi)', 'miniPlayer'),
-      toggle('Anteprima video scorrendo i canali (usa più risorse)', 'previewVideo'),
-      toggle('Risparmio risorse (niente animazioni)', 'lowPower', applyUi),
-      choice('Sfondo', 'wallpaper', WALLPAPERS, null, applyUi),
-      choice('Dimensione interfaccia', 'uiScale', [[80, 'Piccola (80%)'], [90, '90%'], [100, 'Normale (100%)'], [115, 'Grande (115%)'], [130, 'Molto grande (130%)']], null, applyUi),
-      choice('Buffer di riproduzione', 'bufferSec', [[10, '10 secondi (poca RAM)'], [20, '20 secondi'], [40, '40 secondi (connessione instabile)']]),
-      choice('Guida programmi (finestra)', 'epgHours', [[6, '6 ore'], [12, '12 ore'], [24, '24 ore'], [48, '48 ore']]),
-      platform.isDesktop ? { label: 'Aggiornamenti dell\'app', value: () => 'v' + (window.__ver || '…'), act: () => window.desktop.updateCheck() } : null,
-      platform.isDesktop ? choice('Convertitore video (film/serie)', 'transcode', [['auto', 'Automatico: solo se serve (consigliato)'], ['always', 'Sempre (codec strani, timeline bloccata)'], ['never', 'Mai (solo lettore nativo)']]) : null,
-      { label: 'Svuota cache e guida programmi', value: () => '', act: async () => { await store.idbClear(); Epg.reset(); Modal.toast('Cache svuotata'); } },
-      { label: 'Informazioni', value: () => platform.name, act: () => Modal.confirm('TV Player', 'Piattaforma rilevata: ' + platform.name + (platform.isDesktop ? '\nMouse: clic per aprire, tasto destro = opzioni, rotella = scorri.\nTastiera: Ctrl+V incolla un link/playlist, Spazio pausa, F schermo intero, M muto, ← → ±10 s, Esc indietro.' : '\nTasti: frecce + OK; OK lungo = menu; Rosso = preferito; Verde = cerca; Blu = audio/sottotitoli; numeri = canale.'), 'OK', '') }
-    ].filter(Boolean);
+    this.ci = -1; this.rows = [];
   }
-  onShow() { if (platform.isDesktop && !window.__ver) window.desktop.appVersion().then(v => { window.__ver = v; this.list.render(); }); this.list.setItems(this.items, true); this.list.setActive(true); this.list.relayout(); }
-  onKey(a) { return this.list.handleKey(a.a); }
+  show(i) {
+    if (i === this.ci) return;
+    this.ci = i;
+    this.catEls.forEach((e, k) => e.classList.toggle('on', k === i));
+    this.panel.innerHTML = ''; this.panel.scrollTop = 0; this.rows = [];
+    this.cats[i].items.forEach(it => {
+      const v = h('span', { class: 'sv' });
+      let r;
+      if (it.button) {
+        r = h('div', { class: 'srow static' }, h('span', { class: 'sl', text: it.label }), v, h('div', { class: 'btn small', 'data-f': 1, onclick: it.button.act }, icon('refresh'), h('span', { text: it.button.label })));
+      } else {
+        r = h('div', { class: 'srow', 'data-f': 1, onclick: () => it.act() }, h('span', { class: 'sl', text: it.label }), v);
+      }
+      r._v = v; r._it = it; this.panel.appendChild(r); this.rows.push(r);
+    });
+    this.sync();
+  }
+  sync() { this.rows.forEach(r => { r._v.textContent = r._it.value ? r._it.value() : ''; }); }
+  toPanel() { const f = this.panel.querySelector('[data-f]'); if (f) nav.focus(f); }
+  onShow(first) {
+    if (platform.isDesktop && !window.__ver) window.desktop.appVersion().then(v => { window.__ver = v; this.sync(); });
+    if (first || this.ci < 0) { this.ci = -1; this.show(0); nav.focus(this.catEls[0]); } else this.sync();
+  }
+  onKey(a) {
+    const f = nav.getFocus(), inCat = f && this.catBox.contains(f);
+    if (inCat) {
+      if (a.a === 'right' || a.a === 'ok') { this.toPanel(); return true; }
+      if (a.a === 'left') return true;
+      if (a.a === 'down' || a.a === 'up') { const k = this.catEls.indexOf(f) + (a.a === 'down' ? 1 : -1); if (k >= 0 && k < this.catEls.length) nav.focus(this.catEls[k]); return true; }
+    } else if (f && this.panel.contains(f)) {
+      if (a.a === 'left') { nav.focus(this.catEls[this.ci]); return true; }
+      if (a.a === 'right') return true;
+      if (a.a === 'up' || a.a === 'down') { // un solo passo alla volta, dentro il pannello (scorre da solo)
+        const all = nav.focusables(this.panel), k = all.indexOf(f) + (a.a === 'down' ? 1 : -1);
+        if (k >= 0 && k < all.length) nav.focus(all[k]); return true;
+      }
+    }
+    return false;
+  }
 }
