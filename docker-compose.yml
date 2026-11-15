@@ -1,0 +1,9 @@
+# Companion (relay telefono + proxy CORS + hosting app) su NAS / Raspberry Pi
+# Uso:  docker compose up -d --build     poi nella TV: http://IP-DEL-NAS:8787
+services:
+  tvplayer-companion:
+    build:
+      context: .
+      dockerfile: companion/Dockerfile
+    restart: unless-stopped
+    network_mode: host   # semplice sulla LAN; in alternativa "ports: ['8787:8787']"

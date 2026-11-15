@@ -1,0 +1,142 @@
+{
+  "name": "tv-player",
+  "version": "1.3.1",
+  "description": "TV Player: IPTV/media player per TV (Android TV, Tizen, webOS, VIDAA) e computer (Windows, macOS, Linux)",
+  "main": "desktop/main.js",
+  "scripts": {
+    "build": "./build.sh",
+    "dist": "./scripts/dist.sh",
+    "companion": "node companion/server.js",
+    "mock": "node test/mock.js",
+    "test:media": "./test/make-media.sh",
+    "test": "node test/e2e.js && node test/e2e2.js",
+    "desktop": "electron .",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux",
+    "test:desktop": "node test/desktop.js"
+  },
+  "keywords": [],
+  "author": {
+    "name": "TV Player",
+    "email": "noreply@example.com"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "bonjour-service": "^1.4.4",
+    "electron-updater": "^6.8.11",
+    "ffmpeg-static": "^5.3.0"
+  },
+  "private": true,
+  "devDependencies": {
+    "electron": "^45.3.2",
+    "electron-builder": "^26.18.0",
+    "esbuild": "^0.28.2",
+    "hls.js": "^1.7.4",
+    "mpegts.js": "^1.8.2",
+    "puppeteer-core": "^25.17.0",
+    "qrcode-generator": "^2.0.4"
+  },
+  "homepage": "https://example.com/tv-player",
+  "build": {
+    "appId": "it.tvplayer.app",
+    "productName": "TV Player",
+    "copyright": "TV Player",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "desktop/**/*",
+      "www/**/*",
+      "package.json",
+      "!www/**/*.map"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "m3u",
+          "m3u8"
+        ],
+        "name": "Playlist M3U",
+        "description": "Playlist IPTV",
+        "role": "Viewer"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "mac": {
+      "category": "public.app-category.video",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "identity": null
+    },
+    "dmg": {
+      "title": "TV Player"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "AudioVideo;Video;Player;TV",
+      "maintainer": "TV Player <noreply@example.com>",
+      "synopsis": "Guarda IPTV e media da playlist M3U, Xtream e NAS",
+      "syncDesktopName": true,
+      "desktop": {
+        "entry": {
+          "MimeType": "audio/x-mpegurl;application/vnd.apple.mpegurl;"
+        }
+      }
+    },
+    "artifactName": "TV-Player-${version}-${os}-${arch}.${ext}",
+    "publish": [
+      {
+        "provider": "github",
+        "releaseType": "release"
+      }
+    ],
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**"
+    ]
+  },
+  "desktopName": "tv-player.desktop",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OWNER/REPO.git"
+  }
+}

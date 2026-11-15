@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>TV Player — Telecomando</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0a0e15;color:#e8edf5;-webkit-tap-highlight-color:transparent}
+header{padding:14px 16px;background:#121a29;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0}
+header b{font-size:18px}#st{font-size:13px;color:#ff9f43}#st.ok{color:#41d6a2}
+nav{display:flex;background:#121a29;border-top:1px solid #1c2536}
+nav button{flex:1;padding:12px 4px;background:none;border:0;color:#8a97ab;font-size:14px;border-bottom:3px solid transparent}
+nav button.on{color:#fff;border-color:#2f7bff}
+section{display:none;padding:16px}section.on{display:block}
+label{display:block;font-size:13px;color:#8a97ab;margin:12px 0 4px}
+input,textarea,select{width:100%;padding:12px;border-radius:10px;border:1px solid #26324a;background:#121a29;color:#fff;font-size:17px}
+textarea{min-height:90px}
+button.b{padding:13px 18px;border-radius:10px;border:0;background:#2563eb;color:#fff;font-size:16px;margin-top:12px}
+button.b.g{background:#1c2536}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:320px;margin:18px auto}
+.pad button{height:64px;border-radius:14px;border:0;background:#1c2536;color:#fff;font-size:22px}
+.pad button:active{background:#2f7bff}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.hint{font-size:13px;color:#8a97ab;margin-top:8px}
+.prompt{background:#16233a;border:1px solid #2f7bff;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:14px;display:none}
+</style>
+</head>
+<body>
+<header><b>TV Player</b><span id="st">collegamento…</span></header>
+<nav><button data-t="kb" class="on">Tastiera</button><button data-t="rc">Telecomando</button><button data-t="add">Aggiungi</button><button data-t="url">Invia</button></nav>
+
+<section id="kb" class="on">
+  <div class="prompt" id="prompt"></div>
+  <label>Scrivi qui: il testo appare nel campo aperto sulla TV</label>
+  <textarea id="txt" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Apri un campo di testo sulla TV, poi scrivi qui…"></textarea>
+  <div class="row"><button class="b g" id="clr">Cancella</button><button class="b" id="ok">Invia / OK</button></div>
+  <div class="hint">Il testo è sincronizzato mentre scrivi. “Invia / OK” conferma il campo sulla TV.</div>
+</section>
+
+<section id="rc">
+  <div class="pad">
+    <span></span><button data-k="up">▲</button><span></span>
+    <button data-k="left">◀</button><button data-k="ok">OK</button><button data-k="right">▶</button>
+    <span></span><button data-k="down">▼</button><span></span>
+    <button data-k="back">↩</button><button data-k="menu">☰</button><button data-k="info">ℹ</button>
+    <button data-k="playpause">⏯</button><button data-k="rw">⏪</button><button data-k="ff">⏩</button>
+    <button data-k="chdown">CH−</button><button data-k="stop">⏹</button><button data-k="chup">CH+</button>
+  </div>
+</section>
+
+<section id="add">
+  <label>Tipo</label>
+  <select id="ty"><option value="m3u">Playlist M3U (URL)</option><option value="xtream">Xtream Codes</option><option value="webdav">NAS WebDAV</option><option value="http">NAS indice HTTP</option></select>
+  <label>Nome</label><input id="nm" placeholder="Es. Casa">
+  <label>Indirizzo</label><input id="ur" inputmode="url" autocapitalize="off" placeholder="http://…">
+  <div id="cred"><label>Utente</label><input id="us" autocapitalize="off"><label>Password</label><input id="pw" type="password"></div>
+  <button class="b" id="sv">Aggiungi alla TV</button>
+  <hr style="border-color:#1c2536;margin:22px 0">
+  <label>Oppure carica un file .m3u / .m3u8 da questo telefono</label>
+  <input type="file" id="fl" accept=".m3u,.m3u8,.txt,audio/x-mpegurl,application/vnd.apple.mpegurl">
+</section>
+
+<section id="url">
+  <label>Indirizzo di un flusso o video da riprodurre subito sulla TV</label>
+  <input id="pu" inputmode="url" autocapitalize="off" placeholder="http://…/stream.m3u8">
+  <label>Titolo (facoltativo)</label><input id="pn">
+  <button class="b" id="pp">Riproduci sulla TV</button>
+</section>
+
+<script>
+(function(){
+  var q=new URLSearchParams(location.search), room=(q.get('room')||'').toUpperCase();
+  var $=function(i){return document.getElementById(i)};
+  if(!room){ room=(prompt('Codice stanza mostrato sulla TV:')||'').toUpperCase(); }
+  var base=location.origin+'/r/'+room;
+  function send(m){ return fetch(base+'/to-tv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(m)}).then(function(r){return r.json()}).then(function(j){ $('st').textContent=j.delivered?'● TV collegata':'○ TV non trovata'; $('st').className=j.delivered?'ok':''; return j; }).catch(function(){ $('st').textContent='○ errore di rete'; $('st').className=''; }); }
+  var es=new EventSource(base+'/phone-events');
+  es.onopen=function(){ send({t:'hello'}); };
+  es.onmessage=function(e){ var m=JSON.parse(e.data);
+    if(m.t==='prompt'){ var p=$('prompt'); p.style.display='block'; p.textContent='Sulla TV: '+(m.title||'campo di testo'); $('txt').value=m.value||''; $('txt').type=''; $('txt').focus(); document.querySelector('nav button[data-t=kb]').click(); }
+    if(m.t==='prompt-end'){ $('prompt').style.display='none'; }
+    if(m.t==='tv-online'){ send({t:'hello'}); }
+  };
+  document.querySelectorAll('nav button').forEach(function(b){ b.onclick=function(){ document.querySelectorAll('nav button,section').forEach(function(x){x.classList.remove('on')}); b.classList.add('on'); $(b.dataset.t).classList.add('on'); }; });
+  var t=null; $('txt').oninput=function(){ clearTimeout(t); t=setTimeout(function(){ send({t:'text',v:$('txt').value}); },120); };
+  $('clr').onclick=function(){ $('txt').value=''; send({t:'text',v:''}); };
+  $('ok').onclick=function(){ send({t:'text',v:$('txt').value}).then(function(){ return send({t:'submit'}); }); };
+  document.querySelectorAll('[data-k]').forEach(function(b){ b.onclick=function(){ if(navigator.vibrate)navigator.vibrate(15); send({t:'key',a:b.dataset.k}); }; });
+  function creds(){ var x=$('ty').value==='m3u'; $('cred').style.display=x?'none':'block'; } $('ty').onchange=creds; creds();
+  $('sv').onclick=function(){ var ty=$('ty').value; if(!$('ur').value){alert('Inserisci l\'indirizzo');return;}
+    send({t:'addSource',cfg:{type:ty,name:$('nm').value||ty,url:$('ur').value.trim(),user:$('us').value,pass:$('pw').value,epgMode:'short'}}).then(function(j){ alert(j&&j.delivered?'Inviato alla TV':'La TV non è collegata'); }); };
+  $('fl').onchange=function(){ var f=this.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(){ send({t:'m3u',name:f.name.replace(/\.[^.]+$/,''),text:r.result}).then(function(j){ alert(j&&j.delivered?'Playlist inviata ('+Math.round(f.size/1024)+' KB)':'La TV non è collegata'); }); }; r.readAsText(f); };
+  $('pp').onclick=function(){ if(!$('pu').value)return; send({t:'play',url:$('pu').value.trim(),name:$('pn').value}); };
+})();
+</script>
+</body>
+</html>
