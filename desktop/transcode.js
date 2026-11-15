@@ -52,8 +52,8 @@ function probe(url) {
       const dur = d ? (+d[1]) * 3600 + (+d[2]) * 60 + parseFloat(d[3]) : 0;
       const v = /Stream #0:\d+[^:]*: Video: (\w+)/.exec(err);
       const audio = [];
-      const re = /Stream #0:(\d+)(?:\((\w+)\))?[^:]*: Audio: (\w+)/g; let m;
-      while ((m = re.exec(err))) audio.push({ idx: audio.length, lang: m[2] || '', codec: m[3] });
+      const re = /Stream #0:(\d+)(?:\((\w+)\))?[^:]*: Audio: (\w+)([^\n]*)/g; let m;
+      while ((m = re.exec(err))) { const l = /, (mono|stereo|5\.1|7\.1|(\d+) channels)/.exec(m[4] || ''); audio.push({ idx: audio.length, lang: m[2] || '', codec: m[3], ch: l ? ({ mono: 1, stereo: 2, '5.1': 6, '7.1': 8 })[l[1]] || +l[2] || 0 : 0 }); }
       if (!v && !audio.length) return fin({ error: (/(HTTP error \d+[^\n]*|Server returned[^\n]*|Connection[^\n]*|No such file[^\n]*|Invalid data[^\n]*)/.exec(err) || [])[1] || 'Formato non riconosciuto' });
       fin({ duration: dur, vcodec: v ? v[1] : '', audio: audio });
     });

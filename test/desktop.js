@@ -126,7 +126,12 @@ const dl = http.createServer((req, res2) => {
   const jumped = await page.evaluate(() => document.querySelector('video.pv').currentTime > window.__t0 + 1 || document.querySelector('video.pv').currentTime > 5);
   ok('clic sulla barra di avanzamento salta in avanti', jumped);
   await page.keyboard.press('Escape'); await sleep(600);
-  ok('Esc chiude il player', await page.evaluate(() => !document.querySelector('video.pv')));
+  ok('Esc riduce il player a finestrella (continua a riprodurre)', await page.evaluate(() => { const m = document.querySelector('.screen.player.mini'); return !!m && !m.querySelector('video').paused; }));
+  await page.click('.screen.player.mini'); await sleep(500);
+  ok('clic sulla finestrella la riespande', await page.evaluate(() => !!document.querySelector('.screen.player') && !document.querySelector('.screen.player.mini')));
+  await page.keyboard.press('Escape'); await sleep(500);
+  await page.click('.mini-x'); await sleep(500);
+  ok('la X della finestrella chiude il player', await page.evaluate(() => !document.querySelector('video.pv')));
 
   // 6. DLNA (SOAP + parser) via bridge
   const dres = await page.evaluate(async () => { const a = await window.desktop.dlnaBrowse('http://localhost:9200/ctl', '0'); const b = await window.desktop.dlnaBrowse('http://localhost:9200/ctl', 'v'); return { a, b }; });

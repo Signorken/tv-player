@@ -7,7 +7,7 @@ const CODE = {
   427: 'chup', 428: 'chdown', 33: 'chup', 34: 'chdown',
   403: 'red', 404: 'green', 405: 'yellow', 406: 'blue',
   112: 'red', 113: 'green', 114: 'yellow', 115: 'blue',
-  457: 'info', 10073: 'info', 458: 'guide', 93: 'menu'
+  457: 'info', 10073: 'info', 458: 'guide', 93: 'menu', 46: 'del'
 };
 const NAME = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', Enter: 'ok',

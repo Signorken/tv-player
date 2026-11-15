@@ -82,7 +82,16 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   const t2 = await text('.pt');
   ok('player: zapping con freccia su cambia canale', t1 !== t2, t1 + ' -> ' + t2);
   await key('Escape'); await sleep(500);
-  ok('player: indietro torna alla lista', await page.$('.screen.live') !== null && await page.$('video.pv') === null);
+  ok('player: Indietro lo riduce a finestrella e mostra la lista', await page.$('.screen.live') !== null && await page.$('.screen.player.mini') !== null);
+  const miniPlaying = await page.evaluate(() => { const v = document.querySelector('.screen.player.mini video'); return !!v && !v.paused; });
+  ok('finestrella: il video continua mentre si naviga', miniPlaying);
+  await key('ArrowDown'); await sleep(200);
+  ok('finestrella: la lista dietro resta navigabile col telecomando', await page.$('.screen.live .focused') !== null);
+  await page.keyboard.press('F4'); await sleep(500); // blu (F4 = 115) = espandi
+  ok('finestrella: tasto blu la riespande a tutto schermo', await page.$('.screen.player.mini') === null && await page.$('.screen.player') !== null && await page.$('.screen.player.mini') === null);
+  await key('Escape'); await sleep(400);
+  await page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 413, bubbles: true }))); await sleep(500);
+  ok('finestrella: Stop la chiude del tutto', await page.$('.screen.player') === null);
 
   // --- ricerca con tastiera a schermo (telecomando puro)
   await key('ArrowUp', 6); await sleep(200); // porta il focus alla barra
@@ -183,7 +192,13 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   ok('abbinamento: QR generato', await page.$('.qr svg') !== null);
   await key('Escape'); await sleep(300); await key('Escape'); await sleep(300); await key('Escape'); await sleep(500);
   await shot('23-home-recenti');
-  ok('home: "Continua a guardare" popolato', (await page.$$eval('.ccard', c => c.length)) >= 2);
+  ok('home: "Continua a guardare" popolato', (await page.$$eval('.ccard', c => c.length)) >= 1);
+  ok('home: "Continua a guardare" non contiene canali live', (await page.$$eval('.ccard .cknd', c => c.filter(x => x.textContent === 'LIVE').length)) === 0 && await page.evaluate(() => window.__app.store.contItems().every(r => r.kind !== 'live')));
+  const before = await page.evaluate(() => ({ rec: window.__app.store.get().recents.length, prog: Object.keys(window.__app.store.get().progress).length }));
+  await key('Escape'); await sleep(300); // chiude l'eventuale conferma di uscita
+  await page.keyboard.press('F3'); await sleep(500); // giallo = rimuovi riga
+  const after = await page.evaluate(() => ({ rec: window.__app.store.get().recents.length, prog: Object.keys(window.__app.store.get().progress).length, cards: document.querySelectorAll('.screen.home .ccard').length }));
+  ok('home: tasto giallo rimuove la riga ma non recenti né progressi', after.cards === 0 && after.rec === before.rec && after.prog === before.prog, JSON.stringify({ before, after }));
 
   console.log('\nErrori JS rilevati: ' + errors.length); errors.slice(0, 12).forEach(e => console.log('  ' + e));
   const fails = results.filter(r => !r[1]);

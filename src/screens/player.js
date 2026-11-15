@@ -6,6 +6,20 @@ import { Engine } from '../ui/engine.js';
 import * as Modal from '../ui/modal.js';
 import { icon } from '../ui/icons.js';
 import { platform, toggleFullscreen } from '../core/platform.js';
+import { router } from '../core/router.js';
+
+// Finestrella: un solo player alla volta può restare attivo in un angolo mentre si naviga
+export const Mini = { player: null,
+  close() { const p = this.player; this.player = null; if (p) { p.destroy(); if (p.el.parentNode) p.el.parentNode.removeChild(p.el); } },
+  onKey(a) {
+    const p = this.player; if (!p) return false;
+    if (a.a === 'blue') { p.expand(); return true; }
+    if (a.a === 'stop') { this.close(); return true; }
+    if (a.a === 'playpause') { p._toggle(); return true; }
+    if (a.a === 'play') { p._play(); return true; }
+    if (a.a === 'pause') { p.video.pause(); return true; }
+    return false;
+  } };
 
 /*
  opts: {
@@ -24,7 +38,10 @@ export class PlayerScreen {
     this.seekBox = h('div', { class: 'pseek' });
     this.numBox = h('div', { class: 'pnum' });
     this.clock = h('div', { class: 'pclock' });
-    this.el = h('div', { class: 'screen player' }, this.video, this.clock, this.numBox, this.seekBox, this.msg, this.spin, this.info);
+    this.miniUi = h('div', { class: 'miniui' }, h('div', { class: 'mini-t' }), h('div', { class: 'mini-h', text: platform.isDesktop ? 'Clic: espandi' : 'Blu: espandi · Stop: chiudi' }),
+      h('div', { class: 'mini-x', title: 'Chiudi', text: '✕', onclick: e => { e.stopPropagation(); Mini.close(); } }));
+    this.el = h('div', { class: 'screen player' }, this.video, this.clock, this.numBox, this.seekBox, this.msg, this.spin, this.info, this.miniUi);
+    this.el.addEventListener('click', e => { if (this.mini && !(e.target.classList && e.target.classList.contains('mini-x'))) { e.stopPropagation(); this.expand(); } }, true);
     this.engine = new Engine(this.video);
     this.engine.onPlaying = () => { this.spin.classList.remove('show'); clearTimeout(this.spinT); this.msg.classList.remove('show'); };
     this.engine.onFail = why => { this.spin.classList.remove('show'); this.say(this.live ? 'Canale non raggiungibile' : 'Impossibile riprodurre il file', (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live)' : 'Dettagli: ' + (why || 'sconosciuto')) + (why ? '' : '')); this.showInfo(); };
@@ -55,7 +72,7 @@ export class PlayerScreen {
     left.push(B('prev', this.live ? 'Canale precedente (▼)' : 'Precedente', () => this._step(-1)), B('next', this.live ? 'Canale successivo (▲)' : 'Successivo', () => this._step(1)));
     this.dbar = h('div', { class: 'dbar' }, h('div', { class: 'pdl' }, left), h('div', { class: 'pdr' }, this.bVol, this.vol,
       B('list', 'Audio e sottotitoli', () => this.trackMenu()), B('gear', 'Opzioni', () => this.mainMenu()), B('full', 'Schermo intero (F)', () => toggleFullscreen())));
-    this.dback = h('div', { class: 'cbtn pclose', title: 'Chiudi (Esc)', onclick: e => { e.stopPropagation(); this._exit(); } }, icon('back'));
+    this.dback = h('div', { class: 'cbtn pclose', title: 'Riduci a finestrella (Esc) — Stop chiude', onclick: e => { e.stopPropagation(); if (!(store.settings().miniPlayer !== false && this.minimize())) this._exit(); } }, icon('back'));
     if (!this.live) {
       this.seekBar = h('div', { class: 'pseekbar', title: 'Vai a…' }, h('div', { class: 'pseekfill' }));
       this.seekBar.onclick = e => { e.stopPropagation(); const d = this._d(); if (!d || !this.engine.canSeek()) return; const r = this.seekBar.getBoundingClientRect(); this.engine.seekTo(Math.max(0, Math.min(d - 1, (e.clientX - r.left) / r.width * d))); this.showInfo(); };
@@ -63,9 +80,9 @@ export class PlayerScreen {
     }
     this.el.classList.add('desk');
     this.el.appendChild(this.dbar); this.el.appendChild(this.dback);
-    this.el.addEventListener('mousemove', () => { if (document.body.classList.contains('mouse') || true) { this.showInfo(); } });
-    this.el.addEventListener('click', () => { if (this.live) { if (this.shown) this.hideInfo(); else this.showInfo(); } else this._toggle(); });
-    this.el.addEventListener('dblclick', () => toggleFullscreen());
+    this.el.addEventListener('mousemove', () => { if (!this.mini) this.showInfo(); });
+    this.el.addEventListener('click', () => { if (this.mini) return; if (this.live) { if (this.shown) this.hideInfo(); else this.showInfo(); } else this._toggle(); });
+    this.el.addEventListener('dblclick', () => { if (!this.mini) toggleFullscreen(); });
     this.el.addEventListener('wheel', e => { e.preventDefault(); this._vol(e.deltaY < 0 ? 5 : -5); }, { passive: false });
     v.addEventListener('play', () => this._syncDesk()); v.addEventListener('pause', () => this._syncDesk()); v.addEventListener('volumechange', () => this._syncDesk());
   }
@@ -81,7 +98,25 @@ export class PlayerScreen {
   _vol(d) { const v = this.video; v.muted = false; v.volume = Math.max(0, Math.min(1, v.volume + d / 100)); this.say('Volume ' + Math.round(v.volume * 100) + '%', '', 900); }
   _step(d) { const n = this.i + d; if (this.live) this.play(n); else if (n >= 0 && n < this.o.list.length) this.play(n); }
 
-  onShow() { if (!this.started) { this.started = true; this.play(this.i); } }
+  onShow() {
+    if (Mini.player && Mini.player !== this) Mini.close(); // un altro contenuto parte: chiude la finestrella
+    if (!this.started) { this.started = true; this.play(this.i); }
+  }
+  // riduce a finestrella in un angolo: il video continua mentre si naviga nell'app
+  minimize() {
+    if (this.mini || !router.detach(this)) return false;
+    this.mini = true; Mini.player = this;
+    this.el.classList.add('mini'); this.miniUi.firstChild.textContent = this.cur ? this.cur.title : '';
+    this.hideInfo(); this.msg.classList.remove('show'); this.seekBox.classList.remove('show');
+    return true;
+  }
+  expand() {
+    if (!this.mini) return;
+    this.mini = false; Mini.player = null;
+    this.el.classList.remove('mini');
+    router.push(this);
+    this.showInfo();
+  }
   onHide() { }
   destroy() {
     clearInterval(this.clockT); clearTimeout(this.hideT); clearTimeout(this.loadT); clearTimeout(this.seekT); clearTimeout(this.numT); clearTimeout(this.spinT);
@@ -239,7 +274,8 @@ export class PlayerScreen {
     if (k === 'blue') { this.trackMenu(); return true; }
     if (k === 'red') { this.toggleFav(); return true; }
     if (k === 'menu') { this.mainMenu(); return true; }
-    if (k === 'stop' || k === 'back' || k === 'backspace') { this._exit(); return true; }
+    if (k === 'back' || k === 'backspace') { if (store.settings().miniPlayer !== false && this.minimize()) return true; this._exit(); return true; }
+    if (k === 'stop') { this._exit(); return true; }
     return true; // il player consuma tutto
   }
 
@@ -282,10 +318,14 @@ export class PlayerScreen {
     const items = [];
     t.audio.forEach(a => items.push({ label: 'Audio: ' + a.label + (a.on ? '  ✓' : ''), value: { a: a.i } }));
     if (t.text.length) { items.push({ label: 'Sottotitoli: nessuno', value: { s: -1 } }); t.text.forEach(s => items.push({ label: 'Sottotitoli: ' + s.label + (s.on ? '  ✓' : ''), value: { s: s.i } })); }
-    if (!items.length) { this.say('Nessuna traccia alternativa disponibile', '', 2000); return; }
+    if (!items.length) { this.say('Nessuna traccia audio alternativa', 'Questo contenuto ha una sola lingua', 2200); return; }
     const r = await Modal.menu('Audio e sottotitoli', items);
     if (!r) return;
-    if (r.a !== undefined) this.engine.setAudio(r.a);
+    if (r.a !== undefined) {
+      this.engine.setAudio(r.a);
+      const tr = t.audio.filter(x => x.i === r.a)[0];
+      if (tr && tr.lang) { store.settings().audioLang = tr.lang; store.save(); this.say('Audio: ' + tr.label.split('  (')[0], 'Lo ricordo per i prossimi contenuti', 2500); }
+    }
     if (r.s !== undefined) this.engine.setText(r.s);
   }
 
@@ -302,6 +342,7 @@ export class PlayerScreen {
     if (this.cur && this.cur.alt) items.push({ label: 'Prova flusso alternativo (TS/HLS)', value: 'alt', icon: 'refresh' });
     if (!this.live) items.push({ label: 'Riparti dall\'inizio', value: 'restart', icon: 'refresh' });
     if (!this.live && this.engine.ffAvailable()) items.push({ label: this.engine.ff ? 'Usa il lettore nativo (senza conversione)' : 'Non va / non scorre? Usa il convertitore video', value: 'ff', icon: 'refresh' });
+    items.push({ label: 'Riduci a finestrella (continua a guardare e naviga)', value: 'mini', icon: 'tv' });
     items.push({ label: 'Chiudi player', value: 'close', icon: 'back' });
     const r = await Modal.menu('Opzioni', items);
     if (r === 'fav') this.toggleFav();
@@ -310,6 +351,7 @@ export class PlayerScreen {
     else if (r === 'alt') { this.engine.load(this.cur.alt, { live: this.live }); }
     else if (r === 'restart') { if (this.cur.key) store.clearProgress(this.cur.key); this.engine.seekTo(0); }
     else if (r === 'ff') { this.engine.load(this.cur.url, { live: false, ff: !this.engine.ff, startAt: this._t() }); this.say(this.engine.ff ? 'Passo al lettore nativo' : 'Uso il convertitore video…', '', 2500); }
+    else if (r === 'mini') this.minimize();
     else if (r === 'close') this._exit();
   }
 }

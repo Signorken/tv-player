@@ -7,7 +7,7 @@ import { Remote } from './core/remote.js';
 import * as Modal from './ui/modal.js';
 import { active as kbActive, promptText } from './ui/keyboard.js';
 import { HomeScreen } from './screens/home.js';
-import { PlayerScreen } from './screens/player.js';
+import { PlayerScreen, Mini } from './screens/player.js';
 import { applyUi } from './screens/settings.js';
 import { addSourceFlow, addFromText, addFromClipboard, importFiles, pickPlaylistFile, discoverFlow, addFolderFlow, playUrl } from './screens/addflow.js';
 import { uid } from './core/util.js';
@@ -34,6 +34,7 @@ function dispatch(a, e) {
   if (a.a !== 'char') document.body.classList.remove('mouse');
   if (a.a === 'backspace') a = { a: 'back' };
   if (s.onKey && s.onKey(a, e)) return;
+  if (Mini.onKey(a)) return;
   defaultNav(a);
 }
 

@@ -97,6 +97,13 @@ Installazione tramite sideload: *Impostazioni › Il mio Fire TV › Opzioni svi
 
 Limiti da sapere: (1) i modelli con **Vega OS** (Fire TV Stick 4K Select, Stick HD 2026 e futuri) **non eseguono APK** e non permettono sideload: servirebbe una versione Vega ufficiale tramite Amazon Appstore (non fattibile con questo progetto così com'è); (2) Amazon ha iniziato a bloccare alcuni APK sideloaded anche su Fire OS e, secondo segnalazioni, certi aggiornamenti di TV Fire OS 8 hanno tolto il sideload; (3) i Fire TV più vecchi (Fire OS 5, Android 5.1) hanno WebView obsoleta e Capacitor recente richiede Android 6+/7+, quindi supporta Fire OS 6 in su; (4) il codice è lo stesso dell'APK Android TV, che qui **non ho potuto compilare né provare** (manca l'Android SDK nel sandbox).
 
+## Finestrella, lingua audio, "Continua a guardare"
+
+- **Finestrella (tutte le piattaforme):** nel player, *Indietro* riduce il video a un riquadro in un angolo e riporta alla schermata precedente: puoi navigare tra categorie, film e serie mentre il flusso continua (audio compreso). Per tornare a tutto schermo: **tasto Blu** (TV) o **clic** (desktop). **Stop** (o la X) chiude il player. Scegliendo un altro contenuto, la finestrella si chiude da sola. Disattivabile in Impostazioni ("Indietro dal player = finestrella").
+- **Lingua audio:** tasto **Blu** nel player (o menu *Audio e sottotitoli*). Le lingue hanno nomi leggibili (Italiano, English…) con codec e canali. La scelta viene **ricordata** e applicata ai contenuti successivi che offrono quella lingua. Funziona con HLS multi-audio su tutte le piattaforme; sul desktop anche con MP4/MKV multi-traccia (le tracce le legge ffmpeg e il cambio passa dal convertitore). Sulle TV i file MP4/MKV/TS multi-audio dipendono dal lettore nativo del sistema: se il sistema non espone le tracce, l'app non può elencarle.
+- **Continua a guardare:** solo film, episodi e file (mai canali live). *Rimuovi riga* (tasto **Giallo** / **Canc** / pulsante) la toglie dalla Home; recenti, "ultimo canale" e progressi di film e serie restano salvati.
+- **Sfondi:** 8 wallpaper astratti (SVG → JPG 1080p e 4K, in `www/wallpapers/`, rigenerabili con `scripts/gen-wallpapers.py`), inclusi nell'installer per tutte le piattaforme. Generati per il progetto, nessuna licenza di terzi.
+
 ## Telecomando
 
 | Tasto | Azione |

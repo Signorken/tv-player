@@ -137,7 +137,10 @@ body{color:#e8edf5;font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-ser
 .t2{font-size:.85rem;color:#8a97ab;margin-top:.2rem}
 .tile.focused{background:#2f7bff;border-color:#fff}
 .tile.focused .ic,.tile.focused .t2{color:#fff}
-.contt{font-size:1.3rem;margin:2.2rem 0 .8rem;color:#b9c6da}
+.conthd{display:flex;align-items:center;margin:2.2rem 0 .8rem}
+.contt{font-size:1.3rem;color:#b9c6da}
+.contnote{font-size:.9rem;color:#8a97ab;margin-left:1rem}
+.flex1{flex:1}
 .contbox{display:flex;flex:none;overflow:hidden;padding:.3rem 0}
 .ccard{width:14%;flex:none;margin-right:1.2%;padding:.35rem;border-radius:.6rem;border:.15rem solid transparent}
 .cthumb{position:relative;width:100%;padding-top:56%;background:#141c2b;border-radius:.4rem;overflow:hidden}
@@ -280,3 +283,12 @@ body.desktop .kbd-desk .kb-input{font-size:1.2rem}
 .pseekfill{height:100%;width:0;background:#2f7bff}
 .pseekbar:hover{height:1.1rem}
 .player.desk .pbar.big{display:none}
+
+/* finestrella: il player continua in un angolo mentre si naviga */
+.miniui{display:none}
+.screen.player.mini{left:auto;top:auto;right:2.5%;bottom:4%;width:28vw;height:15.75vw;z-index:60;border-radius:.8rem;overflow:hidden;box-shadow:0 .6rem 2rem rgba(0,0,0,.7);outline:.18rem solid #ff4fb8;outline-offset:.1rem;cursor:pointer}
+.screen.player.mini>*:not(.pv):not(.miniui):not(.pspin){display:none!important}
+.screen.player.mini .miniui{display:block;position:absolute;left:0;right:0;bottom:0;padding:1.6rem .8rem .5rem;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.85))}
+.mini-t{font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-h{font-size:.75rem;color:#cdbfca}
+.mini-x{position:absolute;right:.4rem;top:-4.2rem;width:1.8rem;height:1.8rem;border-radius:50%;background:rgba(0,0,0,.65);text-align:center;line-height:1.8rem;font-size:.9rem}

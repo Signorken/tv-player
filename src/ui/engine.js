@@ -4,6 +4,33 @@ import { settings } from '../core/store.js';
 import { mediaUrl } from '../core/net.js';
 import { platform } from '../core/platform.js';
 
+// ---- lingua audio: nomi leggibili e preferenza ricordata
+const L3 = { ita: 'it', eng: 'en', spa: 'es', fra: 'fr', fre: 'fr', deu: 'de', ger: 'de', por: 'pt', rus: 'ru', jpn: 'ja', zho: 'zh', chi: 'zh', ara: 'ar', tur: 'tr', pol: 'pl', nld: 'nl', dut: 'nl' };
+export const LANG = { it: 'Italiano', en: 'English', es: 'Español', fr: 'Français', de: 'Deutsch', pt: 'Português', ru: 'Русский', ja: '日本語', zh: '中文', ar: 'العربية', tr: 'Türkçe', pl: 'Polski', nl: 'Nederlands' };
+export function langCode(x) {
+  x = String(x || '').toLowerCase().trim(); if (!x) return '';
+  const m = x.match(/^[a-z]{2,3}/); if (!m) return '';
+  const c = m[0]; if (c.length === 2) return c; return L3[c] || '';
+}
+function codeFromTrack(t) {
+  let c = langCode(t.lang || t.language); if (c) return c;
+  const n = String(t.name || t.label || '').toLowerCase();
+  for (const k in LANG) if (n.indexOf(LANG[k].toLowerCase()) >= 0 || new RegExp('\\b' + k + '\\b').test(n)) return k;
+  return '';
+}
+export function trackLabel(t, i) {
+  const c = codeFromTrack(t);
+  const base = (c && LANG[c]) || t.name || t.label || t.lang || t.language || ('Audio ' + (i + 1));
+  const extra = [t.codec ? String(t.codec).toUpperCase() : '', t.ch ? ({ 1: 'mono', 2: 'stereo', 6: '5.1', 8: '7.1' })[t.ch] || t.ch + ' canali' : ''].filter(Boolean).join(' · ');
+  return base + (extra ? '  (' + extra + ')' : '');
+}
+// indice della traccia che corrisponde alla lingua preferita (o -1)
+export function pickLang(tracks, pref) {
+  if (!pref) return -1;
+  for (let i = 0; i < tracks.length; i++) if (codeFromTrack(tracks[i]) === pref) return i;
+  return -1;
+}
+
 function nativeHls(v) { return !!(v.canPlayType && (v.canPlayType('application/vnd.apple.mpegurl') || v.canPlayType('application/x-mpegURL'))); }
 
 export class Engine {
@@ -18,10 +45,17 @@ export class Engine {
       self._next('errore ' + code);
     };
     this._play = function () { clearTimeout(self.timer); if (self.onPlaying) self.onPlaying(); self._afterPlaying(); };
-    this._meta = function () { clearTimeout(self.timer); self._checkSeekable(); };
+    this._meta = function () { clearTimeout(self.timer); self._checkSeekable(); self._nativeLang(); };
     video.addEventListener('error', this._err);
     video.addEventListener('playing', this._play);
     video.addEventListener('loadedmetadata', this._meta);
+  }
+
+  // motore nativo con più tracce audio: applica la lingua preferita
+  _nativeLang() {
+    const at = this.v.audioTracks; if (this.hls || this.mp || this.ff || !at || at.length < 2) return;
+    const arr = []; for (let i = 0; i < at.length; i++) arr.push(at[i]);
+    const i = pickLang(arr, settings().audioLang); if (i >= 0) for (let k = 0; k < at.length; k++) at[k].enabled = (k === i);
   }
 
   // ---- convertitore ffmpeg (solo app per computer)
@@ -48,6 +82,7 @@ export class Engine {
     if (gen !== this.gen || this.attempts[this.ai] !== a) return;
     if (info.error) { this._next('convertitore: ' + info.error); return; }
     this.ff = { src: a.u, off: 0, dur: info.duration || 0, audio: info.audio.length ? info.audio : [{ idx: 0, codec: 'aac', lang: '' }], ai: 0, v: 'copy', retried: false };
+    const pi = this.audioIdx != null ? this.audioIdx : pickLang(this.ff.audio, settings().audioLang); if (pi > 0 && pi < this.ff.audio.length) this.ff.ai = pi;
     this.ff.v = info.vcodec === 'h264' ? 'copy' : 'tx';
     await this._ffStart(this.startAt || 0, this.ff.v);
   }
@@ -60,8 +95,22 @@ export class Engine {
     const ok = isFinite(d) && d > 0 && sk && sk.length && sk.end(sk.length - 1) >= d - 2;
     if (!ok) { this.startAt = v.currentTime || this.startAt; this._next('timeline non scorrevole'); }
   }
+  // desktop: il lettore nativo non elenca le tracce audio dei file MP4/MKV -> le legge ffmpeg; se serve cambia lingua passando al convertitore
+  _probeAudio() {
+    const a = this.attempts[this.ai], gen = this.gen;
+    if (!a || a.eng !== 'native' || this.live || this.ff || !this.ffAvailable() || this.probedFor === a.u || (this.v.audioTracks && this.v.audioTracks.length)) return;
+    this.probedFor = a.u;
+    window.desktop.ffProbe(a.u).then(info => {
+      if (gen !== this.gen || this.ff || !info || !info.audio || info.audio.length < 2) return;
+      this.probed = info.audio;
+      const pi = pickLang(info.audio, settings().audioLang);
+      if (pi > 0) this._switchAudio(pi);
+    }).catch(() => { });
+  }
+  _switchAudio(i) { const a = this.attempts[this.ai]; if (!a) return; this.load(a.u, { live: false, ff: true, startAt: this.time(), audioIdx: i }); }
   // audio non decodificabile (AC3/E-AC3/DTS): il video parte muto -> converti
   _afterPlaying() {
+    this._probeAudio();
     if (this.live || this.ff || !this.ffAvailable()) return;
     const a = this.attempts[this.ai], n = this.attempts[this.ai + 1], gen = this.gen;
     if (!a || a.eng !== 'native' || !n || n.eng !== 'ff') return;
@@ -93,6 +142,7 @@ export class Engine {
     o = o || {};
     this._teardown();
     this.gen++;
+    this.audioIdx = o.audioIdx; this.probed = null; if (!o.ff) this.probedFor = null;
     this.live = !!o.live; this.startAt = o.startAt || 0; this.muted = !!o.muted; this.forceFf = !!o.ff; this.fails = []; this.ff = null;
     this.attempts = this.plan(url, this.live, o.alt);
     this.ai = -1;
@@ -139,6 +189,7 @@ export class Engine {
         });
         hls.loadSource(url); hls.attachMedia(v);
         hls.on(Hls.Events.MANIFEST_PARSED, () => { const p = v.play(); if (p && p.catch) p.catch(() => { }); });
+        hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => { const i = pickLang(hls.audioTracks || [], settings().audioLang); if (i >= 0 && hls.audioTrack !== i) hls.audioTrack = i; });
       }).catch(() => this._next('hls load'));
     } else if (a.eng === 'mpegts') {
       loadScript('vendor/mpegts.js').then(() => {
@@ -177,13 +228,14 @@ export class Engine {
   // tracce audio/sottotitoli disponibili
   tracks() {
     const out = { audio: [], text: [] };
-    if (this.ff) { this.ff.audio.forEach((t, i) => out.audio.push({ i: i, label: (t.lang || 'Audio ' + (i + 1)) + ' (' + t.codec + ')', on: this.ff.ai === i })); return out; }
+    if (this.ff) { this.ff.audio.forEach((t, i) => out.audio.push({ i: i, lang: codeFromTrack(t), label: trackLabel(t, i), on: this.ff.ai === i })); return out; }
+    if (this.probed && !this.hls && !this.mp) { this.probed.forEach((t, i) => out.audio.push({ i: i, lang: codeFromTrack(t), label: trackLabel(t, i), on: i === 0 })); return out; }
     if (this.hls) {
-      (this.hls.audioTracks || []).forEach((t, i) => out.audio.push({ i: i, label: t.name || t.lang || ('Audio ' + (i + 1)), on: this.hls.audioTrack === i }));
+      (this.hls.audioTracks || []).forEach((t, i) => out.audio.push({ i: i, lang: codeFromTrack(t), label: trackLabel(t, i), on: this.hls.audioTrack === i }));
       (this.hls.subtitleTracks || []).forEach((t, i) => out.text.push({ i: i, label: t.name || t.lang || ('Sub ' + (i + 1)), on: this.hls.subtitleTrack === i }));
     } else {
       const at = this.v.audioTracks;
-      if (at) for (let i = 0; i < at.length; i++) out.audio.push({ i: i, label: at[i].label || at[i].language || ('Audio ' + (i + 1)), on: !!at[i].enabled });
+      if (at) for (let i = 0; i < at.length; i++) out.audio.push({ i: i, lang: codeFromTrack(at[i]), label: trackLabel(at[i], i), on: !!at[i].enabled });
       const tt = this.v.textTracks;
       if (tt) for (let i = 0; i < tt.length; i++) if (tt[i].kind === 'subtitles' || tt[i].kind === 'captions') out.text.push({ i: i, label: tt[i].label || tt[i].language || ('Sub ' + (i + 1)), on: tt[i].mode === 'showing' });
     }
@@ -191,6 +243,7 @@ export class Engine {
   }
   setAudio(i) {
     if (this.ff) { this.ff.ai = i; this._ffStart(this.time(), this.ff.v); return; }
+    if (this.probed && !this.hls && !this.mp) { this._switchAudio(i); return; }
     if (this.hls) { this.hls.audioTrack = i; return; }
     const at = this.v.audioTracks; if (at) for (let k = 0; k < at.length; k++) at[k].enabled = (k === i);
   }
