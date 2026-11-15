@@ -70,12 +70,13 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   ok('live M3U: categorie presenti', (await page.$$eval('.crow', r => r.length)) >= 4);
   await shot('07-live-m3u');
   const pvt = await text('.pvt'); const pvs = await text('.pvs');
-  ok('live M3U: pannello anteprima mostra programma XMLTV', /Telegiornale|Commissario|Quiz|Film/.test(pvs || ''), pvt + ' | ' + pvs);
+  ok('live M3U: lista leggera, senza guida programmi', /Generalisti/.test(pvs || ''), pvt + ' | ' + pvs);
   await key('ArrowDown', 2); await sleep(500);
   await shot('08-live-m3u-sel');
   await key('Enter'); // play
   const playing = await wait(() => { const v = document.querySelector('video.pv'); return v && v.currentTime > 0.5 && !v.paused; }, 15000);
   ok('player: HLS in riproduzione (via proxy, hls.js)', playing);
+  ok('player: guida XMLTV caricata a canale aperto', await wait(() => /Telegiornale|Commissario|Quiz|Film|Concerto|Musica|Video/.test(document.querySelector('.pinfo').textContent), 12000), await text('.pinfo'));
   await sleep(500); await shot('09-player-live');
   const t1 = await text('.pt');
   await key('ArrowUp'); await sleep(900);
@@ -127,20 +128,23 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   ok('live Xtream: elenco caricato', total === 3000, 'canali: ' + total);
   await key('ArrowRight'); await sleep(200); await key('ArrowDown', 3); await sleep(1200);
   await shot('12-live-xtream');
-  ok('live Xtream: EPG breve nel pannello', /Programma/.test((await text('.pvs')) || ''), await text('.pvs'));
   const t0 = Date.now();
   await key('PageDown'); await key('PageDown'); await key('PageDown');
   ok('scorrimento veloce nella lista da 3000', Date.now() - t0 < 3000, (Date.now() - t0) + ' ms');
   await key('Enter');
   const playingX = await wait(() => { const v = document.querySelector('video.pv'); return v && v.currentTime > 0.5; }, 15000);
   ok('Xtream: canale in riproduzione', playingX);
+  ok('Xtream: EPG breve nel player', await wait(() => /Programma/.test(document.querySelector('.pinfo').textContent), 8000), await text('.pinfo'));
   await sleep(300); await shot('13-player-xtream');
   await goHome();
   // --- Sport e tasto rapido TV
-  ok('home: tasto rapido "TV in diretta"', await page.evaluate(() => !!document.querySelector('.home .hbar .btn.accent')));
-  ok('home: sette tessere con Sport', await page.evaluate(() => document.querySelectorAll('.home .tile').length === 7 && /Sport/.test(document.querySelector('.home .tiles').textContent)));
-  await page.evaluate(() => { document.querySelector('.home .hbar .btn.accent').click(); });
-  ok('tasto rapido apre la lista canali', await wait(() => window.__app.router.current && window.__app.router.current.all, 20000));
+  ok('Aspetto A: barra laterale visibile', await page.evaluate(() => getComputedStyle(document.getElementById('rail')).display !== 'none'));
+  ok('orologio centrale e versione visibili', await page.evaluate(() => /\d:\d\d/.test(document.getElementById('gclock').textContent) && /^v\d/.test(document.getElementById('ver').textContent)));
+  for (let i = 0; i < 4; i++) { await key('ArrowLeft'); await sleep(120); }
+  ok('Sinistra dal contenuto entra nella barra laterale', await page.evaluate(() => document.getElementById('rail').classList.contains('open')));
+  await shot('06b-barra-laterale');
+  await key('ArrowDown'); await key('Enter');
+  ok('dalla barra si apre la lista canali', await wait(() => window.__app.router.current && window.__app.router.current.all, 20000));
   await goHome();
   await page.evaluate(() => { window.__app.router.current.el.querySelectorAll('.tile')[3].click(); });
   await wait(() => document.querySelector('.modal .row, .modal [data-f]'), 20000);
@@ -219,7 +223,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   const before = await page.evaluate(() => ({ rec: window.__app.store.get().recents.length, prog: Object.keys(window.__app.store.get().progress).length }));
   await key('Escape'); await sleep(300); // chiude l'eventuale conferma di uscita
   await page.keyboard.press('F3'); await sleep(500); // giallo = rimuovi riga
-  const after = await page.evaluate(() => ({ rec: window.__app.store.get().recents.length, prog: Object.keys(window.__app.store.get().progress).length, cards: document.querySelectorAll('.screen.home .ccard').length }));
+  const after = await page.evaluate(() => ({ rec: window.__app.store.get().recents.length, prog: Object.keys(window.__app.store.get().progress).length, cards: document.querySelectorAll('.screen.home .ccard:not(.lcard)').length }));
   ok('home: tasto giallo rimuove la riga ma non recenti né progressi', after.cards === 0 && after.rec === before.rec && after.prog === before.prog, JSON.stringify({ before, after }));
 
   ok('visto: segna e legge i contenuti completati', await page.evaluate(() => { const s = window.__app.store; s.markWatched('k|movie|9'); return s.isWatched('k|movie|9') && !s.isWatched('k|movie|8'); }));

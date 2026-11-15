@@ -132,14 +132,6 @@ body{color:#f8f2f6;font-family:"Plus Jakarta Sans","Segoe UI",Roboto,"Helvetica 
 .brand{display:flex;align-items:center;font-size:1.6rem;font-weight:700}
 .brand .ic{width:2rem;height:2rem;margin-right:.7rem;color:#c2268f}
 .hbr{display:flex;align-items:center}
-.hclock{font-size:1.5rem;margin-left:1.6rem;color:#d9cad9}
-.tiles{display:flex;margin-top:2.2rem;flex:none}
-.tile{width:15.3%;height:11rem;margin-right:1.2%;background:rgba(29,12,40,.74);border-radius:.9rem;padding:1.3rem;border:.17rem solid transparent;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}
-.tile .ic{width:3rem;height:3rem;color:#ff7fd0}
-.t1{font-size:1.3rem;font-weight:600}
-.t2{font-size:.85rem;color:#b3a2b8;margin-top:.2rem}
-.tile.focused{background:#c2268f;border-color:#fff}
-.tile.focused .ic,.tile.focused .t2{color:#fff}
 .conthd{display:flex;align-items:center;margin:2.2rem 0 .8rem}
 .contt{font-size:1.3rem;color:#d9cad9}
 .contnote{font-size:.9rem;color:#b3a2b8;margin-left:1rem}
@@ -250,8 +242,6 @@ body{color:#f8f2f6;font-family:"Plus Jakarta Sans","Segoe UI",Roboto,"Helvetica 
 
 /* risparmio risorse */
 .lowpower *{transition:none!important}
-body:not(.lowpower) .tile,body:not(.lowpower) .ccard{transition:transform .12s}
-body:not(.lowpower) .tile.focused,body:not(.lowpower) .ccard.focused{transform:scale(1.04)}
 
 /* ===== desktop / mouse ===== */
 .backbtn{display:none;align-items:center;justify-content:center;width:2.6rem;height:2.6rem;margin-right:.9rem;border-radius:50%;background:#2a1238;color:#f8f2f6;cursor:pointer;flex:none}
@@ -300,8 +290,7 @@ body.desktop .kbd-desk .kb-input{font-size:1.2rem}
 :root{--ac:#ff4fb8}
 #bg{position:fixed;left:0;top:0;width:100%;height:100%;background:#0d0610 center center/cover no-repeat}
 #bg:after{content:"";position:absolute;left:0;top:0;right:0;bottom:0;background:linear-gradient(rgba(13,6,16,.40),rgba(13,6,16,.80))}
-.tile.focused,.ccard.focused{transform:scale(1.05)}
-.tile.focused,.ccard.focused,.btn.focused,.row.focused{box-shadow:0 0 0 .14rem var(--ac)}
+.ccard.focused,.btn.focused,.row.focused{box-shadow:0 0 0 .14rem var(--ac)}
 .hero{margin-top:1.4rem;max-width:52%;flex:none}
 .hero .hg{font-size:.9rem;font-weight:700;letter-spacing:.14em;color:var(--ac)}
 .hero .hn{font-size:3.2rem;font-weight:800;line-height:1.05;margin:.3rem 0 .3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -310,16 +299,7 @@ body.desktop .kbd-desk .kb-input{font-size:1.2rem}
 .hero .hbar2 div{height:100%;background:var(--ac);border-radius:.14rem}
 .hero .btn.primary{background:#ff4fb8;color:#1f0615;font-weight:700}
 .hero .btn.primary.focused{background:#ff7fd0;color:#1f0615}
-body.desktop .home .tiles{align-self:flex-start;margin-top:1rem;padding:.35rem;border-radius:999px;background:rgba(29,12,40,.74)}
-body.desktop .home .tile{width:auto;height:auto;margin:0 .15rem 0 0;padding:.55rem 1.25rem;border-radius:999px;flex-direction:row;align-items:center;justify-content:flex-start;background:transparent}
-body.desktop .home .tile .ic{width:1.25rem;height:1.25rem;margin-right:.55rem}
-body.desktop .home .t2{display:none}
-body.desktop .home .t1{font-size:1.05rem}
 
-.tile{height:5.4rem;flex-direction:row;align-items:center;justify-content:flex-start;padding:0 1.3rem}
-.tile .ic{width:2rem;height:2rem;margin-right:.9rem}
-.tile .t2{display:none}
-.tiles{margin-top:1.2rem}
 .hero .hn{font-size:2.8rem}
 .conthd{margin-top:1.6rem}
 
@@ -342,13 +322,9 @@ body.desktop .home .t1{font-size:1.05rem}
 
 /* prestazioni: lo sfondo è un livello a parte (non si ridisegna a ogni hover) e le righe isolano il loro layout */
 #bg{will-change:transform;-webkit-transform:translateZ(0);transform:translateZ(0)}
-.vl-row,.srow,.scat,.ccard,.tile{contain:layout paint style}
-.row.sel,.srow,.tile,.empty{background-color:#1d0c28}
+.vl-row,.srow,.scat,.ccard{contain:layout paint style}
+.row.sel,.srow,.empty{background-color:#1d0c28}
 /* 7 tessere in Home + tasto rapido TV */
-.tiles .tile{flex:1 1 0;width:auto;min-width:0}
-body.desktop .home .tiles .tile{flex:0 0 auto}
-.btn.accent{background:#ff4fb8;color:#1f0615;font-weight:700}
-.btn.accent.focused{background:#ff7fcb;color:#1f0615}
 
 /* animazioni leggere (solo opacity/transform; disattivate con Risparmio risorse) */
 @keyframes scrIn{from{opacity:0;transform:translateY(.6rem)}to{opacity:1;transform:none}}
@@ -359,14 +335,73 @@ body:not(.lowpower) .modal-back{animation:fadeIn .15s ease-out}
 body:not(.lowpower) .modal{animation:popIn .18s ease-out}
 body:not(.lowpower) .btn,body:not(.lowpower) .srow,body:not(.lowpower) .scat,body:not(.lowpower) .row{transition:background-color .12s,color .12s}
 body:not(.lowpower) .hero{animation:scrIn .35s ease-out}
-.ic{stroke-width:2}
-.tile .ic{width:2.1rem;height:2.1rem}
 .lowpower *{animation:none!important}
-.home .tiles .tile{padding:0 1rem}
-.home .tiles .tile .t1{font-size:1.15rem;line-height:1.15;overflow-wrap:anywhere}
-.home .tiles .tile .ic{margin-right:.7rem}
-body.desktop .home .tiles .tile{padding:.55rem 1.1rem}
 /* Continua a guardare: locandine verticali (2:3) con immagine adattata in automatico */
 .ccard{width:8.7%;margin-right:1%}
 .cthumb{padding-top:150%}
 .cthumb img{object-fit:cover;object-position:center top;padding:0}
+
+/* ===== 2.0: shell comune ===== */
+#gclock{position:fixed;left:50%;top:1.9rem;transform:translateX(-50%);font-size:1.6rem;font-weight:600;color:#f1e6ef;z-index:5;pointer-events:none;letter-spacing:.02em}
+#ver{position:fixed;right:.9rem;bottom:.45rem;font-size:.72rem;color:#7d6c86;z-index:5;pointer-events:none}
+body.playing #gclock,body.playing #ver,body.layA.playing #rail{display:none!important}
+.blogo{width:2.3rem;height:2.3rem;border-radius:.5rem;margin-right:.8rem}
+
+/* Aspetto A: barra laterale a icone, si allarga solo quando ci si entra */
+#rail{display:none;position:fixed;left:0;top:0;bottom:0;width:5.6rem;z-index:20;background:#16091f;padding:1.7rem .8rem 1.4rem;flex-direction:column;overflow:hidden;border-right:1px solid #2a1540}
+body.layA #rail{display:flex}
+body.layA #screens{left:5.6rem;width:calc(100% - 5.6rem)}
+body.layA .home .brand{display:none}
+body.layA .screen.player{position:fixed}
+#rail.open{width:17rem;box-shadow:1rem 0 2.4rem rgba(0,0,0,.55)}
+.ri{display:flex;align-items:center;height:3.3rem;padding:0 1.12rem;border-radius:.8rem;margin-bottom:.35rem;color:#cdb8d6;white-space:nowrap;cursor:pointer;flex:none;position:relative}
+.ri .ic{width:1.75rem;height:1.75rem;flex:none;color:#ff7fd0}
+.ri span{margin-left:1rem;font-size:1.15rem;opacity:0}
+#rail.open .ri span{opacity:1}
+.ri.last{margin-top:auto}
+.ri.cur:before{content:"";position:absolute;left:-.7rem;top:.8rem;bottom:.8rem;width:.28rem;border-radius:0 .2rem .2rem 0;background:#ff4fb8}
+.ri.cur{color:#fff}
+.ri.focused{background:#c2268f;color:#fff}.ri.focused .ic{color:#fff}
+body.mouse .ri:hover{background:#2a1540}
+
+/* Home */
+body.layA .home:not(.nocont) .tiles{display:none}
+.home .hints{margin-top:auto}
+.lcard{width:12%}
+.lcard .cthumb{padding-top:62%}
+.lcard .cthumb img{object-fit:contain!important;padding:12%!important}
+.rlogo{width:3.2rem;height:3.2rem;border-radius:.7rem;margin:0 0 2.2rem .4rem;flex:none}
+#rail.open .rlogo{margin-left:.2rem}
+.tiles{display:flex;flex:none;margin-top:1.2rem}
+.tile{flex:none;width:5.6rem;height:5.6rem;margin-right:.8rem;background:#1d0c28;border-radius:1rem;border:.17rem solid transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
+.tile .ic{width:2.4rem;height:2.4rem;color:#ff7fd0;flex:none}
+.tile .t1{display:none;font-size:1.2rem;font-weight:600;white-space:nowrap;margin-left:.8rem}
+.tile.focused{width:auto;padding:0 1.6rem;background:#c2268f;border-color:#fff}
+.tile.focused .ic{color:#fff}.tile.focused .t1{display:block}
+body.desktop.mouse .tile:hover .t1{display:block}
+body.desktop.mouse .tile:hover{width:auto;padding:0 1.4rem}
+
+/* tastiera: maiuscole */
+.key.shiftk.on{background:#4a2f62}.key.shiftk.caps{background:#ff4fb8;color:#1f0615}
+
+/* player: pannelli laterali */
+.pdrawer{position:absolute;top:0;bottom:0;width:30rem;background:rgba(18,8,28,.96);z-index:6;display:flex;flex-direction:column;padding:2rem 1.2rem 1.2rem;opacity:0}
+.pdrawer.left{left:0;border-right:1px solid #3a2150}.pdrawer.right{right:0;border-left:1px solid #3a2150}
+.pdrawer.show{opacity:1}
+.pdt{font-size:1.5rem;font-weight:700;margin:0 0 1rem .4rem;flex:none}
+.pdrawer .vl{flex:1;min-height:0}
+.pdh{flex:none;font-size:.85rem;color:#b3a2b8;margin-top:.8rem}
+.drow{display:flex;align-items:center;padding:0 1rem;border-radius:.6rem;font-size:1.1rem}
+.drow .dn{width:3rem;flex:none;color:#b3a2b8;font-size:.95rem}.drow .dn:empty{display:none}
+.drow .dl{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drow .dv{color:#b3a2b8;margin-left:.8rem;font-size:.95rem;white-space:nowrap}
+.drow.on .dl{color:#ff7fd0;font-weight:600}
+.drow.focused{background:#c2268f}.drow.focused .dl,.drow.focused .dv,.drow.focused .dn{color:#fff}
+body:not(.lowpower) .pdrawer{transition:opacity .15s}
+
+/* finestrella selezionata col cursore */
+.screen.player.mini.mfocus{outline:.3rem solid #fff;outline-offset:.15rem}
+.screen.player.mini.mfocus .mini-t{color:#ff7fd0}
+.ri.now .ic{color:#fff}.ri.now{background:#3a1d55;margin-bottom:.9rem}
+.hmain{flex:1;min-height:0;overflow:hidden;margin:0 -.6rem;padding:0 .6rem}
+.hmain .contbox{padding:.4rem .2rem}

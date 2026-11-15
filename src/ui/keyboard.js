@@ -14,29 +14,32 @@ export const active = { prompt: null };
 // promptText({title, value, password, hint, quick}) -> Promise<string|null>
 export function promptText(o) {
   return new Promise(res => {
-    let shift = false, sym = false, shown = !o.password, lastPhysical = 0, finished = false;
+    let shift = false, caps = false, sym = false, shown = !o.password, lastPhysical = 0, finished = false;
     const input = h('input', { class: 'kb-input', type: o.password ? 'password' : 'text', readonly: true, value: o.value || '', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false' });
     const hint = h('div', { class: 'kb-hint', text: o.hint || '' });
     const keysBox = h('div', { class: 'kb-keys' });
     let m;
 
     const setVal = v => { input.value = v; };
-    const add = ch => { input.value += (shift && !sym ? ch.toUpperCase() : ch); if (shift && !sym) { shift = false; build(); } };
+    const up = () => (shift || caps) && !sym;
+    const add = ch => { input.value += (up() ? ch.toUpperCase() : ch); if (shift && !caps && !sym) { shift = false; build('keep'); } };
     const del = () => { input.value = input.value.slice(0, -1); };
     const finish = v => { if (finished) return; finished = true; active.prompt = null; Remote.send({ t: 'prompt-end' }); m.close(v); res(v); };
 
     function key(label, fn, cls) {
       return h('div', { class: 'key ' + (cls || ''), 'data-f': 1, onclick: fn, text: label });
     }
+    let keepCh = null;
     function build(focusKey) {
+      const f = nav.getFocus(); keepCh = f && f._ch;
       keysBox.innerHTML = '';
       const rows = sym ? L2 : L1;
       let toFocus = null;
       rows.forEach((r, ri) => {
         const row = h('div', { class: 'kb-row' });
-        if (ri === 3) row.appendChild(key(shift ? 'ABC' : 'abc', () => { shift = !shift; build('shift'); }, 'wide' + (shift ? ' on' : '')));
+        if (ri === 3) row.appendChild(key(caps ? '⇪ ABC' : shift ? '⇧ Abc' : '⇧ abc', () => { if (caps) { caps = false; shift = false; } else if (shift) { caps = true; } else shift = true; build('shift'); }, 'wide shiftk' + (shift || caps ? ' on' : '') + (caps ? ' caps' : '')));
         r.split('').forEach(ch => {
-          const k = key(shift && !sym ? ch.toUpperCase() : ch, () => add(ch));
+          const k = key(up() ? ch.toUpperCase() : ch, () => add(ch)); k._ch = ch;
           row.appendChild(k);
         });
         if (ri === 3) row.appendChild(key('⌫', del, 'wide'));
@@ -49,7 +52,8 @@ export function promptText(o) {
         key('/', () => add('/')), key(':', () => add(':')), key('-', () => add('-')));
       keysBox.appendChild(r5);
       if (o.quick !== false) keysBox.appendChild(h('div', { class: 'kb-row quick' }, QUICK.map(q => key(q, () => { input.value += q; }, 'q'))));
-      if (focusKey === 'shift') toFocus = keysBox.querySelector('.wide');
+      if (focusKey === 'shift') toFocus = keysBox.querySelector('.shiftk');
+      if (focusKey === 'keep' && keepCh) toFocus = [].slice.call(keysBox.querySelectorAll('.key')).find(k => k._ch === keepCh) || null;
       if (focusKey === 'sym') toFocus = r5.firstChild;
       if (toFocus) nav.focus(toFocus);
     }

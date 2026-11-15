@@ -35,7 +35,12 @@ export function h(tag, props) {
 }
 
 export function pad(n, w) { let s = String(n); while (s.length < (w || 2)) s = '0' + s; return s; }
-export function fmtClock(ms) { const d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+export const clockOpt = { h12: false };
+export function fmtClock(ms) {
+  const d = new Date(ms), hh = d.getHours();
+  if (clockOpt.h12) return ((hh % 12) || 12) + ':' + pad(d.getMinutes()) + (hh < 12 ? ' AM' : ' PM');
+  return pad(hh) + ':' + pad(d.getMinutes());
+}
 export function fmtDur(sec) {
   sec = Math.max(0, Math.floor(sec || 0));
   const hh = Math.floor(sec / 3600), mm = Math.floor((sec % 3600) / 60), ss = sec % 60;

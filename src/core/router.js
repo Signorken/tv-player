@@ -16,6 +16,7 @@ export const router = {
     stack.push(screen);
     nav.setScope(screen.el);
     if (screen.onShow) screen.onShow(true);
+    this._chg();
     return screen;
   },
 
@@ -28,6 +29,7 @@ export const router = {
     nav.setScope(p.el);
     if (p.onShow) p.onShow(false);
     if (p._lf && document.body.contains(p._lf)) nav.focus(p._lf, true);
+    this._chg();
     return true;
   },
 
@@ -42,6 +44,7 @@ export const router = {
     nav.setScope(p.el);
     if (p.onShow) p.onShow(false);
     if (p._lf && document.body.contains(p._lf)) nav.focus(p._lf, true);
+    this._chg();
     return true;
   },
 
@@ -55,7 +58,10 @@ export const router = {
     stack.push(screen);
     nav.setScope(screen.el);
     if (screen.onShow) screen.onShow(true);
+    this._chg();
   },
 
+  onChange: null,
+  _chg() { if (this.onChange) this.onChange(); },
   home() { while (stack.length > 1) this.back(); }
 };

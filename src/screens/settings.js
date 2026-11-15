@@ -17,6 +17,7 @@ import { addSourceFlow } from './addflow.js';
 import { showLoading, hideLoading, invalidate } from '../core/session.js';
 import { Epg } from '../core/epg.js';
 
+import { applyShell, VERSION, Rail } from '../ui/shell.js';
 export function applyUi() {
   const s = store.settings();
   const k = (s.uiScale || 100) / 100;
@@ -24,6 +25,7 @@ export function applyUi() {
   if (platform.isDesktop) document.documentElement.style.fontSize = Math.max(13, Math.min(26, window.innerWidth * 0.0105)) * k + 'px';
   else document.documentElement.style.fontSize = (1.05 * k) + 'vw';
   document.body.classList.toggle('lowpower', !!s.lowPower);
+  applyShell();
   applyWallpaper();
 }
 
@@ -195,6 +197,7 @@ export class PairScreen {
 // ---------------- impostazioni ----------------
 export class SettingsScreen {
   constructor() {
+    this.railId = 'set';
     this.hd = header('Impostazioni', 'MAXENTA', []);
     this.catBox = h('div', { class: 'scats' });
     this.panel = h('div', { class: 'spanel', 'data-scroll': 1 });
@@ -217,6 +220,9 @@ export class SettingsScreen {
         choice('Buffer di riproduzione', 'bufferSec', [[10, '10 secondi (poca RAM)'], [20, '20 secondi'], [40, '40 secondi (connessione instabile)']]),
         platform.isDesktop ? choice('Convertitore video (film/serie)', 'transcode', [['auto', 'Automatico: solo se serve (consigliato)'], ['always', 'Sempre (codec strani, timeline bloccata)'], ['never', 'Mai (solo lettore nativo)']]) : null) },
       { id: 'look', label: 'Aspetto', icon: 'tv', items: [
+        choice('Disposizione', 'layout', [['A', 'Aspetto A: barra laterale (consigliato)'], ['B', 'Aspetto B: pulsanti in alto']], null, () => { applyUi(); const hm = router.current; }),
+        choice('Orologio', 'clock', [['24', '24 ore (21:45)'], ['12', '12 ore (9:45 PM)']], null, applyUi),
+        choice('Schermata all\'avvio', 'startScreen', [['home', 'Home'], ['live', 'TV in diretta'], ['movie', 'Film'], ['series', 'Serie TV'], ['sport', 'Sport'], ['favs', 'Preferiti'], ['last', 'Ultimo canale visto']]),
         choice('Sfondo', 'wallpaper', WALLPAPERS, null, applyUi),
         choice('Dimensione interfaccia', 'uiScale', [[80, 'Piccola (80%)'], [90, '90%'], [100, 'Normale (100%)'], [115, 'Grande (115%)'], [130, 'Molto grande (130%)']], null, applyUi),
         toggle('Risparmio risorse (niente animazioni)', 'lowPower', applyUi)] },
@@ -228,7 +234,8 @@ export class SettingsScreen {
         choice('Guida programmi (finestra)', 'epgHours', [[6, '6 ore'], [12, '12 ore'], [24, '24 ore'], [48, '48 ore']]),
         { label: 'Svuota cache e guida programmi', value: () => '', act: async () => { await store.idbClear(); Epg.reset(); Modal.toast('Cache svuotata'); } }] },
       { id: 'info', label: 'Informazioni', icon: 'info', items: list(
-        platform.isDesktop ? { label: 'Versione', value: () => 'v' + (window.__ver || '…'), button: { label: 'Verifica aggiornamenti', act: () => window.desktop.updateCheck() } } : null,
+        platform.isDesktop ? { label: 'Versione', value: () => 'v' + VERSION, button: { label: 'Verifica aggiornamenti', act: () => window.desktop.updateCheck() } } : { label: 'Versione', value: () => 'v' + VERSION },
+        { label: 'Crediti', value: () => 'Icone Solar (480 Design, CC BY 4.0) · Font Plus Jakarta Sans (OFL)' },
         { label: 'Piattaforma e comandi', value: () => platform.name, act: () => Modal.confirm('MAXENTA', 'Piattaforma rilevata: ' + platform.name + (platform.isDesktop ? '\nMouse: clic per aprire, tasto destro = opzioni, rotella = scorri.\nTastiera: Ctrl+V incolla un link/playlist, Spazio pausa, F schermo intero, M muto, ← → ±10 s, Esc indietro.' : '\nTasti: frecce + OK; OK lungo = menu; Rosso = preferito; Verde = cerca; Blu = audio/sottotitoli/finestrella; Giallo = rimuovi riga; numeri = canale.'), 'OK', '') }) }
     ];
     this.catEls = this.cats.map((c, i) => {
@@ -258,14 +265,13 @@ export class SettingsScreen {
   sync() { this.rows.forEach(r => { r._v.textContent = r._it.value ? r._it.value() : ''; }); }
   toPanel() { const f = this.panel.querySelector('[data-f]'); if (f) nav.focus(f); }
   onShow(first) {
-    if (platform.isDesktop && !window.__ver) window.desktop.appVersion().then(v => { window.__ver = v; this.sync(); });
     if (first || this.ci < 0) { this.ci = -1; this.show(0); nav.focus(this.catEls[0]); } else this.sync();
   }
   onKey(a) {
     const f = nav.getFocus(), inCat = f && this.catBox.contains(f);
     if (inCat) {
       if (a.a === 'right' || a.a === 'ok') { this.toPanel(); return true; }
-      if (a.a === 'left') return true;
+      if (a.a === 'left') { Rail.enter(); return true; }
       if (a.a === 'down' || a.a === 'up') { const k = this.catEls.indexOf(f) + (a.a === 'down' ? 1 : -1); if (k >= 0 && k < this.catEls.length) nav.focus(this.catEls[k]); return true; }
     } else if (f && this.panel.contains(f)) {
       if (a.a === 'left') { nav.focus(this.catEls[this.ci]); return true; }

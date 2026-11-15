@@ -9,9 +9,11 @@ import { icon } from '../ui/icons.js';
 import * as Modal from '../ui/modal.js';
 import { showLoading, hideLoading, movieOpts, episodesOpts } from '../core/session.js';
 import { PlayerScreen } from './player.js';
+import { Rail } from '../ui/shell.js';
 
 export class DetailScreen {
   constructor(src, mode, item, cachedInfo) {
+    this.railId = mode;
     this.src = src; this.mode = mode; this.item = item; this.info = cachedInfo || {};
     this.key = store.favKey(src.id, mode === 'movie' ? 'movie' : 'series', item.id);
     this.poster = img('dpost'); setImg(this.poster, item.poster);
@@ -100,7 +102,7 @@ export class DetailScreen {
         n._b.style.display = p ? '' : 'none'; if (p) n._b.firstChild.style.width = Math.min(100, p.pos / p.dur * 100) + '%';
       },
       onSelect: (ep, i) => this.playEpisode(i),
-      onEdge: d => { if (d === 'up') { this.setZone('seasons'); return true; } return true; }
+      onEdge: d => { if (d === 'up') { this.setZone('seasons'); return true; } if (d === 'left') Rail.enter(); return true; }
     });
     this.eps.el.classList.add('eplist');
     this.seasonsBox.appendChild(this.eps.el);
@@ -118,6 +120,8 @@ export class DetailScreen {
     this.eps.setItems(s.episodes);
   }
 
+  onRailEnter() { if (this.eps) this.eps.setActive(false); }
+  onRailExit() { this.setZone(this.zone || 'btns'); }
   onKey(a) {
     const k = a.a;
     if (k === 'red') { this.toggleFav(); return true; }
@@ -132,12 +136,12 @@ export class DetailScreen {
         if (k === 'ok') { this.setZone('eps'); return true; }
       } else if (this.zone === 'btns') {
         if (k === 'down') { this.setZone('seasons'); return true; }
-        if (k === 'left' || k === 'right') { nav.move(k); return true; }
+        if (k === 'left' || k === 'right') { if (!nav.move(k) && k === 'left') Rail.enter(); return true; }
         if (k === 'ok') { nav.activate(); return true; }
       }
       return false;
     }
-    if (k === 'left' || k === 'right') { nav.move(k); return true; }
+    if (k === 'left' || k === 'right') { if (!nav.move(k) && k === 'left') Rail.enter(); return true; }
     if (k === 'ok') { nav.activate(); return true; }
     return false;
   }

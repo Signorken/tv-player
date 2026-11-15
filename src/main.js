@@ -11,10 +11,12 @@ import { PlayerScreen, Mini } from './screens/player.js';
 import { applyUi } from './screens/settings.js';
 import { addSourceFlow, addFromText, addFromClipboard, importFiles, pickPlaylistFile, discoverFlow, addFolderFlow, playUrl } from './screens/addflow.js';
 import { uid } from './core/util.js';
+import { initShell, Rail, goSection } from './ui/shell.js';
 
 function defaultNav(a) {
   switch (a.a) {
-    case 'up': case 'down': case 'left': case 'right': nav.move(a.a); break;
+    case 'up': case 'down': case 'right': if (!nav.move(a.a)) Mini.focusFrom(a.a); break;
+    case 'left': if (!nav.move('left')) Rail.enter(); break;
     case 'ok': nav.activate(); break;
     case 'back': router.back(); break;
   }
@@ -33,6 +35,8 @@ function dispatch(a, e) {
   if (a.a === 'inputEnter') return;
   if (a.a !== 'char') document.body.classList.remove('mouse');
   if (a.a === 'backspace') a = { a: 'back' };
+  if (Rail.active) { Rail.onKey(a); return; }
+  if (Mini.focused && Mini.onFocusKey(a)) return;
   if (s.onKey && s.onKey(a, e)) return;
   if (Mini.onKey(a)) return;
   defaultNav(a);
@@ -70,10 +74,18 @@ if (!store.settings().companion && /\/app\//.test(location.pathname) && /^https?
 initPlatform();
 applyUi();
 router.init(document.getElementById('screens'));
+initShell();
 installKeys(dispatch);
 Remote.onMessage(onRemote);
 Remote.start();
 router.push(new HomeScreen());
+// schermata all'avvio scelta nelle impostazioni
+(function () {
+  const st = store.settings().startScreen;
+  if (!st || st === 'home' || !store.get().sources.length) return;
+  if (st === 'last') { const r = store.get().recents.find(x => x.kind === 'live'); if (r) router.current.playMeta(r); return; }
+  goSection(st);
+})();
 
 // ---- desktop / mouse
 // Il puntatore (anche il Magic Remote LG) attiva la modalità "mouse": hover, pulsante indietro visibile
@@ -140,4 +152,4 @@ if (platform.isDesktop) {
     if (store.settings().userAgent && window.desktop.setUserAgent) window.desktop.setUserAgent(store.settings().userAgent);
   }
 }
-window.__app = { applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };
+window.__app = { Mini: Mini, applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };

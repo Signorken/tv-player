@@ -8,6 +8,9 @@ const DEFAULTS = {
     previewVideo: false,     // anteprima video mentre si scorrono i canali (consuma risorse)
     wallpaper: '01-aurora',   // sfondo (vedi www/wallpapers) oppure 'none'
     audioLang: '',           // lingua audio preferita (it, en…): ricordata quando la scegli nel player
+    layout: 'A',             // A = barra laterale, B = pulsanti in alto
+    clock: '24',             // 24 | 12
+    startScreen: 'home',     // schermata all'avvio: home | live | movie | series | sport | favs | last
     miniPlayer: true,        // Indietro dal player = finestrella in un angolo (continua a guardare mentre navighi)
     lowPower: true,          // niente animazioni/ombre
     liveFormat: 'm3u8',      // m3u8 | ts  (per Xtream)
@@ -28,6 +31,8 @@ const DEFAULTS = {
 };
 
 let data = null;
+let favV = 0;
+export function favVer() { return favV; }
 let saveT = null;
 
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -99,6 +104,7 @@ export function isFav(key) { return !!get().favorites[key]; }
 export function toggleFav(key, info) {
   const f = get().favorites;
   if (f[key]) delete f[key]; else { info.t = Date.now(); f[key] = info; }
+  favV++;
   save();
   return !!f[key];
 }
@@ -113,8 +119,10 @@ export function addRecent(key, info) {
 // Rimuovere la riga non cancella né recenti né progressi.
 export function contItems(max) {
   const c = get().contClearedAt || 0;
-  return get().recents.filter(r => r.kind !== 'live' && r.t > c).slice(0, max || 12);
+  return get().recents.filter(r => r.kind !== 'live' && r.t > c && !r.hid).slice(0, max || 12);
 }
+// toglie un solo elemento dalla riga (riappare se lo si riguarda)
+export function hideRecent(key) { const r = get().recents.find(x => x.key === key); if (r) { r.hid = 1; save(); } }
 export function clearContRow() { get().contClearedAt = Date.now(); save(); }
 export function setProgress(key, pos, dur) {
   get().progress[key] = { pos: Math.floor(pos), dur: Math.floor(dur), t: Date.now() };
