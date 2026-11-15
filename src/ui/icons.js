@@ -1,44 +1,42 @@
-// Icone SVG inline (nessun font di icone/emoji: sulle TV spesso mancano)
+// Icone SVG inline (Lucide, licenza ISC; nessun font di icone/emoji: sulle TV spesso mancano)
 const P = {
-  trophy: 'M7 3h10v2h3v3a4 4 0 01-4 4h-.3A5 5 0 0113 14.9V17h3v2H8v-2h3v-2.1A5 5 0 018.3 12H8a4 4 0 01-4-4V5h3zm0 4H6v1a2 2 0 001 1.7zm10 0v2.7A2 2 0 0018 8V7z',
-  tv: 'M3 5h18a1 1 0 011 1v11a1 1 0 01-1 1h-7l1 2H9l1-2H3a1 1 0 01-1-1V6a1 1 0 011-1zm1 2v9h16V7z',
-  film: 'M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1zm1 2v2h2V6zm0 4v2h2v-2zm0 4v2h2v-2zm12-8v2h2V6zm0 4v2h2v-2zm0 4v2h2v-2zM9 6v12h6V6z',
-  series: 'M4 6h13v2H4zm0 4h13v2H4zm0 4h9v2H4zm13 0l5 3-5 3z',
-  folder: 'M3 5h6l2 2h10a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1z',
-  star: 'M12 2l3 6.5 7 .8-5.2 4.8 1.5 7-6.3-3.6-6.3 3.6 1.5-7L2 9.3l7-.8z',
-  gear: 'M12 8a4 4 0 100 8 4 4 0 000-8zm9 5v-2l-2.2-.7a7 7 0 00-.7-1.6l1.1-2-1.4-1.4-2 1.1a7 7 0 00-1.6-.7L13 3h-2l-.7 2.2a7 7 0 00-1.6.7l-2-1.1-1.4 1.4 1.1 2a7 7 0 00-.7 1.6L3 11v2l2.2.7c.2.6.4 1.1.7 1.6l-1.1 2 1.4 1.4 2-1.1c.5.3 1 .5 1.6.7L11 21h2l.7-2.2c.6-.2 1.1-.4 1.6-.7l2 1.1 1.4-1.4-1.1-2c.3-.5.5-1 .7-1.6z',
-  search: 'M10 3a7 7 0 015.3 11.6l5.4 5.4-1.4 1.4-5.4-5.4A7 7 0 1110 3zm0 2a5 5 0 100 10 5 5 0 000-10z',
-  play: 'M7 4l13 8-13 8z',
-  x: 'M5.7 4.3L12 10.6l6.3-6.3 1.4 1.4L13.4 12l6.3 6.3-1.4 1.4L12 13.4l-6.3 6.3-1.4-1.4L10.6 12 4.3 5.7z',
-  pause: 'M6 4h4v16H6zm8 0h4v16h-4z',
-  back: 'M15 5l-7 7 7 7',
-  phone: 'M8 2h8a1 1 0 011 1v18a1 1 0 01-1 1H8a1 1 0 01-1-1V3a1 1 0 011-1zm1 3v12h6V5zm3 14a1 1 0 100 2 1 1 0 000-2z',
-  plus: 'M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z',
-  cloud: 'M7 18a5 5 0 01-.6-9.96A6 6 0 0118 9a4.5 4.5 0 011 8.9V18z',
-  video: 'M4 5h12a1 1 0 011 1v3.5l5-3v11l-5-3V18a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z',
-  list: 'M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z',
-  refresh: 'M12 5V2L8 6l4 4V7a5 5 0 11-5 5H5a7 7 0 107-7z',
-  trash: 'M6 7h12l-1 14H7zM9 3h6l1 2h4v2H4V5h4z',
-  clock: 'M12 3a9 9 0 100 18 9 9 0 000-18zm1 4v5l4 2-1 1.7-5-2.7V7z',
-  check: 'M5 13l4 4 10-10',
-  full: 'M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z',
-  vol: 'M4 9h4l5-4v14l-5-4H4zm11.5 3a3.5 3.5 0 00-2-3.2v6.4a3.5 3.5 0 002-3.2zm1.4-6.2a8 8 0 010 12.4l-1.2-1.6a6 6 0 000-9.2z',
-  mute: 'M4 9h4l5-4v14l-5-4H4zm12 1.4L17.4 9l1.6 1.6L20.6 9 22 10.4 20.4 12 22 13.6 20.6 15 19 13.4 17.4 15 16 13.6 17.6 12z',
-  prev: 'M6 5h2v14H6zm3 7l10-7v14z',
-  next: 'M16 5h2v14h-2zM5 5l10 7L5 19z',
-  rw: 'M11 6v12L2 12zm10 0v12l-9-6z',
-  ff: 'M3 6v12l9-6zm10 0v12l9-6z',
-  clip: 'M9 2h6v2h3a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V5a1 1 0 011-1h3zm1 2v2h4V4zM7 6v14h10V6h-1v2H8V6z',
-  info: 'M11 10h2v8h-2zm0-4h2v2h-2zM12 2a10 10 0 100 20 10 10 0 000-20z'
+  trophy: '<path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" /><path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" /><path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" /><path d="M4 22h16" /><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" /><path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" />',
+  tv: '<path d="m17 2-5 5-5-5" /><rect width="20" height="15" x="2" y="7" rx="2" />',
+  film: '<path d="m12.296 3.464 3.02 3.956" /><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z" /><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="m6.18 5.276 3.1 3.899" />',
+  series: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />',
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />',
+  star: '<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />',
+  gear: '<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" />',
+  search: '<path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" />',
+  play: '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />',
+  x: '<path d="M18 6 6 18" /><path d="m6 6 12 12" />',
+  pause: '<rect x="14" y="3" width="5" height="18" rx="1" /><rect x="5" y="3" width="5" height="18" rx="1" />',
+  back: '<path d="m12 19-7-7 7-7" /><path d="M19 12H5" />',
+  phone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2" /><path d="M12 18h.01" />',
+  plus: '<path d="M5 12h14" /><path d="M12 5v14" />',
+  cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />',
+  video: '<path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" /><rect x="2" y="6" width="14" height="12" rx="2" />',
+  list: '<path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" />',
+  refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" />',
+  trash: '<path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />',
+  clock: '<circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />',
+  check: '<path d="M20 6 9 17l-5-5" />',
+  full: '<path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />',
+  vol: '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /><path d="M16 9a5 5 0 0 1 0 6" /><path d="M19.364 18.364a9 9 0 0 0 0-12.728" />',
+  mute: '<path d="M11 4.702a.7.7 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.7.7 0 0 0 11 19.298z" /><path d="m16.5 14.5 5-5" /><path d="m16.5 9.5 5 5" />',
+  prev: '<path d="M17.971 4.285A2 2 0 0 1 21 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432z" /><path d="M3 20V4" />',
+  next: '<path d="M21 4v16" /><path d="M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z" />',
+  rw: '<path d="M12 6a2 2 0 0 0-3.414-1.414l-6 6a2 2 0 0 0 0 2.828l6 6A2 2 0 0 0 12 18z" /><path d="M22 6a2 2 0 0 0-3.414-1.414l-6 6a2 2 0 0 0 0 2.828l6 6A2 2 0 0 0 22 18z" />',
+  ff: '<path d="M12 6a2 2 0 0 1 3.414-1.414l6 6a2 2 0 0 1 0 2.828l-6 6A2 2 0 0 1 12 18z" /><path d="M2 6a2 2 0 0 1 3.414-1.414l6 6a2 2 0 0 1 0 2.828l-6 6A2 2 0 0 1 2 18z" />',
+  clip: '<rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />',
+  info: '<circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />'
 };
+const FILLED = { play: 1, pause: 1, prev: 1, next: 1, rw: 1, ff: 1, star: 1 };
+
+const cache = {};
 export function icon(name, cls) {
-  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  s.setAttribute('viewBox', '0 0 24 24');
-  s.setAttribute('class', 'ic' + (cls ? ' ' + cls : ''));
-  const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  p.setAttribute('d', P[name] || P.info);
-  if (name === 'back' || name === 'check') { p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'currentColor'); p.setAttribute('stroke-width', '2.5'); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('stroke-linejoin', 'round'); }
-  else p.setAttribute('fill', 'currentColor');
-  s.appendChild(p);
-  return s;
+  const n = P[name] ? name : 'info';
+  let w = cache.w || (cache.w = document.createElement('div'));
+  w.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="ic' + (cls ? ' ' + cls : '') + '" fill="' + (FILLED[n] ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="' + (FILLED[n] ? '1.6' : '2') + '" stroke-linecap="round" stroke-linejoin="round">' + P[n] + '</svg>';
+  return w.removeChild(w.firstChild);
 }

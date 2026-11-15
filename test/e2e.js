@@ -205,7 +205,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   // --- impostazioni / telefono
   await page.evaluate(() => { window.__app.router.current.el.querySelectorAll('.tile')[6].click(); });
   await sleep(500); await shot('21-impostazioni');
-  ok('impostazioni: macrocategorie a sinistra', (await page.$$eval('.scat', c => c.map(x => x.textContent))).join('|') === 'Sorgenti|Riproduzione|Aspetto|Rete e telefono|Guida e dati|Informazioni');
+  const scs = (await page.$$eval('.scat', c => c.map(x => x.textContent))).join('|'); ok('impostazioni: macrocategorie a sinistra', scs === 'Sorgenti|Riproduzione|Aspetto|Rete e telefono|Guida e dati|Informazioni', scs);
   await page.setViewport({ width: 1280, height: 330 }); await sleep(300);
   await key('ArrowDown'); await key('ArrowRight'); await key('ArrowDown', 5); await sleep(300);
   ok('impostazioni: l\'elenco scorre se le voci superano lo schermo', await page.evaluate(() => { const p = document.querySelector('.spanel'), f = document.querySelector('.srow.focused'); if (!p || !f) return false; const a = p.getBoundingClientRect(), b = f.getBoundingClientRect(); return p.scrollTop > 0 && b.top >= a.top - 2 && b.bottom <= a.bottom + 2; }));
