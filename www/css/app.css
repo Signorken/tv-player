@@ -1,8 +1,11 @@
+@font-face{font-family:"Plus Jakarta Sans";font-weight:400;font-style:normal;font-display:swap;src:url(../fonts/plus-jakarta-sans-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Plus Jakarta Sans";font-weight:600;font-style:normal;font-display:swap;src:url(../fonts/plus-jakarta-sans-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Plus Jakarta Sans";font-weight:700;font-style:normal;font-display:swap;src:url(../fonts/plus-jakarta-sans-latin-700-normal.woff2) format("woff2")}
 /* Solo flexbox + transform/opacity: leggero e compatibile con Chromium 53+ (webOS 4, Tizen 4) */
 *{box-sizing:border-box;margin:0;padding:0}
 html{font-size:1.05vw}
 html,body{width:100%;height:100%;overflow:hidden;background:#0d0610}
-body{color:#f8f2f6;font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:1rem;line-height:1.3;-webkit-user-select:none;user-select:none}
+body{color:#f8f2f6;font-family:"Plus Jakarta Sans","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:1rem;line-height:1.3;-webkit-user-select:none;user-select:none}
 .ic{width:1.5rem;height:1.5rem;flex:none;vertical-align:middle}
 #screens,#modals{position:absolute;left:0;top:0;width:100%;height:100%}
 #modals{pointer-events:none}
@@ -346,3 +349,20 @@ body.desktop .home .t1{font-size:1.05rem}
 body.desktop .home .tiles .tile{flex:0 0 auto}
 .btn.accent{background:#ff4fb8;color:#1f0615;font-weight:700}
 .btn.accent.focused{background:#ff7fcb;color:#1f0615}
+
+/* animazioni leggere (solo opacity/transform; disattivate con Risparmio risorse) */
+@keyframes scrIn{from{opacity:0;transform:translateY(.6rem)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+body:not(.lowpower) .screen:not(.player){animation:scrIn .22s ease-out}
+body:not(.lowpower) .modal-back{animation:fadeIn .15s ease-out}
+body:not(.lowpower) .modal{animation:popIn .18s ease-out}
+body:not(.lowpower) .btn,body:not(.lowpower) .srow,body:not(.lowpower) .scat,body:not(.lowpower) .row{transition:background-color .12s,color .12s}
+body:not(.lowpower) .hero{animation:scrIn .35s ease-out}
+.ic{stroke-width:2}
+.tile .ic{width:2.1rem;height:2.1rem}
+.lowpower *{animation:none!important}
+.home .tiles .tile{padding:0 1rem}
+.home .tiles .tile .t1{font-size:1.15rem;line-height:1.15;overflow-wrap:anywhere}
+.home .tiles .tile .ic{margin-right:.7rem}
+body.desktop .home .tiles .tile{padding:.55rem 1.1rem}
