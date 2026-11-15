@@ -38,7 +38,7 @@ const res = []; const ok = (n, c, x) => { res.push(c); console.log((c ? 'PASS ' 
   ok('tasto rosso nel player aggiunge ai preferiti', favs === 1, 'preferiti=' + favs);
   // --- menu con OK lungo nel player
   await page.keyboard.down('Enter'); await sleep(700); await page.keyboard.down('Enter'); await sleep(200); await page.keyboard.up('Enter'); await sleep(500);
-  ok('OK lungo apre il menu opzioni del player', /Opzioni/.test((await text('.modal .mtitle')) || ''));
+  ok('OK lungo apre il pannello opzioni del player', /Opzioni/.test((await text('.pdrawer .pdt')) || ''));
   await page.screenshot({ path: OUT + '/menu-player.png' });
   await key('Escape'); await sleep(300);
   await key('Escape'); await sleep(600);

@@ -1,5 +1,5 @@
 // TV in diretta: categorie | canali (con "ora in onda") | anteprima con guida programmi
-import { h, fmtClock, debounce } from '../core/util.js';
+import { h, debounce } from '../core/util.js';
 import * as store from '../core/store.js';
 import * as nav from '../core/nav.js';
 import { router } from '../core/router.js';
@@ -10,13 +10,15 @@ import { icon } from '../ui/icons.js';
 import { promptText } from '../ui/keyboard.js';
 import * as Modal from '../ui/modal.js';
 import { Engine } from '../ui/engine.js';
-import { startEpg, epgStatus, liveOpts, showLoading, hideLoading } from '../core/session.js';
-import { PlayerScreen } from './player.js';
+import { liveOpts, showLoading, hideLoading } from '../core/session.js';
+import { PlayerScreen, Mini } from './player.js';
+import { Rail } from '../ui/shell.js';
 
 import { isSportChannel } from '../core/sport.js';
 export class LiveScreen {
   constructor(src, opts) {
     this.src = src; this.opts = opts || {};
+    this.railId = this.opts.sport ? 'sport' : 'live';
     this.zone = 'chs'; this.query = ''; this.catId = '__all';
     this.hd = header(this.opts.sport ? 'Sport in diretta' : 'TV in diretta', src.name, [
       { icon: 'search', label: 'Cerca', onclick: () => this.search() },
@@ -29,39 +31,35 @@ export class LiveScreen {
       fill: (n, it) => { if (n._it === it) return; n._it = it; n.firstChild.textContent = it.name; n.lastChild.textContent = it.count != null ? it.count : ''; },
       onChange: it => this.pickCat(it),
       onSelect: () => this.setZone('chs'),
-      onEdge: d => { if (d === 'right') { this.setZone('chs'); return true; } if (d === 'up') { this.setZone('bar'); return true; } return true; }
+      onEdge: d => { if (d === 'right') { this.setZone('chs'); return true; } if (d === 'up') { this.setZone('bar'); return true; } if (d === 'left') Rail.enter(); return true; }
     });
     this.chs = new VList({
       rowH: rh,
       build: () => {
         const logo = h('div', { class: 'lg' }); const im = img(); logo.appendChild(im);
-        const nm = h('div', { class: 'cn' }), now = h('div', { class: 'cnow' });
-        const bar = h('div', { class: 'cbar' }, h('div', { class: 'cfill' }));
+        const nm = h('div', { class: 'cn' });
         const star = icon('star', 'cstar');
-        const r = h('div', { class: 'row chrow' }, h('span', { class: 'cnum' }), logo, h('div', { class: 'cmid' }, nm, now, bar), star);
-        r._n = r.firstChild; r._im = im; r._nm = nm; r._now = now; r._bar = bar; r._star = star;
+        const r = h('div', { class: 'row chrow' }, h('span', { class: 'cnum' }), logo, h('div', { class: 'cmid' }, nm), star);
+        r._n = r.firstChild; r._im = im; r._nm = nm; r._star = star;
         return r;
       },
       fill: (n, ch) => this.fillChannel(n, ch),
       onChange: ch => this.onChannel(ch),
       onSelect: (ch, i) => this.play(i),
       onMenu: ch => this.channelMenu(ch),
-      onEdge: d => { if (d === 'left') { this.setZone('cats'); return true; } if (d === 'up') { this.setZone('bar'); return true; } return true; }
+      onEdge: d => { if (d === 'left') { this.setZone('cats'); return true; } if (d === 'up') { this.setZone('bar'); return true; } if (d === 'down') Mini.focusFrom('down'); return true; }
     });
     // pannello anteprima
     this.pv = h('video', { class: 'pvideo', muted: true, playsinline: true });
     this.pvLogo = img('pvlogo');
     this.pvBox = h('div', { class: 'pbox' }, this.pvLogo, this.pv);
     this.pvT = h('div', { class: 'pvt' }); this.pvS = h('div', { class: 'pvs' });
-    this.pvBar = h('div', { class: 'pbar' }, h('div', { class: 'pfill' }));
-    this.pvD = h('div', { class: 'pvd' }); this.pvN = h('div', { class: 'pvn' });
-    this.pvEpg = h('div', { class: 'pvepg' });
-    this.prev = h('div', { class: 'pane prev' }, this.pvBox, this.pvT, this.pvS, this.pvBar, this.pvD, this.pvN, this.pvEpg);
+    this.prev = h('div', { class: 'pane prev' }, this.pvBox, this.pvT, this.pvS, h('div', { class: 'pvn', text: 'OK: guarda · la guida programmi compare a canale aperto' }));
     this.panes = h('div', { class: 'panes' },
       h('div', { class: 'pane cats' }, this.cats.el),
       h('div', { class: 'pane chs' }, this.chs.el), this.prev);
     this.status = h('div', { class: 'status' });
-    this.el = h('div', { class: 'screen live' }, this.hd.el, this.panes, hints([['red', 'Preferito'], ['green', 'Cerca'], ['yellow', 'Sorgente'], ['ok', 'Guarda'], ['menu', 'Opzioni']]), this.status);
+    this.el = h('div', { class: 'screen live' }, this.hd.el, this.panes, hints([['ok', 'Guarda'], ['menu', 'Preferito / opzioni'], ['back', 'Indietro']]), this.status);
     this.updPrev = debounce(() => this.renderPreview(), 180);
     this.pvEngine = null; this.pvTimer = null;
     this.loaded = false;
@@ -87,12 +85,6 @@ export class LiveScreen {
       if (want) { const idx = this.list.findIndex(c => c.id === want); if (idx >= 0) this.chs.select(idx, true); }
       this.chs.render(); this.cats.render();
       this.onChannel(this.chs.current());
-      if (this.src.epgUrl) {
-        this.status.textContent = 'Guida programmi: caricamento…';
-        startEpg(this.src, this.all, () => { this.status.textContent = ''; this.chs.render(); this.renderPreview(); });
-        const iv = setInterval(() => { if (epgStatus(this.src.id) !== 'loading') { clearInterval(iv); if (epgStatus(this.src.id) === 'error') this.status.textContent = 'Guida programmi non disponibile'; else this.status.textContent = ''; } }, 1500);
-        this._iv = iv;
-      }
       if (this.opts.playId) { const idx = this.list.findIndex(c => c.id === this.opts.playId); if (idx >= 0) this.play(idx); }
     } else {
       this.chs.relayout(); this.cats.relayout();
@@ -125,16 +117,12 @@ export class LiveScreen {
   }
 
   fillChannel(n, ch) {
+    if (n._ch === ch && n._fv === store.favVer()) return;
+    n._ch = ch; n._fv = store.favVer();
     n._n.textContent = ch.num;
     n._nm.textContent = ch.name;
     setImg(n._im, ch.logo);
     n._star.style.display = store.isFav(store.favKey(this.src.id, 'live', ch.id)) ? '' : 'none';
-    const nn = Epg.ready || Epg.getShort(ch) ? Epg.nowNext(ch) : null;
-    if (nn && nn.now) {
-      n._now.textContent = nn.now[2];
-      n._bar.style.display = '';
-      n._bar.firstChild.style.width = Math.max(0, Math.min(100, (Date.now() - nn.now[0]) / (nn.now[1] - nn.now[0]) * 100)) + '%';
-    } else { n._now.textContent = ''; n._bar.style.display = 'none'; }
   }
 
   // ---- zone / focus
@@ -145,6 +133,8 @@ export class LiveScreen {
     else if (nav.getFocus() && this.hd.el.contains(nav.getFocus())) { nav.getFocus().classList.remove('focused'); }
   }
 
+  onRailEnter() { this.cats.setActive(false); this.chs.setActive(false); }
+  onRailExit() { this.setZone(this.zone === 'bar' ? 'chs' : this.zone); }
   onKey(a) {
     if (!this.loaded) return a.a === 'back' ? false : true;
     const k = a.a;
@@ -210,33 +200,14 @@ export class LiveScreen {
       clearTimeout(this.pvTimer);
       this.pvTimer = setTimeout(() => this.startPreview(ch), 1400);
     }
-    // EPG breve a richiesta (Xtream) per il canale selezionato
-    if (ch && !Epg.ready && this.src.shortEpg && !Epg.getShort(ch)) {
-      clearTimeout(this._eT);
-      this._eT = setTimeout(async () => {
-        const l = await this.src.shortEpg(ch);
-        if (l && l.length) { Epg.setShort(ch, l); if (this.chs.current() === ch) { this.renderPreview(); this.chs.render(); } }
-      }, 350);
-    }
   }
 
   renderPreview() {
     const ch = this.chs.current();
-    if (!ch) { this.pvT.textContent = this.list && !this.list.length ? 'Nessun canale' : ''; this.pvS.textContent = ''; this.pvD.textContent = ''; this.pvN.textContent = ''; this.pvEpg.innerHTML = ''; setImg(this.pvLogo, ''); return; }
+    if (!ch) { this.pvT.textContent = this.list && !this.list.length ? 'Nessun canale' : ''; this.pvS.textContent = ''; setImg(this.pvLogo, ''); return; }
     setImg(this.pvLogo, ch.logo);
     this.pvT.textContent = ch.num + '  ' + ch.name;
-    const nn = Epg.nowNext(ch);
-    this.pvEpg.innerHTML = '';
-    if (nn && nn.now) {
-      this.pvS.textContent = 'In onda: ' + nn.now[2] + '  (' + fmtClock(nn.now[0]) + ' – ' + fmtClock(nn.now[1]) + ')';
-      this.pvBar.style.display = ''; this.pvBar.firstChild.style.width = Math.max(0, Math.min(100, (Date.now() - nn.now[0]) / (nn.now[1] - nn.now[0]) * 100)) + '%';
-      this.pvD.textContent = nn.now[3] || '';
-      const l = Epg.list(ch) || [];
-      const nowI = l.indexOf(nn.now);
-      for (let i = nowI + 1; i < Math.min(l.length, nowI + 5); i++) this.pvEpg.appendChild(h('div', { class: 'pe' }, h('span', { class: 'pet', text: fmtClock(l[i][0]) }), h('span', { text: l[i][2] })));
-    } else {
-      this.pvS.textContent = ch.group || ''; this.pvBar.style.display = 'none'; this.pvD.textContent = ''; this.pvN.textContent = Epg.ready || this.src.shortEpg ? '' : '';
-    }
+    this.pvS.textContent = ch.group || '';
   }
 
   startPreview(ch) {

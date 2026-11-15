@@ -1,6 +1,6 @@
 {
   "name": "tv-player",
-  "version": "1.3.1",
+  "version": "2.0.0",
   "description": "MAXENTA: IPTV/media player per TV (Android TV, Tizen, webOS, VIDAA) e computer (Windows, macOS, Linux)",
   "main": "desktop/main.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "companion": "node companion/server.js",
     "mock": "node test/mock.js",
     "test:media": "./test/make-media.sh",
-    "test": "node test/e2e.js && node test/e2e2.js",
+    "test": "node test/e2e.js && node test/e2e2.js && node test/e2e3.js",
     "desktop": "electron .",
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac",

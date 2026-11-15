@@ -7,11 +7,13 @@ import { header, hints, remPx, img, setImg } from '../ui/chrome.js';
 import { icon } from '../ui/icons.js';
 import * as Modal from '../ui/modal.js';
 import { showLoading, hideLoading, fileOpts } from '../core/session.js';
-import { PlayerScreen } from './player.js';
+import { PlayerScreen, Mini } from './player.js';
+import { Rail } from '../ui/shell.js';
 import { uid } from '../core/util.js';
 
 export class FilesScreen {
   constructor(src) {
+    this.railId = 'files';
     this.src = src; this.path = src.rootPath; this.entries = []; this.trail = []; this.names = [];
     this.hd = header(src.name, '', [{ icon: 'refresh', label: 'Aggiorna', onclick: () => this.load() }]);
     this.list = new VList({
@@ -25,7 +27,7 @@ export class FilesScreen {
       onChange: e => this.onEntry(e),
       onSelect: e => this.open(e),
       onMenu: e => this.menu(e),
-      onEdge: d => { if (d === 'left' || d === 'right') return true; return true; }
+      onEdge: d => { if (d === 'left') Rail.enter(); else if (d === 'down') Mini.focusFrom(d); return true; }
     });
     this.iPoster = img('ipost'); this.iT = h('div', { class: 'it' }); this.iM = h('div', { class: 'im' }); this.iP = h('div', { class: 'ip' });
     this.info = h('div', { class: 'pane info' }, h('div', { class: 'ipbox' }, this.iPoster), this.iT, this.iM, this.iP);
@@ -101,6 +103,8 @@ export class FilesScreen {
     }
   }
 
+  onRailEnter() { this.list.setActive(false); }
+  onRailExit() { this.list.setActive(true); }
   onKey(a) {
     if (a.a === 'back') {
       if (this.trail.length) { this.path = this.trail.pop(); this.names.pop(); this.load(); return true; }

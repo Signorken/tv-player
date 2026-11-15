@@ -33,7 +33,7 @@ function isTyping(t) {
 
 // handler(action, event). OK viene emesso al rilascio; tenendolo premuto >600ms emette 'menu'.
 export function installKeys(handler) {
-  let okDown = false, okLong = false, okAt = 0;
+  let okDown = false, okLong = false, okT = null;
   window.addEventListener('keydown', function (e) {
     if (isTyping(e.target)) {
       if (e.keyCode === 27 || e.keyCode === 10009 || e.keyCode === 461) { e.preventDefault(); handler({ a: 'back' }, e); }
@@ -47,13 +47,14 @@ export function installKeys(handler) {
     }
     e.preventDefault();
     if (act.a === 'ok') {
-      if (e.repeat) {
-        if (okDown && !okLong && Date.now() - okAt > 600) { okLong = true; handler({ a: 'menu' }, e); }
-        return;
-      }
-      okDown = true; okLong = false; okAt = Date.now();
+      // OK lungo: un timer (non i keydown ripetuti, che alcuni telecomandi Samsung/LG non inviano)
+      if (okDown) return;
+      okDown = true; okLong = false;
+      clearTimeout(okT);
+      okT = setTimeout(() => { if (okDown && !okLong) { okLong = true; handler({ a: 'menu' }, e); } }, 650);
       return;
     }
+    if (act.a === 'back' && e.repeat) return;
     if (act.a === 'back' && e.keyCode === 8) { handler({ a: 'backspace' }, e); return; }
     handler(act, e);
   }, true);
@@ -62,6 +63,7 @@ export function installKeys(handler) {
     const act = actionFor(e);
     if (act && act.a === 'ok') {
       e.preventDefault();
+      clearTimeout(okT);
       if (okDown && !okLong) handler(act, e);
       okDown = false; okLong = false;
     }

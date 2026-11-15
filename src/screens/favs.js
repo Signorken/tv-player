@@ -4,20 +4,23 @@ import { VList } from '../ui/vlist.js';
 import { header, hints, remPx, img, setImg } from '../ui/chrome.js';
 import * as Modal from '../ui/modal.js';
 import { playMeta } from './home.js';
+import { Rail } from '../ui/shell.js';
+import { Mini } from './player.js';
 
 const KIND = { live: 'Canale', movie: 'Film', series: 'Serie TV', episode: 'Episodio', file: 'File' };
 
 export class FavsScreen {
   constructor() {
+    this.railId = 'favs';
     this.hd = header('Preferiti', '', []);
     this.list = new VList({
       rowH: () => Math.round(remPx() * 3.6),
       build: () => { const im = img(); const r = h('div', { class: 'row favrow' }, h('div', { class: 'lg' }, im), h('div', { class: 'cmid' }, h('div', { class: 'cn' }), h('div', { class: 'cnow' })), h('span', { class: 'rc' })); r._im = im; r._n = r.querySelector('.cn'); r._s = r.querySelector('.cnow'); r._k = r.lastChild; return r; },
       fill: (n, f) => { n._n.textContent = f.name; n._s.textContent = f.sub || ''; n._k.textContent = KIND[f.kind] || ''; setImg(n._im, f.logo || f.poster); },
       onSelect: f => playMeta(f),
-      onMenu: f => this.menu(f), onEdge: () => true
+      onMenu: f => this.menu(f), onEdge: d => { if (d === 'left') Rail.enter(); else if (d === 'down') Mini.focusFrom(d); return true; }
     });
-    this.empty = h('div', { class: 'empty', text: 'Nessun preferito. Premi il tasto rosso (o tieni premuto OK) su un canale, film o serie.' });
+    this.empty = h('div', { class: 'empty', text: 'Nessun preferito. Tieni premuto OK su un canale, film o serie.' });
     this.el = h('div', { class: 'screen favs' }, this.hd.el, h('div', { class: 'single' }, this.list.el), this.empty, hints([['ok', 'Apri'], ['menu', 'Rimuovi'], ['back', 'Indietro']]));
   }
   onShow() { this.load(); this.list.setActive(true); this.list.relayout(); }
@@ -32,5 +35,7 @@ export class FavsScreen {
     const r = await Modal.menu(f.name, [{ label: 'Apri', value: 'open', icon: 'play' }, { label: 'Rimuovi dai preferiti', value: 'rm', icon: 'trash', danger: true }]);
     if (r === 'open') playMeta(f); else if (r === 'rm') { store.toggleFav(f.key, {}); this.load(); }
   }
+  onRailEnter() { this.list.setActive(false); }
+  onRailExit() { this.list.setActive(true); }
   onKey(a) { if (a.a === 'red') { const f = this.list.current(); if (f) { store.toggleFav(f.key, {}); this.load(); } return true; } return this.list.handleKey(a.a); }
 }

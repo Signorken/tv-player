@@ -1,4 +1,6 @@
 import { isSportGroup } from '../core/sport.js';
+import { Rail } from '../ui/shell.js';
+import { Mini } from './player.js';
 // Film e Serie TV: categorie | griglia locandine | scheda informativa
 import { h, debounce } from '../core/util.js';
 import * as store from '../core/store.js';
@@ -15,6 +17,7 @@ export class VodScreen {
   // mode: 'movie' | 'series'
   constructor(src, mode, opts) {
     this.opts = opts || {};
+    this.railId = this.opts.sport ? 'sport' : mode;
     this.src = src; this.mode = mode; this.zone = 'grid'; this.query = '';
     this.title = mode === 'movie' ? 'Film' : 'Serie TV';
     this.hd = header(this.title, src.name, [
@@ -27,7 +30,7 @@ export class VodScreen {
       fill: (n, it) => { if (n._it === it) return; n._it = it; n.firstChild.textContent = it.name; n.lastChild.textContent = ''; },
       onChange: it => this.pickCat(it),
       onSelect: () => this.setZone('grid'),
-      onEdge: d => { if (d === 'right') { this.setZone('grid'); return true; } if (d === 'up') { this.setZone('bar'); return true; } return true; }
+      onEdge: d => { if (d === 'right') { this.setZone('grid'); return true; } if (d === 'up') { this.setZone('bar'); return true; } if (d === 'left') Rail.enter(); return true; }
     });
     this.cols = 4;
     this.grid = new VList({
@@ -47,14 +50,14 @@ export class VodScreen {
       onChange: it => this.onItem(it),
       onSelect: it => this.open(it),
       onMenu: it => this.itemMenu(it),
-      onEdge: d => { if (d === 'left') { this.setZone('cats'); return true; } if (d === 'up') { this.setZone('bar'); return true; } return true; }
+      onEdge: d => { if (d === 'left') { this.setZone('cats'); return true; } if (d === 'up') { this.setZone('bar'); return true; } if (d === 'down') Mini.focusFrom(d); return true; }
     });
     // pannello info
     this.iPoster = img('ipost'); this.iT = h('div', { class: 'it' }); this.iM = h('div', { class: 'im' }); this.iP = h('div', { class: 'ip' }); this.iC = h('div', { class: 'ic' });
     this.info = h('div', { class: 'pane info' }, h('div', { class: 'ipbox' }, this.iPoster), this.iT, this.iM, this.iP, this.iC);
     this.el = h('div', { class: 'screen vod' }, this.hd.el,
       h('div', { class: 'panes' }, h('div', { class: 'pane cats' }, this.cats.el), h('div', { class: 'pane grid' }, this.grid.el), this.info),
-      hints([['ok', 'Dettagli'], ['green', 'Cerca'], ['yellow', 'Sorgente'], ['menu', 'Opzioni']]));
+      hints([['ok', 'Dettagli'], ['menu', 'Preferito / opzioni'], ['back', 'Indietro']]));
     this.updInfo = debounce(it => this.fetchInfo(it), 450);
     this.infoCache = {};
   }
@@ -123,6 +126,8 @@ export class VodScreen {
     else if (nav.getFocus() && this.hd.el.contains(nav.getFocus())) nav.getFocus().classList.remove('focused');
   }
 
+  onRailEnter() { this.cats.setActive(false); this.grid.setActive(false); }
+  onRailExit() { this.setZone(this.zone === 'bar' ? 'grid' : this.zone); }
   onKey(a) {
     if (!this.loaded) return a.a !== 'back';
     const k = a.a;

@@ -60,6 +60,8 @@ export function move(dir) {
     else if (dir === 'left') { prim = c.left - r.right; if (r.left + r.width / 2 >= c.left + c.width / 2) continue; sec = gap(c.top, c.bottom, r.top, r.bottom); }
     else if (dir === 'down') { prim = r.top - c.bottom; if (r.top + r.height / 2 <= c.top + c.height / 2) continue; sec = gap(c.left, c.right, r.left, r.right); }
     else { prim = c.top - r.bottom; if (r.top + r.height / 2 >= c.top + c.height / 2) continue; sec = gap(c.left, c.right, r.left, r.right); }
+    // Sinistra/Destra restano sulla stessa riga: dal primo elemento a sinistra si passa alla barra laterale
+    if ((dir === 'left' || dir === 'right') && sec > 0) continue;
     if (prim < -2) prim = 0; // sovrapposti
     const score = prim + sec * 3 + (sec > 0 ? 40 : 0);
     if (score < bestScore) { bestScore = score; best = el; }

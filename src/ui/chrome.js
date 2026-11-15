@@ -24,6 +24,7 @@ export function remPx() { return parseFloat(getComputedStyle(document.documentEl
 
 export function img(cls) {
   const i = h('img', { class: cls || '' });
+  i.decoding = 'async'; // decodifica fuori dal thread principale (scorrimento più fluido)
   i.onerror = () => { i.style.visibility = 'hidden'; i._bad = i.getAttribute('src'); };
   i.onload = () => { i.style.visibility = ''; };
   return i;
