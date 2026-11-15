@@ -204,6 +204,8 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   ok('home: tasto giallo rimuove la riga ma non recenti né progressi', after.cards === 0 && after.rec === before.rec && after.prog === before.prog, JSON.stringify({ before, after }));
 
   ok('visto: segna e legge i contenuti completati', await page.evaluate(() => { const s = window.__app.store; s.markWatched('k|movie|9'); return s.isWatched('k|movie|9') && !s.isWatched('k|movie|8'); }));
+  ok('sfondo: wallpaper applicato (1080p su schermo Full HD)', await page.evaluate(() => /wallpapers\/01-aurora-1080\.jpg/.test(document.getElementById('bg').style.backgroundImage)));
+  ok('sfondo: "Nessuno" lo toglie', await page.evaluate(() => { window.__app.store.settings().wallpaper = 'none'; window.__app.applyUi(); const r = document.getElementById('bg').style.backgroundImage === 'none'; window.__app.store.settings().wallpaper = '01-aurora'; window.__app.applyUi(); return r; }));
   console.log('\nErrori JS rilevati: ' + errors.length); errors.slice(0, 12).forEach(e => console.log('  ' + e));
   const fails = results.filter(r => !r[1]);
   console.log('\nRISULTATO: ' + (results.length - fails.length) + '/' + results.length + ' ok');

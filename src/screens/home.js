@@ -98,11 +98,12 @@ export class HomeScreen {
     this.cont = h('div', { class: 'contbox' });
     this.contT = h('div', { class: 'contt', text: 'Continua a guardare' });
     this.contX = h('div', { class: 'btn small', 'data-f': 1, title: 'Rimuovi la riga dalla Home (i progressi restano salvati)', onclick: () => this.clearRow() }, icon('x'), h('span', { text: 'Rimuovi riga' }));
+    this.hero = h('div', { class: 'hero' });
     this.contHd = h('div', { class: 'conthd' }, this.contT, h('span', { class: 'contnote', text: 'Solo film e serie' }), h('div', { class: 'flex1' }), this.contX);
     this.empty = h('div', { class: 'empty' });
     this.el = h('div', { class: 'screen home' },
       h('div', { class: 'hbar' }, h('div', { class: 'brand' }, icon('tv'), h('span', { text: 'TV Player' })), h('div', { class: 'hbr' }, platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: 'Aggiungi sorgente (Ctrl+V per incollare un link)', onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: 'Aggiungi' })) : null, this.srcBtn, this.clock)),
-      this.tiles, this.empty, this.contHd, this.cont,
+      this.tiles, this.hero, this.empty, this.contHd, this.cont,
       hints([['ok', 'Apri'], ['yellow', 'Rimuovi riga'], ['back', 'Esci']]));
     this.clockT = setInterval(() => { this.clock.textContent = fmtClock(Date.now()); }, 20000);
   }
@@ -143,6 +144,7 @@ export class HomeScreen {
     this.cont.innerHTML = '';
     const rec = store.contItems(10);
     this.contHd.style.display = rec.length ? '' : 'none';
+    this.renderHero(rec[0]);
     rec.forEach(r => {
       const p = store.getProgress(r.key);
       const im = img(); setImg(im, r.logo || r.poster);
@@ -151,6 +153,17 @@ export class HomeScreen {
         h('div', { class: 'cname', text: r.name }), h('div', { class: 'csub', text: r.sub || '' }));
       this.cont.appendChild(card);
     });
+  }
+  renderHero(r) {
+    this.hero.innerHTML = '';
+    this.hero.style.display = r ? '' : 'none';
+    if (!r) return;
+    const p = store.getProgress(r.key);
+    this.hero.appendChild(h('div', { class: 'hg', text: 'RIPRENDI DA DOVE ERI RIMASTO' }));
+    this.hero.appendChild(h('div', { class: 'hn', text: r.name }));
+    this.hero.appendChild(h('div', { class: 'hs', text: r.sub || '' }));
+    if (p && p.dur) this.hero.appendChild(h('div', { class: 'hbar2' }, h('div', { style: 'width:' + Math.min(100, p.pos / p.dur * 100) + '%' })));
+    this.hero.appendChild(h('div', { class: 'btn primary', 'data-f': 1, onclick: () => playMeta(r) }, icon('play'), h('span', { text: p && p.pos > 30 ? ' Riprendi' : ' Guarda' })));
   }
   async clearRow() {
     if (!store.contItems(1).length) return;
