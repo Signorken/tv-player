@@ -9,7 +9,7 @@
     "companion": "node companion/server.js",
     "mock": "node test/mock.js",
     "test:media": "./test/make-media.sh",
-    "test": "node test/e2e.js && node test/e2e2.js",
+    "test": "node test/e2e.js && node test/e2e2.js && node test/e2e3.js",
     "desktop": "electron .",
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac",
