@@ -220,3 +220,12 @@ La finestrella si riporta a schermo intero con ▶‖, dalla voce "In riproduzio
 - Libreria QR caricata solo quando serve; immagini decodificate in modo asincrono; meno scritture di stile a ogni tasto nelle liste.
 
 Icone: [Solar](https://github.com/480-Design/Solar-Icon-Set) di 480 Design (CC BY 4.0). Font: Plus Jakarta Sans (SIL OFL).
+
+## 2.1
+- **On Demand**: Film, Serie TV e Sport (on demand) sono schede della stessa schermata; le dirette sportive sono in TV in diretta › categoria Sport.
+- **Finestrella** configurabile: sempre, solo canali TV, solo film e serie, mai.
+- **Indietro tenuto premuto** chiude il player o la finestrella (telecomandi senza tasto Stop).
+- Barra laterale: "In riproduzione" mostra solo il titolo, che scorre se è lungo.
+- Home: "Rimuovi riga" anche per i canali visti di recente.
+- Suoni di navigazione (sintetizzati, nessun file) disattivabili in Aspetto; muti dentro il player.
+- Transizioni più morbide (schermate, pulsanti, pannelli del player, finestrella, avvisi); restano spente con "Risparmio risorse".

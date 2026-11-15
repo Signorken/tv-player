@@ -97,7 +97,8 @@ export class LiveScreen {
 
   rebuildCats() {
     const favCount = this.all.filter(c => store.isFav(store.favKey(this.src.id, 'live', c.id))).length;
-    const cats = [{ id: '__fav', name: 'Preferiti', count: favCount }, { id: '__all', name: 'Tutti i canali', count: this.all.length }].concat(this.baseCats);
+    if (this.sportN === undefined) this.sportN = this.opts.sport ? 0 : this.all.filter(isSportChannel).length;
+    const cats = [{ id: '__fav', name: 'Preferiti', count: favCount }, { id: '__all', name: 'Tutti i canali', count: this.all.length }].concat(this.sportN ? [{ id: '__sport', name: 'Sport', count: this.sportN }] : [], this.baseCats);
     if (this.query) cats.unshift({ id: '__q', name: 'Ricerca: ' + this.query, count: 0 });
     this.catList = cats;
     const keepIdx = Math.max(0, cats.findIndex(c => c.id === this.catId));
@@ -109,6 +110,7 @@ export class LiveScreen {
     if (!c) return;
     this.catId = c.id;
     if (c.id === '__all') this.list = this.all;
+    else if (c.id === '__sport') this.list = this.all.filter(isSportChannel);
     else if (c.id === '__fav') this.list = this.all.filter(ch => store.isFav(store.favKey(this.src.id, 'live', ch.id)));
     else if (c.id === '__q') { const q = this.query.toLowerCase(); this.list = this.all.filter(ch => ch._k.indexOf(q) >= 0); c.count = this.list.length; }
     else this.list = this.byGroup[c.id] || [];

@@ -47,7 +47,7 @@ export const Mini = { player: null, focused: false, _prev: null,
   onKey(a) {
     const p = this.player; if (!p) return false;
     if (a.a === 'blue' || a.a === 'playpause' || a.a === 'play') { this.unfocus(); p.expand(); return true; }
-    if (a.a === 'stop') { this.close(); return true; }
+    if (a.a === 'stop' || a.a === 'longback') { this.close(); return true; }
     if (a.a === 'pause') { p.video.pause(); return true; }
     return false;
   } };
@@ -70,7 +70,7 @@ export class PlayerScreen {
     this.seekBox = h('div', { class: 'pseek' });
     this.numBox = h('div', { class: 'pnum' });
     this.clock = h('div', { class: 'pclock' });
-    this.miniUi = h('div', { class: 'miniui' }, h('div', { class: 'mini-t' }), h('div', { class: 'mini-h', text: platform.isDesktop ? 'Clic: espandi' : '▶‖: schermo intero · Stop: chiudi' }),
+    this.miniUi = h('div', { class: 'miniui' }, h('div', { class: 'mini-t' }), h('div', { class: 'mini-h', text: platform.isDesktop ? 'Clic: espandi' : '▶‖: schermo intero · Tieni premuto Indietro: chiudi' }),
       h('div', { class: 'mini-x', title: 'Chiudi', text: '✕', onclick: e => { e.stopPropagation(); Mini.close(); } }));
     this.el = h('div', { class: 'screen player' }, this.video, this.clock, this.numBox, this.seekBox, this.msg, this.spin, this.info, this.miniUi);
     this.el.addEventListener('click', e => { if (this.mini && !(e.target.classList && e.target.classList.contains('mini-x'))) { e.stopPropagation(); this.expand(); } }, true);
@@ -107,7 +107,7 @@ export class PlayerScreen {
     left.push(B('prev', this.live ? 'Canale precedente (▼)' : 'Precedente', () => this._step(-1)), B('next', this.live ? 'Canale successivo (▲)' : 'Successivo', () => this._step(1)));
     this.dbar = h('div', { class: 'dbar' }, h('div', { class: 'pdl' }, left), h('div', { class: 'pdr' }, this.bVol, this.vol,
       B('list', 'Audio e sottotitoli', () => this.trackMenu()), B('gear', 'Opzioni', () => this.mainMenu()), B('full', 'Schermo intero (F)', () => toggleFullscreen())));
-    this.dback = h('div', { class: 'cbtn pclose', title: 'Riduci a finestrella (Esc) — Stop chiude', onclick: e => { e.stopPropagation(); if (!(store.settings().miniPlayer !== false && this.minimize())) this._exit(); } }, icon('back'));
+    this.dback = h('div', { class: 'cbtn pclose', title: 'Riduci a finestrella (Esc) — Stop chiude', onclick: e => { e.stopPropagation(); if (!(this.miniAllowed() && this.minimize())) this._exit(); } }, icon('back'));
     if (!this.live) {
       this.seekBar = h('div', { class: 'pseekbar', title: 'Vai a…' }, h('div', { class: 'pseekfill' }));
       this.seekBar.onclick = e => { e.stopPropagation(); const d = this._d(); if (!d || !this.engine.canSeek()) return; const r = this.seekBar.getBoundingClientRect(); this.engine.seekTo(Math.max(0, Math.min(d - 1, (e.clientX - r.left) / r.width * d))); this.showInfo(); };
@@ -151,6 +151,7 @@ export class PlayerScreen {
     if (!this.started) { this.started = true; this.play(this.i); }
   }
   // riduce a finestrella in un angolo: il video continua mentre si naviga nell'app
+  miniAllowed() { const m = store.settings().miniPlayer; return m === 'always' || (m === 'live' && this.live) || (m === 'vod' && !this.live); }
   minimize() {
     if (this.mini || !router.detach(this)) return false;
     this.closeDrawer();
@@ -311,6 +312,7 @@ export class PlayerScreen {
       if (c === 'p' && this.live) { this._prevChannel(); return true; }
       return true;
     }
+    if (k === 'longback') { this._exit(); return true; }
     if (this.drawer) return this.drawer.onKey(a);
     if (k === 'num' && this.live) { this._digit(a.d); return true; }
     if (k === 'prev' && this.live) { this._prevChannel(); return true; }
@@ -338,7 +340,8 @@ export class PlayerScreen {
     if (k === 'blue') { this.optionsDrawer('tracks'); return true; }
     if (k === 'red') { this.toggleFav(); return true; }
     if (k === 'menu') { this.optionsDrawer(); return true; }
-    if (k === 'back' || k === 'backspace') { if (store.settings().miniPlayer !== false && this.minimize()) return true; this._exit(); return true; }
+    if (k === 'back' || k === 'backspace') { if (this.miniAllowed() && this.minimize()) return true; this._exit(); return true; }
+    if (k === 'longback') { this._exit(); return true; }
     if (k === 'stop') { this._exit(); return true; }
     return true; // il player consuma tutto
   }

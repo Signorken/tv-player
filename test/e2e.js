@@ -146,13 +146,14 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   await key('ArrowDown'); await key('Enter');
   ok('dalla barra si apre la lista canali', await wait(() => window.__app.router.current && window.__app.router.current.all, 20000));
   await goHome();
-  await page.evaluate(() => { window.__app.router.current.el.querySelectorAll('.tile')[3].click(); });
-  await wait(() => document.querySelector('.modal .row, .modal [data-f]'), 20000);
-  ok('Sport: menu con dirette sportive', /Dirette sportive/.test(await page.evaluate(() => document.body.textContent)));
-  await page.evaluate(() => { const m = [].slice.call(document.querySelectorAll('.modal [data-f]')).find(e => /Dirette sportive/.test(e.textContent)); m && m.click(); });
-  await wait(() => window.__app.router.current && window.__app.router.current.opts && window.__app.router.current.opts.sport && window.__app.router.current.all, 20000);
-  const spAll = await page.evaluate(() => window.__app.router.current.all.length);
-  ok('Sport: solo canali sportivi (<3000)', spAll > 0 && spAll < 3000, 'canali: ' + spAll);
+  await page.evaluate(() => window.__app.router.current.openLive());
+  await wait(() => window.__app.router.current && window.__app.router.current.all, 20000); await sleep(400);
+  const spCat = await page.evaluate(() => { const c = window.__app.router.current; const k = c.catList.find(x => x.id === '__sport'); if (!k) return 0; c.pickCat(k); return c.list.length; });
+  ok('TV in diretta: categoria Sport con i soli canali sportivi', spCat > 0 && spCat < 3000, 'canali: ' + spCat);
+  await goHome();
+  await page.evaluate(() => window.__app.router.current.openSport());
+  await wait(() => window.__app.router.current && window.__app.router.current.opts && window.__app.router.current.opts.sport && window.__app.router.current.loaded, 20000); await sleep(600);
+  ok('On Demand: scheda Sport con le categorie sportive di film e serie', await page.evaluate(() => { const c = window.__app.router.current; return c.catList.some(x => x._mode === 'movie') && /Sport/.test(document.querySelector('.tab.on').textContent); }));
   await goHome();
 
   // --- Film
@@ -178,7 +179,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   await goHome();
 
   // --- Serie
-  await page.evaluate(() => { window.__app.router.current.el.querySelectorAll('.tile')[2].click(); });
+  await page.evaluate(() => { window.__app.router.current.openVod('series'); });
   await wait(() => document.querySelectorAll('.cell').length >= 1, 15000);
   await sleep(1200); await key('ArrowRight'); await sleep(300); await key('Enter');
   await wait(() => document.querySelectorAll('.eprow').length > 1, 10000); await sleep(800);
@@ -188,7 +189,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
 
   // --- NAS WebDAV
   await page.evaluate(() => { const s = window.__app.store; });
-  await page.evaluate(() => { window.__app.router.current.el.querySelectorAll('.tile')[4].click(); });
+  await page.evaluate(() => { window.__app.router.current.el.querySelectorAll('.tile')[2].click(); });
   await sleep(500);
   if (await page.$('.modal.menu')) { await shot('18-scegli-nas'); await key('Enter'); }
   await wait(() => document.querySelectorAll('.frow').length > 0, 10000); await sleep(600);
@@ -207,7 +208,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   await key('Escape'); await sleep(400);
 
   // --- impostazioni / telefono
-  await page.evaluate(() => { window.__app.router.current.el.querySelectorAll('.tile')[6].click(); });
+  await page.evaluate(() => { window.__app.router.current.el.querySelectorAll('.tile')[4].click(); });
   await sleep(500); await shot('21-impostazioni');
   const scs = (await page.$$eval('.scat', c => c.map(x => x.textContent))).join('|'); ok('impostazioni: macrocategorie a sinistra', scs === 'Sorgenti|Riproduzione|Aspetto|Rete e telefono|Guida e dati|Informazioni', scs);
   await page.setViewport({ width: 1280, height: 330 }); await sleep(300);

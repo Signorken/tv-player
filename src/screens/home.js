@@ -16,7 +16,6 @@ import { SettingsScreen, SourcesScreen } from './settings.js';
 import { addNetworkFolderFlow, addSourceFlow, addFromClipboard, pickPlaylistFile, discoverFlow, addFolderFlow } from './addflow.js';
 import { DetailScreen } from './detail.js';
 import { PlayerScreen } from './player.js';
-import { openSport } from './sport.js';
 import { MENU } from '../ui/shell.js';
 import { TYPE_LABEL } from '../sources/index.js';
 
@@ -102,7 +101,8 @@ export class HomeScreen {
     this.hero = h('div', { class: 'hero' });
     this.contHd = h('div', { class: 'conthd' }, this.contT, h('span', { class: 'contnote', text: 'Solo film e serie' }), h('div', { class: 'flex1' }), this.contX);
     this.empty = h('div', { class: 'empty' });
-    this.liveHd = h('div', { class: 'conthd' }, h('div', { class: 'contt', text: 'Canali visti di recente' }));
+    this.liveX = h('div', { class: 'btn small', 'data-f': 1, onclick: () => this.clearLive() }, icon('x'), h('span', { text: 'Rimuovi riga' }));
+    this.liveHd = h('div', { class: 'conthd' }, h('div', { class: 'contt', text: 'Canali visti di recente' }), h('div', { class: 'flex1' }), this.liveX);
     this.liveRow = h('div', { class: 'contbox liverow' });
     this.el = h('div', { class: 'screen home' },
       h('div', { class: 'hbar' }, h('div', { class: 'brand' }, h('img', { class: 'blogo', src: 'icon.png', alt: '' }), h('span', { text: 'MAXENTA' })), h('div', { class: 'hbr' }, platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: 'Aggiungi sorgente (Ctrl+V per incollare un link)', onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: 'Aggiungi' })) : null, this.srcBtn)),
@@ -158,11 +158,12 @@ export class HomeScreen {
     });
     // canali live visti di recente: accesso rapido alla TV
     this.liveRow.innerHTML = '';
-    const seen = {}, live = store.get().recents.filter(r => r.kind === 'live' && !seen[r.key] && (seen[r.key] = 1)).slice(0, 8);
+    const live = store.liveItems(8);
     this.liveHd.style.display = this.liveRow.style.display = live.length ? '' : 'none';
     live.forEach(r => {
       const im = img(); setImg(im, r.logo);
-      this.liveRow.appendChild(h('div', { class: 'ccard lcard', 'data-f': 1, onclick: () => playMeta(r) }, h('div', { class: 'cthumb' }, im), h('div', { class: 'cname', text: r.name })));
+      const c = h('div', { class: 'ccard lcard', 'data-f': 1, onclick: () => playMeta(r) }, h('div', { class: 'cthumb' }, im), h('div', { class: 'cname', text: r.name }));
+      c._meta = r; this.liveRow.appendChild(c);
     });
     // niente da riprendere: in Aspetto A mostra comunque i pulsanti delle sezioni
     this.el.classList.toggle('nocont', !rec.length && !live.length);
@@ -190,7 +191,7 @@ export class HomeScreen {
   }
 
   async openLive() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new LiveScreen(s)); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
-  async openSport() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); await openSport(s); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
+  async openSport() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, 'movie', { sport: true })); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
   async openVod(mode) { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, mode)); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
   playMeta(r) { return playMeta(r); }
   openFavs() { router.push(new FavsScreen()); }
@@ -221,11 +222,18 @@ export class HomeScreen {
     if (a.a === 'menu') { const f = nav.getFocus(); if (f && f._meta) { this.cardMenu(f._meta); return true; } }
     return false;
   }
+  clearLive() {
+    store.clearLiveRow(); this.renderCont();
+    Modal.toast('Riga dei canali rimossa: tornerà con i prossimi canali che guardi.');
+    nav.focus(this.firstFocus());
+  }
   async cardMenu(r) {
-    const v = await Modal.menu(r.name, [{ label: 'Guarda', value: 'play', icon: 'play' }, { label: 'Togli dalla riga', value: 'one', icon: 'x' }, { label: 'Svuota la riga “Continua a guardare”', value: 'all', icon: 'trash' }]);
+    const lv = r.kind === 'live';
+    const v = await Modal.menu(r.name, [{ label: 'Guarda', value: 'play', icon: 'play' }, { label: 'Togli dalla riga', value: 'one', icon: 'x' }, { label: lv ? 'Svuota la riga dei canali' : 'Svuota la riga “Continua a guardare”', value: lv ? 'live' : 'all', icon: 'trash' }]);
     if (v === 'play') playMeta(r);
     else if (v === 'one') { store.hideRecent(r.key); this.renderCont(); nav.focus(this.firstFocus()); }
     else if (v === 'all') this.clearRow();
+    else if (v === 'live') this.clearLive();
   }
   async confirmExit() { if (await Modal.confirm('Uscire dall\'app?', '', 'Esci', 'Resta')) exitApp(); }
 }

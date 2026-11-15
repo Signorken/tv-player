@@ -11,8 +11,9 @@ const DEFAULTS = {
     layout: 'A',             // A = barra laterale, B = pulsanti in alto
     clock: '24',             // 24 | 12
     startScreen: 'home',     // schermata all'avvio: home | live | movie | series | sport | favs | last
-    miniPlayer: true,        // Indietro dal player = finestrella in un angolo (continua a guardare mentre navighi)
-    lowPower: true,          // niente animazioni/ombre
+    miniPlayer: 'always',    // Indietro dal player = finestrella: always | live | vod | never
+    sounds: true,            // suoni di navigazione
+    lowPower: false,         // niente animazioni/ombre
     liveFormat: 'm3u8',      // m3u8 | ts  (per Xtream)
     uiScale: 100,
     bufferSec: 20,
@@ -48,6 +49,10 @@ export function load() {
     }
   }
   if (!data.settings.room) data.settings.room = randomRoom();
+  // migrazioni 2.1: finestrella a 4 scelte, animazioni attive una volta (prima erano spente di default)
+  const st = data.settings;
+  if (st.miniPlayer === true) st.miniPlayer = 'always'; else if (st.miniPlayer === false) st.miniPlayer = 'never';
+  if (!st.mig21) { st.mig21 = 1; st.lowPower = false; }
   window.addEventListener('pagehide', flush);
   document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
   return data;
@@ -123,6 +128,11 @@ export function contItems(max) {
 }
 // toglie un solo elemento dalla riga (riappare se lo si riguarda)
 export function hideRecent(key) { const r = get().recents.find(x => x.key === key); if (r) { r.hid = 1; save(); } }
+export function liveItems(max) {
+  const c = get().liveClearedAt || 0, seen = {};
+  return get().recents.filter(r => r.kind === 'live' && r.t > c && !r.hid && !seen[r.key] && (seen[r.key] = 1)).slice(0, max || 8);
+}
+export function clearLiveRow() { get().liveClearedAt = Date.now(); save(); }
 export function clearContRow() { get().contClearedAt = Date.now(); save(); }
 export function setProgress(key, pos, dur) {
   get().progress[key] = { pos: Math.floor(pos), dur: Math.floor(dur), t: Date.now() };

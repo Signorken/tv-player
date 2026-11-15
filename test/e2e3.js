@@ -42,9 +42,9 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   await key('ArrowRight'); await sleep(200);
   ok('Destra richiude la barra e torna al contenuto', await page.evaluate(() => !document.getElementById('rail').classList.contains('open') && /Riprendi/.test(document.querySelector('.focused').textContent)));
   await key('ArrowLeft'); await key('ArrowDown', 2); await key('Enter');
-  ok('barra: Film apre la griglia', await wait(() => document.querySelectorAll('.cell').length > 2, 15000) && (await cur()) === 'movie');
+  ok('barra: On Demand apre la griglia dei film', await wait(() => document.querySelectorAll('.cell').length > 2, 15000) && (await cur()) === 'ondemand');
   await sleep(800);
-  ok('barra: sezione corrente evidenziata', await page.evaluate(() => /Film/.test(document.querySelector('.ri.cur').textContent)));
+  ok('barra: sezione corrente evidenziata', await page.evaluate(() => /On Demand/.test(document.querySelector('.ri.cur').textContent)));
   // dalla prima colonna (categorie) Sinistra entra nella barra
   await key('ArrowLeft'); await sleep(150); await key('ArrowLeft'); await sleep(250);
   ok('Sinistra dalle categorie dei film entra nella barra', await page.evaluate(() => document.getElementById('rail').classList.contains('open')));
@@ -135,7 +135,7 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   await page.evaluate(() => window.__app.nav.focus(document.querySelector('.home .tile')));
   await sleep(200);
   ok('Aspetto B: niente barra, pulsanti a icone', await page.evaluate(() => getComputedStyle(document.getElementById('rail')).display === 'none' && getComputedStyle(document.querySelector('.home .tiles')).display !== 'none'));
-  ok('Aspetto B: solo il pulsante selezionato mostra il nome', await page.evaluate(() => { const t = document.querySelectorAll('.home .tile'); return getComputedStyle(t[0].querySelector('.t1')).display !== 'none' && getComputedStyle(t[1].querySelector('.t1')).display === 'none'; }));
+  ok('Aspetto B: solo il pulsante selezionato mostra il nome', await page.evaluate(() => { const t = document.querySelectorAll('.home .tile'); return getComputedStyle(t[0].querySelector('.t1')).opacity !== '0' && getComputedStyle(t[1].querySelector('.t1')).opacity === '0'; }));
   ok('orologio a 12 ore', /(AM|PM)$/.test(await text('#gclock')), await text('#gclock'));
   await shot('06-home-B');
   await key('ArrowRight'); await sleep(200);
@@ -155,6 +155,42 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   const look = await page.evaluate(() => [].slice.call(document.querySelectorAll('.srow .sl')).map(x => x.textContent).join(' | '));
   ok('Aspetto: disposizione, orologio, schermata all\'avvio', /Disposizione/.test(look) && /Orologio/.test(look) && /avvio/.test(look), look);
   await shot('08-impostazioni-aspetto');
+
+  // --- 2.1: schede On Demand, finestrella configurabile, Indietro tenuto premuto, suoni, riga canali
+  const longBack = async () => { await page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true }))); await sleep(1000); await page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', keyCode: 27, bubbles: true }))); await sleep(400); };
+  await goHome();
+  await page.evaluate(() => { const S = window.__app.Sound; window.__snd = { move: 0, ok: 0 }; const m = S.move, o = S.ok; S.move = function () { window.__snd.move++; return m.apply(S, arguments); }; S.ok = function () { window.__snd.ok++; return o.apply(S, arguments); }; });
+  await page.evaluate(() => window.__app.router.current.openVod('movie'));
+  await wait(() => window.__app.router.current.loaded, 15000); await sleep(600);
+  await key('ArrowRight'); await key('ArrowLeft');
+  const snd1 = await page.evaluate(() => window.__snd.move);
+  ok('suoni: spostarsi tra gli elementi produce il suono di navigazione', snd1 >= 2, 'suoni=' + snd1);
+  await key('ArrowUp', 3); await sleep(200);
+  ok('On Demand: in alto le schede Film / Serie TV / Sport', /Film/.test(await page.evaluate(() => document.querySelector('.focused').textContent)) && await page.evaluate(() => document.querySelectorAll('.hd .tab').length === 3));
+  await key('ArrowRight'); await key('Enter');
+  ok('scheda Serie TV: stessa schermata, elenco delle serie', await wait(() => window.__app.router.current.mode === 'series' && window.__app.router.current.loaded, 15000) && await page.evaluate(() => /Serie/.test(document.querySelector('.tab.on').textContent) && window.__app.router.depth === 2));
+  await shot('09-ondemand-serie');
+  await goHome();
+  await page.evaluate(() => window.__app.router.current.openLive());
+  await wait(() => window.__app.router.current.all, 15000); await sleep(400);
+  await key('Enter'); await wait(() => { const v = document.querySelector('video.pv'); return v && v.currentTime > 0.3; }, 15000);
+  await page.evaluate(() => { window.__snd.move = 0; });
+  await key('ArrowLeft'); await sleep(300); await key('ArrowDown', 3);
+  ok('suoni: nessun suono navigando nel pannello canali del player', await page.evaluate(() => window.__snd.move === 0));
+  await key('Escape'); await sleep(200);
+  await key('Escape'); await sleep(600);
+  ok('finestrella aperta', !!(await page.$('.screen.player.mini')));
+  await longBack();
+  ok('Indietro tenuto premuto chiude la finestrella', !(await page.$('.screen.player')));
+  await page.evaluate(() => { window.__app.store.settings().miniPlayer = 'vod'; });
+  await key('Enter'); await wait(() => { const v = document.querySelector('video.pv'); return v && v.currentTime > 0.3; }, 15000);
+  await key('Escape'); await sleep(600);
+  ok('finestrella "solo film e serie": Indietro da un canale chiude il player', !(await page.$('.screen.player')) && (await cur()) === 'live');
+  await page.evaluate(() => { window.__app.store.settings().miniPlayer = 'always'; });
+  await goHome();
+  ok('Home: riga canali recenti con "Rimuovi riga"', await page.evaluate(() => getComputedStyle(document.querySelector('.liverow')).display !== 'none'));
+  await page.evaluate(() => window.__app.router.current.liveX.click()); await sleep(300);
+  ok('Rimuovi riga nasconde i canali recenti', await page.evaluate(() => getComputedStyle(document.querySelector('.liverow')).display === 'none'));
 
   console.log('Errori JS: ' + errs.length, errs.slice(0, 5));
   const f = res.filter(x => !x).length; console.log('RISULTATO: ' + (res.length - f) + '/' + res.length);

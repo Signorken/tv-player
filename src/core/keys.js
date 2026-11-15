@@ -33,7 +33,7 @@ function isTyping(t) {
 
 // handler(action, event). OK viene emesso al rilascio; tenendolo premuto >600ms emette 'menu'.
 export function installKeys(handler) {
-  let okDown = false, okLong = false, okT = null;
+  let okDown = false, okLong = false, okT = null, bkDown = false, bkLong = false, bkT = null;
   window.addEventListener('keydown', function (e) {
     if (isTyping(e.target)) {
       if (e.keyCode === 27 || e.keyCode === 10009 || e.keyCode === 461) { e.preventDefault(); handler({ a: 'back' }, e); }
@@ -54,13 +54,24 @@ export function installKeys(handler) {
       okT = setTimeout(() => { if (okDown && !okLong) { okLong = true; handler({ a: 'menu' }, e); } }, 650);
       return;
     }
-    if (act.a === 'back' && e.repeat) return;
+    if (act.a === 'back' && e.keyCode !== 8) {
+      // Indietro: breve = indietro, tenuto premuto = chiudi (player / finestrella) — per i telecomandi senza Stop
+      if (bkDown) return;
+      bkDown = true; bkLong = false; clearTimeout(bkT);
+      bkT = setTimeout(() => { if (bkDown && !bkLong) { bkLong = true; handler({ a: 'longback' }, e); } }, 800);
+      return;
+    }
     if (act.a === 'back' && e.keyCode === 8) { handler({ a: 'backspace' }, e); return; }
     handler(act, e);
   }, true);
   window.addEventListener('keyup', function (e) {
     if (isTyping(e.target)) return;
     const act = actionFor(e);
+    if (act && act.a === 'back' && e.keyCode !== 8) {
+      e.preventDefault(); clearTimeout(bkT);
+      if (bkDown && !bkLong) handler(act, e);
+      bkDown = false; bkLong = false; return;
+    }
     if (act && act.a === 'ok') {
       e.preventDefault();
       clearTimeout(okT);

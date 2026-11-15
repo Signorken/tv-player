@@ -329,11 +329,7 @@ body.desktop .kbd-desk .kb-input{font-size:1.2rem}
 @keyframes scrIn{from{opacity:0;transform:translateY(.6rem)}to{opacity:1;transform:none}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes popIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
-body:not(.lowpower) .screen:not(.player){animation:scrIn .22s ease-out}
 body:not(.lowpower) .modal-back{animation:fadeIn .15s ease-out}
-body:not(.lowpower) .modal{animation:popIn .18s ease-out}
-body:not(.lowpower) .btn,body:not(.lowpower) .srow,body:not(.lowpower) .scat,body:not(.lowpower) .row{transition:background-color .12s,color .12s}
-body:not(.lowpower) .hero{animation:scrIn .35s ease-out}
 .lowpower *{animation:none!important}
 /* Continua a guardare: locandine verticali (2:3) con immagine adattata in automatico */
 .ccard{width:8.7%;margin-right:1%}
@@ -371,13 +367,13 @@ body.layA .home:not(.nocont) .tiles{display:none}
 .rlogo{width:3.2rem;height:3.2rem;border-radius:.7rem;margin:0 0 2.2rem .4rem;flex:none}
 #rail.open .rlogo{margin-left:.2rem}
 .tiles{display:flex;flex:none;margin-top:1.2rem}
-.tile{flex:none;width:5.6rem;height:5.6rem;margin-right:.8rem;background:#1d0c28;border-radius:1rem;border:.17rem solid transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
+.tile{flex:none;max-width:5.6rem;min-width:5.6rem;height:5.6rem;margin-right:.8rem;padding:0 1.42rem;background:#1d0c28;border-radius:1rem;border:.17rem solid transparent;display:flex;align-items:center;justify-content:flex-start;cursor:pointer;overflow:hidden}
 .tile .ic{width:2.4rem;height:2.4rem;color:#ff7fd0;flex:none}
-.tile .t1{display:none;font-size:1.2rem;font-weight:600;white-space:nowrap;margin-left:.8rem}
-.tile.focused{width:auto;padding:0 1.6rem;background:#c2268f;border-color:#fff}
-.tile.focused .ic{color:#fff}.tile.focused .t1{display:block}
-body.desktop.mouse .tile:hover .t1{display:block}
-body.desktop.mouse .tile:hover{width:auto;padding:0 1.4rem}
+.tile .t1{opacity:0;font-size:1.2rem;font-weight:600;white-space:nowrap;margin-left:.8rem}
+.tile.focused{max-width:22rem;padding-right:1.6rem;background:#c2268f;border-color:#fff}
+.tile.focused .ic{color:#fff}.tile.focused .t1{opacity:1}
+body.desktop.mouse .tile:hover .t1{opacity:1}
+body.desktop.mouse .tile:hover{max-width:22rem}
 
 /* tastiera: maiuscole */
 .key.shiftk.on{background:#4a2f62}.key.shiftk.caps{background:#ff4fb8;color:#1f0615}
@@ -385,7 +381,7 @@ body.desktop.mouse .tile:hover{width:auto;padding:0 1.4rem}
 /* player: pannelli laterali */
 .pdrawer{position:absolute;top:0;bottom:0;width:30rem;background:rgba(18,8,28,.96);z-index:6;display:flex;flex-direction:column;padding:2rem 1.2rem 1.2rem;opacity:0}
 .pdrawer.left{left:0;border-right:1px solid #3a2150}.pdrawer.right{right:0;border-left:1px solid #3a2150}
-.pdrawer.show{opacity:1}
+.pdrawer.show{opacity:1;transform:none}
 .pdt{font-size:1.5rem;font-weight:700;margin:0 0 1rem .4rem;flex:none}
 .pdrawer .vl{flex:1;min-height:0}
 .pdh{flex:none;font-size:.85rem;color:#b3a2b8;margin-top:.8rem}
@@ -395,7 +391,6 @@ body.desktop.mouse .tile:hover{width:auto;padding:0 1.4rem}
 .drow .dv{color:#b3a2b8;margin-left:.8rem;font-size:.95rem;white-space:nowrap}
 .drow.on .dl{color:#ff7fd0;font-weight:600}
 .drow.focused{background:#c2268f}.drow.focused .dl,.drow.focused .dv,.drow.focused .dn{color:#fff}
-body:not(.lowpower) .pdrawer{transition:opacity .15s}
 
 /* finestrella selezionata col cursore */
 .screen.player.mini.mfocus{outline:.3rem solid #fff;outline-offset:.15rem}
@@ -404,3 +399,31 @@ body:not(.lowpower) .pdrawer{transition:opacity .15s}
 .hmain{flex:1;min-height:0;overflow:hidden;margin:0 -.6rem;padding:0 .6rem}
 .hmain .contbox{padding:.4rem .2rem}
 .hd-l{max-width:calc(50% - 7rem);min-width:0}.hd-lt{min-width:0}.hd-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ri.now span{overflow:hidden;flex:1;min-width:0;white-space:nowrap}
+.ri.now .mq{display:inline-block;margin:0;opacity:1}
+#rail.open .ri.now .mq.run{padding-left:0;-webkit-animation:mq 9s linear infinite;animation:mq 9s linear infinite}
+@keyframes mq{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(calc(-100% + 9rem))}}
+.btn.tab.on{background:#3a1d55;color:#ff9ad6}.btn.tab.on.focused{background:#c2268f;color:#fff}
+
+/* ===== transizioni 2.1 (solo transform/opacity e colori; spente con Risparmio risorse) ===== */
+@keyframes scrIn2{from{opacity:0;transform:translateX(1.4rem)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translate(-50%,1rem)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(.8rem)}to{opacity:1;transform:none}}
+body:not(.lowpower) .screen:not(.player){animation:scrIn2 .28s cubic-bezier(.2,.8,.2,1)}
+body:not(.lowpower) .modal{animation:popIn .22s cubic-bezier(.2,.8,.2,1)}
+body:not(.lowpower) .hero,body:not(.lowpower) .hmain .contbox{animation:fadeUp .4s cubic-bezier(.2,.8,.2,1) both}
+body:not(.lowpower) .hmain .liverow{animation-delay:.08s}
+body:not(.lowpower) .btn,body:not(.lowpower) .srow,body:not(.lowpower) .scat,body:not(.lowpower) .row,body:not(.lowpower) .ri,body:not(.lowpower) .chip,body:not(.lowpower) .key{transition:background-color .16s ease,color .16s ease,border-color .16s ease,box-shadow .16s ease}
+body:not(.lowpower) .ccard,body:not(.lowpower) .cell .cin{transition:transform .2s cubic-bezier(.2,.8,.2,1),background-color .16s}
+body:not(.lowpower) .ccard.focused{transform:scale(1.06)}
+body:not(.lowpower) .cell.focused .cin{transform:scale(1.04)}
+body:not(.lowpower) .tile{transition:max-width .26s cubic-bezier(.2,.8,.2,1),background-color .16s,border-color .16s}
+body:not(.lowpower) .tile .t1{transition:opacity .2s ease .06s}
+body:not(.lowpower) #rail{transition:width .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s}
+body:not(.lowpower) .ri span{transition:opacity .18s ease .05s}
+.pdrawer.left{transform:translateX(-2rem)}.pdrawer.right{transform:translateX(2rem)}
+body:not(.lowpower) .pdrawer{transition:opacity .2s ease,transform .24s cubic-bezier(.2,.8,.2,1)}
+body:not(.lowpower) .pinfo.show,body:not(.lowpower) .pclock.show{animation:fadeIn .25s ease-out}
+body:not(.lowpower) .pmsg.show{animation:fadeIn .2s ease-out}
+body:not(.lowpower) #toast.show{animation:slideUp .25s cubic-bezier(.2,.8,.2,1)}
+body:not(.lowpower) .screen.player.mini{animation:popIn .25s cubic-bezier(.2,.8,.2,1)}
