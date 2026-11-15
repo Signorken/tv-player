@@ -23,6 +23,18 @@ export function applyUi() {
   if (platform.isDesktop) document.documentElement.style.fontSize = Math.max(13, Math.min(26, window.innerWidth * 0.0105)) * k + 'px';
   else document.documentElement.style.fontSize = (1.05 * k) + 'vw';
   document.body.classList.toggle('lowpower', !!s.lowPower);
+  applyWallpaper();
+}
+
+export const WALLPAPERS = [['01-aurora', 'Aurora'], ['02-orbita', 'Orbita'], ['03-dune', 'Dune'], ['04-nebula', 'Nebulosa'], ['05-griglia', 'Griglia neon'], ['06-prisma', 'Prisma'], ['07-onde', 'Onde'], ['08-notte', 'Notte'], ['none', 'Nessuno (sfondo scuro)']];
+// 4K solo su schermi 4K (un'immagine 4K occupa ~33 MB di RAM: sulle TV economiche si resta a 1080p)
+export function applyWallpaper() {
+  const w = store.settings().wallpaper, bg = document.getElementById('bg'); if (!bg) return;
+  if (!w || w === 'none') { bg.style.backgroundImage = 'none'; return; }
+  const px = Math.max(screen.width, screen.height) * (window.devicePixelRatio || 1);
+  const mem = navigator.deviceMemory;
+  const q = px >= 3000 && (platform.isDesktop || platform.name === 'web' || (mem && mem >= 3)) ? '4k' : '1080';
+  bg.style.backgroundImage = 'url(wallpapers/' + w + '-' + q + '.jpg)';
 }
 
 // ---------------- form generico ----------------
@@ -202,6 +214,7 @@ export class SettingsScreen {
       toggle('Indietro dal player = finestrella (navighi mentre guardi)', 'miniPlayer'),
       toggle('Anteprima video scorrendo i canali (usa più risorse)', 'previewVideo'),
       toggle('Risparmio risorse (niente animazioni)', 'lowPower', applyUi),
+      choice('Sfondo', 'wallpaper', WALLPAPERS, null, applyUi),
       choice('Dimensione interfaccia', 'uiScale', [[80, 'Piccola (80%)'], [90, '90%'], [100, 'Normale (100%)'], [115, 'Grande (115%)'], [130, 'Molto grande (130%)']], null, applyUi),
       choice('Buffer di riproduzione', 'bufferSec', [[10, '10 secondi (poca RAM)'], [20, '20 secondi'], [40, '40 secondi (connessione instabile)']]),
       choice('Guida programmi (finestra)', 'epgHours', [[6, '6 ore'], [12, '12 ore'], [24, '24 ore'], [48, '48 ore']]),

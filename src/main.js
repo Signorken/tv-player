@@ -140,4 +140,4 @@ if (platform.isDesktop) {
     if (store.settings().userAgent && window.desktop.setUserAgent) window.desktop.setUserAgent(store.settings().userAgent);
   }
 }
-window.__app = { router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };
+window.__app = { applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };

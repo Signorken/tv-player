@@ -6,6 +6,7 @@ const DEFAULTS = {
   sources: [], activeSource: null,
   settings: {
     previewVideo: false,     // anteprima video mentre si scorrono i canali (consuma risorse)
+    wallpaper: '01-aurora',   // sfondo (vedi www/wallpapers) oppure 'none'
     audioLang: '',           // lingua audio preferita (it, en…): ricordata quando la scegli nel player
     miniPlayer: true,        // Indietro dal player = finestrella in un angolo (continua a guardare mentre navighi)
     lowPower: true,          // niente animazioni/ombre
