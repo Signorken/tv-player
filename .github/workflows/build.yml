@@ -1,12 +1,18 @@
 # Compila gli installer nativi (Windows .exe, macOS .dmg, Linux .AppImage/.deb/.rpm) e, con un tag, pubblica la Release
 # da cui l'app si aggiorna da sola.
 #   Rilascio:  git tag v1.3.0 && git push --tags      (la versione viene presa dal tag)
-#   Prova:     Actions > Build > Run workflow          (solo artefatti, nessuna Release)
+#          oppure Actions > Build > Run workflow con il campo "Versione" compilato (es. 1.3.2)
+#   Prova:     Actions > Build > Run workflow a campo vuoto (solo artefatti, nessuna Release)
 name: Build
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versione da pubblicare (es. 1.3.2). Vuoto = solo compilazione di prova, nessuna Release'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -35,7 +41,9 @@ jobs:
         shell: bash
         run: |
           npm pkg set repository.url="https://github.com/${{ github.repository }}.git"
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version; fi
+          V=""
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then V="${GITHUB_REF_NAME#v}"; elif [[ -n "${{ inputs.version }}" ]]; then V="${{ inputs.version }}"; fi
+          if [[ -n "$V" ]]; then npm version "$V" --no-git-tag-version --allow-same-version; echo "RELEASE=1" >> "$GITHUB_ENV"; fi
       - run: npm ci
       - name: ffmpeg universale (macOS Intel + Apple Silicon)
         if: matrix.os == 'macos-latest'
@@ -49,7 +57,7 @@ jobs:
       - name: Compila (e pubblica se è un tag)
         shell: bash
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then P=always; else P=never; fi
+          if [[ "$RELEASE" == "1" ]]; then P=always; else P=never; fi
           npx electron-builder ${{ matrix.target }} --publish $P
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
