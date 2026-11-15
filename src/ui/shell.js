@@ -4,6 +4,7 @@ import * as store from '../core/store.js';
 import * as nav from '../core/nav.js';
 import { router } from '../core/router.js';
 import { icon } from './icons.js';
+import { Sel } from './sound.js';
 
 export const VERSION = typeof __VERSION__ !== 'undefined' ? __VERSION__ : 'dev';
 
@@ -11,20 +12,20 @@ export const VERSION = typeof __VERSION__ !== 'undefined' ? __VERSION__ : 'dev';
 const ITEMS = [
   ['home', 'home', 'Home', hm => { }],
   ['live', 'tv', 'TV in diretta', hm => hm.openLive()],
-  ['movie', 'film', 'Film', hm => hm.openVod('movie')],
-  ['series', 'series', 'Serie TV', hm => hm.openVod('series')],
-  ['sport', 'trophy', 'Sport', hm => hm.openSport()],
+  ['ondemand', 'film', 'On Demand', hm => hm.openVod('movie')],
   ['files', 'folder', 'File di rete', hm => hm.openFiles()],
   ['favs', 'star', 'Preferiti', hm => hm.openFavs()],
   ['set', 'gear', 'Impostazioni', hm => hm.openSettings()]
 ];
 export const MENU = ITEMS.map(x => ({ id: x[0], icon: x[1], label: x[2], go: x[3] }));
+// sezioni raggiungibili (anche come schermata all'avvio) senza una voce propria nel menu
+const EXTRA = { movie: hm => hm.openVod('movie'), series: hm => hm.openVod('series'), sport: hm => hm.openSport() };
 
 // apre una sezione partendo sempre dalla Home (così Indietro riporta lì)
 export function goSection(id) {
   router.home();
   const hm = router.current, it = MENU.find(m => m.id === id);
-  if (hm && it) it.go(hm);
+  if (hm && it) it.go(hm); else if (hm && EXTRA[id]) EXTRA[id](hm);
 }
 
 let rail = null, items = [], sel = 0, prev = null, clockEl = null, clockT = null;
@@ -42,6 +43,7 @@ export const Rail = {
     this.active = true;
     sel = Math.max(0, items.findIndex(e => e._id === (s.railId || 'home')));
     rail.classList.add('open');
+    Sel.v++;
     this._paint();
     return true;
   },
@@ -59,7 +61,7 @@ export const Rail = {
     if (k === 'up' || k === 'down') {
       let n = sel;
       do { n += k === 'down' ? 1 : -1; } while (n >= 0 && n < items.length && items[n].style.display === 'none');
-      if (n >= 0 && n < items.length) { sel = n; this._paint(); }
+      if (n >= 0 && n < items.length) { sel = n; Sel.v++; this._paint(); }
       return true;
     }
     if (k === 'right' || k === 'back') { this.exit(); return true; }
@@ -78,7 +80,7 @@ export const Rail = {
     items.forEach(e => e.classList.toggle('cur', e._id === id));
     const m = this.mini && this.mini();
     items[0].style.display = m ? '' : 'none';
-    if (m) items[0].lastChild.textContent = 'In riproduzione: ' + m;
+    if (m) { const sp = items[0].lastChild; sp.innerHTML = ''; sp.appendChild(h('span', { class: 'mq' + (m.length > 13 ? ' run' : ''), text: m })); }
   }
 };
 

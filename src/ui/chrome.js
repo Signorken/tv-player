@@ -6,7 +6,7 @@ import { router } from '../core/router.js';
 export function header(title, sub, buttons) {
   const right = h('div', { class: 'hd-r' });
   const btns = (buttons || []).map(b => {
-    const e = h('div', { class: 'btn small', 'data-f': 1, onclick: b.onclick }, b.icon ? icon(b.icon) : null, b.label ? h('span', { text: b.label }) : null);
+    const e = h('div', { class: 'btn small' + (b.tab !== undefined ? ' tab' + (b.tab ? ' on' : '') : ''), 'data-f': 1, onclick: b.onclick }, b.icon ? icon(b.icon) : null, b.label ? h('span', { text: b.label }) : null);
     right.appendChild(e); return e;
   });
   const t = h('div', { class: 'hd-t', text: title }), s = h('div', { class: 'hd-s', text: sub || '' });

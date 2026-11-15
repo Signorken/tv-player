@@ -17,10 +17,13 @@ export class VodScreen {
   // mode: 'movie' | 'series'
   constructor(src, mode, opts) {
     this.opts = opts || {};
-    this.railId = this.opts.sport ? 'sport' : mode;
-    this.src = src; this.mode = mode; this.zone = 'grid'; this.query = '';
-    this.title = mode === 'movie' ? 'Film' : 'Serie TV';
-    this.hd = header(this.title, src.name, [
+    this.railId = 'ondemand';
+    this.src = src; this.mode = this.baseMode = mode; this.zone = 'grid'; this.query = '';
+    this.title = this.opts.sport ? 'Sport on demand' : mode === 'movie' ? 'Film' : 'Serie TV';
+    // On Demand: Film, Serie TV e Sport sono schede della stessa schermata
+    const tab = (label, m, sp) => ({ label: label, tab: !!sp === !!this.opts.sport && m === mode, onclick: () => { if (!(!!sp === !!this.opts.sport && m === mode)) router.replace(new VodScreen(src, m, { sport: sp, fromTab: true })); } });
+    this.hd = header('On Demand', src.name, [
+      tab('Film', 'movie'), tab('Serie TV', 'series'), tab('Sport', 'movie', true),
       { icon: 'search', label: 'Cerca', onclick: () => this.search() },
       { icon: 'list', label: 'Sorgente', onclick: async () => { const m = await import('./home.js'); m.chooseSource(true); } }
     ]);
@@ -44,7 +47,7 @@ export class VodScreen {
       fill: (n, it) => {
         if (n._it !== it) { n._it = it; n._t.textContent = it.name; setImg(n._p, it.poster); n._b.textContent = it.rating && +it.rating ? '★ ' + it.rating : ''; }
         const mk = store.favKey(this.src.id, 'movie', it.id);
-        const done = this.mode === 'movie' ? (store.getProgress(mk) || store.isWatched(mk)) : null;
+        const done = (it._mode || this.mode) === 'movie' ? (store.getProgress(mk) || store.isWatched(mk)) : null;
         n.classList.toggle('seen', !!done);
       },
       onChange: it => this.onItem(it),
@@ -66,21 +69,27 @@ export class VodScreen {
     if (first) {
       showLoading('Caricamento ' + this.title.toLowerCase() + '…', this.src.name);
       try {
-        let cats = await (this.mode === 'movie' ? this.src.vodCats() : this.src.seriesCats());
+        let cats;
+        if (this.opts.sport) {
+          // sport: categorie sportive di film e serie insieme
+          const r = await Promise.all([Promise.resolve().then(() => this.src.vodCats()).catch(() => []), Promise.resolve().then(() => this.src.seriesCats()).catch(() => [])]);
+          cats = r[0].filter(c => isSportGroup(c.name)).map(c => Object.assign({}, c, { _mode: 'movie' }))
+            .concat(r[1].filter(c => isSportGroup(c.name)).map(c => Object.assign({}, c, { _mode: 'series', name: c.name + '  · serie' })));
+          if (!cats.length) Modal.toast('Nessun contenuto sportivo on demand in questa sorgente. Le dirette sono in TV in diretta › Sport', 6000);
+        } else cats = await (this.mode === 'movie' ? this.src.vodCats() : this.src.seriesCats());
         hideLoading();
         const sp = this.opts.sport;
-        if (sp) cats = cats.filter(c => isSportGroup(c.name));
         this.baseCats = cats;
         const list = [{ id: '', name: 'Tutti' }, { id: '__fav', name: 'Preferiti' }, { id: '__cont', name: 'Continua a guardare' }].concat(cats);
         if (this.mode === 'series') list.splice(2, 1);
-        if (sp) { const i = list.findIndex(c => c.id === '__cont'); if (i >= 0) list.splice(i, 1); }
+        if (sp) list.splice(1, list.length - 1 - cats.length);
         this.catList = list;
         this.cats.setItems(list);
         this.loaded = true;
         this.cats.sel = !sp && list.length > 3 && this.src.cfg.type === 'xtream' ? 3 : 0;
         this.cats.render();
         await this.pickCat(list[this.cats.sel]);
-        this.setZone('grid');
+        this.setZone(this.opts.fromTab ? 'bar' : 'grid');
       } catch (e) { hideLoading(); Modal.toast('Errore: ' + e.message, 5000); router.back(); }
     } else {
       this.cats.relayout(); this.grid.relayout(); this.setZone(this.zone === 'bar' ? 'grid' : this.zone); this.grid.render();
@@ -101,10 +110,16 @@ export class VodScreen {
       return out;
     }
     if (this.opts.sport && c.id === '') {
-      const parts = await Promise.all(this.baseCats.map(k => m ? this.src.vodItems(k.id) : this.src.seriesItems(k.id)));
+      const parts = await Promise.all(this.baseCats.map(k => this._items(k)));
       return [].concat.apply([], parts);
     }
+    if (this.opts.sport) return this._items(c);
     return m ? this.src.vodItems(c.id) : this.src.seriesItems(c.id);
+  }
+  async _items(k) {
+    const l = await (k._mode === 'series' ? this.src.seriesItems(k.id) : this.src.vodItems(k.id));
+    l.forEach(i => { i._mode = k._mode; });
+    return l;
   }
 
   async pickCat(c) {
@@ -122,7 +137,7 @@ export class VodScreen {
   setZone(z) {
     this.zone = z;
     this.cats.setActive(z === 'cats'); this.grid.setActive(z === 'grid');
-    if (z === 'bar') nav.focus(this.hd.buttons[0]);
+    if (z === 'bar') nav.focus(this.hd.el.querySelector('.tab.on') || this.hd.buttons[0]);
     else if (nav.getFocus() && this.hd.el.contains(nav.getFocus())) nav.getFocus().classList.remove('focused');
   }
 
@@ -137,7 +152,7 @@ export class VodScreen {
       if (k === 'ok') { nav.activate(); return true; }
     } else {
       if (k === 'green') { this.search(); return true; }
-      if (k === 'yellow') { this.hd.buttons[1].click(); return true; }
+      if (k === 'yellow') { this.hd.buttons[4].click(); return true; }
       if (k === 'red') { this.toggleFav(this.grid.current()); return true; }
       const vl = this.zone === 'cats' ? this.cats : this.grid;
       if (vl.handleKey(k)) return true;
@@ -179,7 +194,7 @@ export class VodScreen {
     if (this.grid.current() !== it) return;
     let inf = this.infoCache[it.id];
     if (!inf) {
-      try { inf = this.infoCache[it.id] = this.mode === 'movie' ? await this.src.vodInfo(it) : (await this.src.seriesInfo(it)).info; } catch (e) { return; }
+      try { inf = this.infoCache[it.id] = (it._mode || this.mode) === 'movie' ? await this.src.vodInfo(it) : (await this.src.seriesInfo(it)).info; } catch (e) { return; }
     }
     if (this.grid.current() !== it) return;
     this.iP.textContent = inf.plot || it.plot || '';
@@ -189,12 +204,12 @@ export class VodScreen {
 
   open(it) {
     if (!it) return;
-    router.push(new DetailScreen(this.src, this.mode, it, this.infoCache[it.id]));
+    router.push(new DetailScreen(this.src, it._mode || this.mode, it, this.infoCache[it.id]));
   }
 
   toggleFav(it) {
     if (!it) return;
-    const kind = this.mode === 'movie' ? 'movie' : 'series';
+    const kind = (it._mode || this.mode) === 'movie' ? 'movie' : 'series';
     const key = store.favKey(this.src.id, kind, it.id);
     const on = store.toggleFav(key, { kind: kind, src: this.src.id, id: it.id, name: it.name, logo: it.poster, poster: it.poster, ext: it.ext, item: it });
     Modal.toast(on ? '★ Aggiunto ai preferiti' : 'Rimosso dai preferiti', 1500);

@@ -1,4 +1,5 @@
 // Navigazione spaziale leggera: sceglie l'elemento [data-f] più vicino nella direzione premuta.
+import { Sel } from '../ui/sound.js';
 let scope = document.body;
 let current = null;
 
@@ -20,6 +21,7 @@ export function focusables(root) {
 }
 
 export function focus(el, noScroll) {
+  if (current !== el) Sel.v++;
   if (current && current !== el) current.classList.remove('focused');
   current = el || null;
   if (!el) return;

@@ -1,6 +1,7 @@
 // Lista/griglia virtualizzata: solo ~20 nodi DOM, anche con 50.000 canali.
 // Gestisce da sola la selezione e i tasti direzionali.
 import { h } from '../core/util.js';
+import { Sel } from './sound.js';
 
 export class VList {
   /**
@@ -72,7 +73,9 @@ export class VList {
   current() { return this.items[this.sel]; }
   select(i, silent) {
     if (!this.items.length) return;
-    this.sel = Math.max(0, Math.min(this.items.length - 1, i));
+    const ns = Math.max(0, Math.min(this.items.length - 1, i));
+    if (ns !== this.sel) Sel.v++;
+    this.sel = ns;
     this.render();
     if (!silent && this.o.onChange) this.o.onChange(this.items[this.sel], this.sel);
   }

@@ -12,21 +12,32 @@ import { applyUi } from './screens/settings.js';
 import { addSourceFlow, addFromText, addFromClipboard, importFiles, pickPlaylistFile, discoverFlow, addFolderFlow, playUrl } from './screens/addflow.js';
 import { uid } from './core/util.js';
 import { initShell, Rail, goSection } from './ui/shell.js';
+import { Sound, Sel } from './ui/sound.js';
 
 function defaultNav(a) {
   switch (a.a) {
     case 'up': case 'down': case 'right': if (!nav.move(a.a)) Mini.focusFrom(a.a); break;
     case 'left': if (!nav.move('left')) Rail.enter(); break;
     case 'ok': nav.activate(); break;
-    case 'back': router.back(); break;
+    case 'back': case 'longback': router.back(); break;
   }
 }
 
+// suoni: spostamento solo se la selezione è cambiata davvero; mai dentro il player
+const ARROW = { up: 1, down: 1, left: 1, right: 1, chup: 1, chdown: 1 };
 function dispatch(a, e) {
+  const s0 = router.current, quiet = !!(s0 && s0.isPlayer && !Modal.top()), v0 = Sel.v;
+  dispatchKey(a, e);
+  if (quiet) return;
+  if (ARROW[a.a]) { if (Sel.v !== v0) Sound.move(); }
+  else if (a.a === 'ok') Sound.ok();
+  else if (a.a === 'back' || a.a === 'backspace') Sound.back();
+}
+function dispatchKey(a, e) {
   const m = Modal.top();
   if (m) {
     if (m.onKey && m.onKey(a, e)) return;
-    if (a.a === 'backspace') a = { a: 'back' };
+    if (a.a === 'backspace' || a.a === 'longback') a = { a: 'back' };
     if (a.a === 'back') { if (m.cancelable) m.close(); return; }
     defaultNav(a); return;
   }
@@ -87,6 +98,9 @@ router.push(new HomeScreen());
   goSection(st);
 })();
 
+// clic del mouse su un elemento: stesso suono di OK (i clic simulati dal telecomando non sono isTrusted)
+document.addEventListener('click', e => { if (!e.isTrusted) return; const c = router.current; if (c && c.isPlayer && !c.mini) return; if (e.target.closest && e.target.closest('[data-f],.ri,.vl-row')) Sound.ok(); }, true);
+
 // ---- desktop / mouse
 // Il puntatore (anche il Magic Remote LG) attiva la modalità "mouse": hover, pulsante indietro visibile
 let lastMove = 0;
@@ -95,7 +109,7 @@ window.addEventListener('mousemove', e => {
   if (!document.body.classList.contains('mouse')) document.body.classList.add('mouse');
   // hover = focus per gli elementi navigabili (non nelle liste virtuali, che gestiscono da sole)
   const t = e.target && e.target.closest ? e.target.closest('[data-f]') : null;
-  if (t && t !== nav.getFocus()) { const m = Modal.top(); if (m) { if (m.el.contains(t)) nav.focus(t, true); } else if (nav.getScope().contains(t) && !t.hasAttribute('data-off')) nav.focus(t, true); }
+  if (t && t !== nav.getFocus()) { const m = Modal.top(); if (m) { if (m.el.contains(t)) { nav.focus(t, true); Sound.move(); } } else if (nav.getScope().contains(t) && !t.hasAttribute('data-off')) { nav.focus(t, true); Sound.move(); } }
 }, true);
 if (platform.isDesktop) {
   document.body.classList.add('desktop');
@@ -152,4 +166,4 @@ if (platform.isDesktop) {
     if (store.settings().userAgent && window.desktop.setUserAgent) window.desktop.setUserAgent(store.settings().userAgent);
   }
 }
-window.__app = { Mini: Mini, applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };
+window.__app = { Mini: Mini, Sound: Sound, applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };

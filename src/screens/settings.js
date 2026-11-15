@@ -215,16 +215,17 @@ export class SettingsScreen {
       { id: 'play', label: 'Riproduzione', icon: 'play', items: list(
         choice('Formato canali live Xtream', 'liveFormat', [['m3u8', 'HLS (.m3u8) — consigliato'], ['ts', 'MPEG-TS (.ts)']]),
         choice('Lingua audio preferita', 'audioLang', langs, null, null),
-        toggle('Indietro dal player = finestrella (navighi mentre guardi)', 'miniPlayer'),
+        choice('Finestrella (Indietro dal player)', 'miniPlayer', [['always', 'Sempre'], ['live', 'Solo con i canali TV'], ['vod', 'Solo con film e serie'], ['never', 'Mai (Indietro chiude il player)']]),
         toggle('Anteprima video scorrendo i canali (usa più risorse)', 'previewVideo'),
         choice('Buffer di riproduzione', 'bufferSec', [[10, '10 secondi (poca RAM)'], [20, '20 secondi'], [40, '40 secondi (connessione instabile)']]),
         platform.isDesktop ? choice('Convertitore video (film/serie)', 'transcode', [['auto', 'Automatico: solo se serve (consigliato)'], ['always', 'Sempre (codec strani, timeline bloccata)'], ['never', 'Mai (solo lettore nativo)']]) : null) },
       { id: 'look', label: 'Aspetto', icon: 'tv', items: [
         choice('Disposizione', 'layout', [['A', 'Aspetto A: barra laterale (consigliato)'], ['B', 'Aspetto B: pulsanti in alto']], null, () => { applyUi(); const hm = router.current; }),
         choice('Orologio', 'clock', [['24', '24 ore (21:45)'], ['12', '12 ore (9:45 PM)']], null, applyUi),
-        choice('Schermata all\'avvio', 'startScreen', [['home', 'Home'], ['live', 'TV in diretta'], ['movie', 'Film'], ['series', 'Serie TV'], ['sport', 'Sport'], ['favs', 'Preferiti'], ['last', 'Ultimo canale visto']]),
+        choice('Schermata all\'avvio', 'startScreen', [['home', 'Home'], ['live', 'TV in diretta'], ['movie', 'On Demand: Film'], ['series', 'On Demand: Serie TV'], ['sport', 'On Demand: Sport'], ['favs', 'Preferiti'], ['last', 'Ultimo canale visto']]),
         choice('Sfondo', 'wallpaper', WALLPAPERS, null, applyUi),
         choice('Dimensione interfaccia', 'uiScale', [[80, 'Piccola (80%)'], [90, '90%'], [100, 'Normale (100%)'], [115, 'Grande (115%)'], [130, 'Molto grande (130%)']], null, applyUi),
+        toggle('Suoni di navigazione', 'sounds'),
         toggle('Risparmio risorse (niente animazioni)', 'lowPower', applyUi)] },
       { id: 'net', label: platform.isDesktop ? 'Rete' : 'Rete e telefono', icon: 'cloud', items: list(
         platform.isDesktop ? choice('Identità del lettore (se il provider blocca)', 'userAgent', UA, null, () => window.desktop && window.desktop.setUserAgent && window.desktop.setUserAgent(S().userAgent)) : toggle('Video tramite proxy (se il server blocca CORS)', 'proxyMedia'),
