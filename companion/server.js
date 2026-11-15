@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * TV Player — companion (zero dipendenze, Node 14+)
+ * MAXENTA — companion (zero dipendenze, Node 14+)
  *
  * Fa tre cose, tutte sulla rete locale:
  *  1) RELAY: la TV non può fare da server HTTP, quindi il telefono parla con questo programma e la TV
@@ -169,6 +169,6 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
   const nets = require('os').networkInterfaces(); const ips = [];
   Object.keys(nets).forEach(k => nets[k].forEach(n => { if (n.family === 'IPv4' && !n.internal) ips.push(n.address); }));
-  console.log('TV Player companion in ascolto sulla porta ' + PORT);
+  console.log('MAXENTA companion in ascolto sulla porta ' + PORT);
   ips.forEach(ip => console.log('  indirizzo da inserire nella TV:  http://' + ip + ':' + PORT + '    |  app per browser TV: http://' + ip + ':' + PORT + '/app/'));
 });

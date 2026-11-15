@@ -195,7 +195,7 @@ export class PairScreen {
 // ---------------- impostazioni ----------------
 export class SettingsScreen {
   constructor() {
-    this.hd = header('Impostazioni', 'TV Player', []);
+    this.hd = header('Impostazioni', 'MAXENTA', []);
     this.catBox = h('div', { class: 'scats' });
     this.panel = h('div', { class: 'spanel', 'data-scroll': 1 });
     this.el = h('div', { class: 'screen sets' }, this.hd.el, h('div', { class: 'sbody' }, this.catBox, this.panel), hints([['ok', 'Cambia'], ['back', 'Indietro']]));
@@ -229,7 +229,7 @@ export class SettingsScreen {
         { label: 'Svuota cache e guida programmi', value: () => '', act: async () => { await store.idbClear(); Epg.reset(); Modal.toast('Cache svuotata'); } }] },
       { id: 'info', label: 'Informazioni', icon: 'info', items: list(
         platform.isDesktop ? { label: 'Versione', value: () => 'v' + (window.__ver || '…'), button: { label: 'Verifica aggiornamenti', act: () => window.desktop.updateCheck() } } : null,
-        { label: 'Piattaforma e comandi', value: () => platform.name, act: () => Modal.confirm('TV Player', 'Piattaforma rilevata: ' + platform.name + (platform.isDesktop ? '\nMouse: clic per aprire, tasto destro = opzioni, rotella = scorri.\nTastiera: Ctrl+V incolla un link/playlist, Spazio pausa, F schermo intero, M muto, ← → ±10 s, Esc indietro.' : '\nTasti: frecce + OK; OK lungo = menu; Rosso = preferito; Verde = cerca; Blu = audio/sottotitoli/finestrella; Giallo = rimuovi riga; numeri = canale.'), 'OK', '') }) }
+        { label: 'Piattaforma e comandi', value: () => platform.name, act: () => Modal.confirm('MAXENTA', 'Piattaforma rilevata: ' + platform.name + (platform.isDesktop ? '\nMouse: clic per aprire, tasto destro = opzioni, rotella = scorri.\nTastiera: Ctrl+V incolla un link/playlist, Spazio pausa, F schermo intero, M muto, ← → ±10 s, Esc indietro.' : '\nTasti: frecce + OK; OK lungo = menu; Rosso = preferito; Verde = cerca; Blu = audio/sottotitoli/finestrella; Giallo = rimuovi riga; numeri = canale.'), 'OK', '') }) }
     ];
     this.catEls = this.cats.map((c, i) => {
       const e = h('div', { class: 'scat', 'data-f': 1, onclick: () => { this.show(i); this.toPanel(); } }, icon(c.icon), h('span', { text: c.label }));

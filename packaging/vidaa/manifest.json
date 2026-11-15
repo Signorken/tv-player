@@ -1,6 +1,6 @@
 {
-  "name": "TV Player",
-  "short_name": "TV Player",
+  "name": "MAXENTA",
+  "short_name": "MAXENTA",
   "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "landscape",

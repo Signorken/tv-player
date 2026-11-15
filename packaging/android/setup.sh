@@ -10,6 +10,21 @@ npm i @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacito
 cp ../packaging/android/capacitor.config.json .
 rm -rf www && cp -r ../www www
 npx cap add android
+# icona e banner MAXENTA (banner 320x180 per il launcher TV; icone launcher dal logo 512x512)
+mkdir -p android/app/src/main/res/drawable-xhdpi
+cp ../packaging/android/banner-1280x720.png android/app/src/main/res/drawable-xhdpi/banner.png
+python3 - <<'PY2'
+import os
+try:
+    from PIL import Image
+    L=Image.open('../packaging/vidaa/icon.png').convert('RGBA')
+    for d,sz in {'mdpi':48,'hdpi':72,'xhdpi':96,'xxhdpi':144,'xxxhdpi':192}.items():
+        for n in ('ic_launcher.png','ic_launcher_round.png','ic_launcher_foreground.png'):
+            q='android/app/src/main/res/mipmap-'+d
+            if os.path.isdir(q): L.resize((sz,sz)).save(q+'/'+n)
+except ImportError:
+    print('Pillow non installato: icone launcher lasciate di default (pip install pillow)')
+PY2
 python3 - <<'PY'
 import re,io
 p='android/app/src/main/AndroidManifest.xml'
@@ -21,7 +36,7 @@ if 'android.software.leanback' not in s:
 s=s.replace('<category android:name="android.intent.category.LAUNCHER" />','<category android:name="android.intent.category.LAUNCHER" />\n                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />',1)
 # 3) HTTP in chiaro (server IPTV/NAS locali)
 if 'usesCleartextTraffic' not in s:
-    s=s.replace('<application','<application android:usesCleartextTraffic="true" android:banner="@mipmap/ic_launcher"',1)
+    s=s.replace('<application','<application android:usesCleartextTraffic="true" android:banner="@drawable/banner"',1)
 open(p,'w',encoding='utf-8').write(s)
 print('AndroidManifest.xml aggiornato')
 PY

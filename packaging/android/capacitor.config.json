@@ -1,6 +1,6 @@
 {
   "appId": "com.example.tvplayer",
-  "appName": "TV Player",
+  "appName": "MAXENTA",
   "webDir": "www",
   "server": { "androidScheme": "http", "cleartext": true },
   "android": { "allowMixedContent": true },

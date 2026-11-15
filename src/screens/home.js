@@ -13,7 +13,7 @@ import { VodScreen } from './vod.js';
 import { FilesScreen } from './files.js';
 import { FavsScreen } from './favs.js';
 import { SettingsScreen, SourcesScreen } from './settings.js';
-import { addSourceFlow, addFromClipboard, pickPlaylistFile, discoverFlow, addFolderFlow } from './addflow.js';
+import { addNetworkFolderFlow, addSourceFlow, addFromClipboard, pickPlaylistFile, discoverFlow, addFolderFlow } from './addflow.js';
 import { DetailScreen } from './detail.js';
 import { PlayerScreen } from './player.js';
 import { openSport } from './sport.js';
@@ -104,7 +104,7 @@ export class HomeScreen {
     this.contHd = h('div', { class: 'conthd' }, this.contT, h('span', { class: 'contnote', text: 'Solo film e serie' }), h('div', { class: 'flex1' }), this.contX);
     this.empty = h('div', { class: 'empty' });
     this.el = h('div', { class: 'screen home' },
-      h('div', { class: 'hbar' }, h('div', { class: 'brand' }, icon('tv'), h('span', { text: 'TV Player' })), h('div', { class: 'hbr' }, h('div', { class: 'btn small accent', 'data-f': 1, title: 'Lista canali (tasto verde)', onclick: () => this.openLive() }, icon('tv'), h('span', { text: 'TV in diretta' })), platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: 'Aggiungi sorgente (Ctrl+V per incollare un link)', onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: 'Aggiungi' })) : null, this.srcBtn, this.clock)),
+      h('div', { class: 'hbar' }, h('div', { class: 'brand' }, icon('tv'), h('span', { text: 'MAXENTA' })), h('div', { class: 'hbr' }, h('div', { class: 'btn small accent', 'data-f': 1, title: 'Lista canali (tasto verde)', onclick: () => this.openLive() }, icon('tv'), h('span', { text: 'TV in diretta' })), platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: 'Aggiungi sorgente (Ctrl+V per incollare un link)', onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: 'Aggiungi' })) : null, this.srcBtn, this.clock)),
       this.tiles, this.hero, this.empty, this.contHd, this.cont,
       hints([['ok', 'Apri'], ['green', 'TV in diretta'], ['yellow', 'Rimuovi riga'], ['back', 'Esci']]));
     this.clockT = setInterval(() => { this.clock.textContent = fmtClock(Date.now()); }, 20000);
@@ -124,6 +124,7 @@ export class HomeScreen {
           B('clip', 'Incolla link o playlist', () => addFromClipboard(), true),
           B('list', 'Scegli file playlist…', () => pickPlaylistFile()),
           B('cloud', 'Cerca NAS in rete', () => discoverFlow()),
+          B('folder', 'NAS Windows (\\\\NAS\\cartella)', () => addNetworkFolderFlow()),
           B('folder', 'Cartella del computer…', () => addFolderFlow()),
           B('plus', 'Altre opzioni (manuale)', () => addSourceFlow()),
           B('play', 'Prova con la demo', () => addDemo())));

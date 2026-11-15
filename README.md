@@ -1,4 +1,4 @@
-# TV Player — Android TV · Google TV · Fire OS · Tizen · webOS · VIDAA · Windows · macOS · Linux
+# MAXENTA — Android TV · Google TV · Fire OS · Tizen · webOS · VIDAA · Windows · macOS · Linux
 
 Player multimediale per televisori: **TV in diretta, film e serie** da playlist **M3U/M3U8**, da **Xtream Codes API** e da **server di rete (NAS)**, pensato per il **solo telecomando**, con interfaccia leggera.
 
@@ -46,9 +46,9 @@ Se il provider blocca i browser, in **Impostazioni › Identità del lettore** p
 
 | Sistema | File | Note |
 |---|---|---|
-| **Windows 10/11** | `TV-Player-x.y.z-win-x64.exe` (installer NSIS, per-utente, **senza permessi di amministratore**) e versione `portable` | Non firmato: SmartScreen mostra “Windows ha protetto il PC” → *Ulteriori informazioni › Esegui comunque* |
-| **macOS 11+** | `TV-Player-x.y.z-mac-universal.dmg` (Intel + Apple Silicon): trascina nelle Applicazioni | Non firmato/notarizzato: la prima volta tasto destro › Apri, oppure `xattr -dr com.apple.quarantine "/Applications/TV Player.app"` |
-| **Linux** | `.AppImage` (qualunque distro: `chmod +x` e doppio clic) · `.deb` (Debian/Ubuntu/Mint: `sudo apt install ./TV-Player-*.deb`) · `.rpm` (Fedora/openSUSE, solo da CI) | Il `.deb` aggiunge icona al menu e associazione `.m3u` |
+| **Windows 10/11** | `MAXENTA-x.y.z-win-x64.exe` (installer NSIS, per-utente, **senza permessi di amministratore**) e versione `portable` | Non firmato: SmartScreen mostra “Windows ha protetto il PC” → *Ulteriori informazioni › Esegui comunque* |
+| **macOS 11+** | `MAXENTA-x.y.z-mac-universal.dmg` (Intel + Apple Silicon): trascina nelle Applicazioni | Non firmato/notarizzato: la prima volta tasto destro › Apri, oppure `xattr -dr com.apple.quarantine "/Applications/MAXENTA.app"` |
+| **Linux** | `.AppImage` (qualunque distro: `chmod +x` e doppio clic) · `.deb` (Debian/Ubuntu/Mint: `sudo apt install ./MAXENTA-*.deb`) · `.rpm` (Fedora/openSUSE, solo da CI) | Il `.deb` aggiunge icona al menu e associazione `.m3u` |
 
 **Come ottenerli.** I pacchetti Windows e macOS si costruiscono solo sul rispettivo sistema: il file `.github/workflows/build.yml` li produce tutti su GitHub Actions (carica il progetto su un repository GitHub, poi *Actions › Build › Run workflow* oppure crea un tag `v1.1.0`: gli installer compaiono negli artefatti e nella Release). In locale: `npm install && npm run build`, poi `npm run desktop` (prova), `npm run dist:linux` / `dist:win` (su Windows) / `dist:mac` (su Mac).
 

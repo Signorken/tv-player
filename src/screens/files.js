@@ -46,7 +46,8 @@ export class FilesScreen {
       Modal.toast('Errore: ' + e.message + ' — se è un problema CORS imposta il server companion nelle Impostazioni', 7000);
       this.entries = [];
     }
-    this.crumb.textContent = [this.src.name].concat(this.names).join('  ›  ');
+    const nv = this.entries.filter(x => x.kind === 'video').length, nd = this.entries.filter(x => x.dir).length;
+    this.crumb.textContent = [this.src.name].concat(this.names).join('  ›  ') + '   —   ' + (nv ? nv + (nv === 1 ? ' video' : ' video') : 'nessun video') + (nd ? ', ' + nd + (nd === 1 ? ' cartella' : ' cartelle') : '');
     this.list.setItems(this.entries, !!keepSel);
     this.onEntry(this.list.current());
   }
@@ -77,13 +78,17 @@ export class FilesScreen {
   }
 
   async menu(e) {
-    if (!e || e.dir) return;
+    if (!e) return;
     const items = [];
+    if (e.dir && this.src.cfg && this.src.cfg.type === 'local') items.push({ label: 'Salva come accesso rapido', sub: 'Compare in “File di rete”', value: 'save', icon: 'star' });
     if (e.kind === 'video' || e.kind === 'audio') items.push({ label: 'Riproduci', value: 'play', icon: 'play' });
     if (e.kind === 'playlist') items.push({ label: 'Aggiungi come sorgente M3U', value: 'import', icon: 'plus' });
     if (!items.length) return;
     const r = await Modal.menu(e.name, items);
-    if (r === 'play') this.open(e);
+    if (r === 'save') {
+      store.addSource({ id: uid(), type: 'local', name: e.name, path: e.path });
+      Modal.toast('Cartella salvata: ' + e.name + ' — la trovi in “File di rete”', 4000);
+    } else if (r === 'play') this.open(e);
     else if (r === 'import') {
       showLoading('Importo la playlist…');
       try {

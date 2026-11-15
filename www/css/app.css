@@ -366,3 +366,7 @@ body:not(.lowpower) .hero{animation:scrIn .35s ease-out}
 .home .tiles .tile .t1{font-size:1.15rem;line-height:1.15;overflow-wrap:anywhere}
 .home .tiles .tile .ic{margin-right:.7rem}
 body.desktop .home .tiles .tile{padding:.55rem 1.1rem}
+/* Continua a guardare: locandine verticali (2:3) con immagine adattata in automatico */
+.ccard{width:8.7%;margin-right:1%}
+.cthumb{padding-top:150%}
+.cthumb img{object-fit:cover;object-position:center top;padding:0}

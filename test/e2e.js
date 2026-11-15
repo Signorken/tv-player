@@ -199,7 +199,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   ok('NAS: file in riproduzione', playingN);
   await key('Escape'); await sleep(500);
   await key('Escape'); await sleep(500); // su di una cartella
-  ok('NAS: indietro risale di cartella', /^NAS WebDAV$/.test((await text('.crumb')) || ''), await text('.crumb'));
+  ok('NAS: indietro risale di cartella', /^NAS WebDAV(\s+—|$)/.test((await text('.crumb')) || ''), await text('.crumb'));
   await key('Escape'); await sleep(400);
 
   // --- impostazioni / telefono
