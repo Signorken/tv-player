@@ -2,6 +2,7 @@
 import { h } from '../core/util.js';
 import * as nav from '../core/nav.js';
 import { icon } from './icons.js';
+import { tr } from '../core/i18n.js';
 
 const stack = [];
 let root = null;
@@ -52,7 +53,7 @@ export function confirm(title, text, yes, no) {
       h('div', { class: 'mtitle', text: title }),
       text ? h('div', { class: 'mbody', text: text }) : null,
       h('div', { class: 'mbtns' },
-        h('div', { class: 'btn', 'data-f': 1, onclick: () => fin(false), text: no || 'Annulla' }),
+        h('div', { class: 'btn', 'data-f': 1, onclick: () => fin(false), text: no || tr('Annulla') }),
         h('div', { class: 'btn primary', 'data-f': 1, onclick: () => fin(true), text: yes || 'OK' }))
     ], { cls: 'confirm' });
     m.onClose = () => { if (!done) { done = true; res(false); } };

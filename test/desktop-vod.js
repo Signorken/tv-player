@@ -26,7 +26,7 @@ const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'tvp-ud-'));
 (async () => {
   const xv = spawn('Xvfb', [':81', '-screen', '0', '1600x900x24'], { stdio: 'ignore' }); await sleep(800);
   const el = spawn(path.join(__dirname, '..', 'node_modules', 'electron', 'dist', 'electron'), ['.', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=9334', '--user-data-dir=' + userData],
-    { cwd: path.join(__dirname, '..'), env: Object.assign({}, process.env, { DISPLAY: ':81' }), stdio: 'ignore' });
+    { cwd: path.join(__dirname, '..'), env: Object.assign({}, process.env, { DISPLAY: ':81', LANG: 'it_IT.UTF-8', LANGUAGE: 'it' }), stdio: 'ignore' });
   const done = c => { try { el.kill(); xv.kill(); srv.close(); } catch (e) { /* */ } process.exit(c); };
   let browser; for (let i = 0; i < 30 && !browser; i++) { try { browser = await puppeteer.connect({ browserURL: 'http://127.0.0.1:9334', defaultViewport: null }); } catch (e) { await sleep(500); } }
   let page; for (let i = 0; i < 20; i++) { page = (await browser.pages()).find(p => /index\.html/.test(p.url())); if (page) break; await sleep(300); }

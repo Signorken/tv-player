@@ -4,7 +4,7 @@ const fs = require('fs'); const OUT = '/tmp/shots2'; fs.mkdirSync(OUT, { recursi
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const res = []; const ok = (n, c, x) => { res.push(c); console.log((c ? 'PASS ' : 'FAIL ') + n + (x ? '  — ' + x : '')); };
 (async () => {
-  const browser = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'], defaultViewport: { width: 1920, height: 1080 } });
+  const browser = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', env: Object.assign({}, process.env, { LANG: 'it_IT.UTF-8', LANGUAGE: 'it' }), args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'], defaultViewport: { width: 1920, height: 1080 } });
   const page = await browser.newPage();
   const errs = []; page.on('pageerror', e => errs.push(e.message));
   // simula una TV senza HLS nativo (webOS/Tizen vecchi hanno HLS, ma Chrome Android WebView no)

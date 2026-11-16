@@ -1,5 +1,6 @@
 // Cartella del computer o condivisione di rete già montata dal sistema (SMB/NFS/UNC): solo desktop
 import { kindOf, parseNfo, sortEntries, toFileUrl } from './shared.js';
+import { tr } from '../core/i18n.js';
 
 function sep(p) { return /\\/.test(p) && !/\//.test(p) ? '\\' : '/'; }
 
@@ -10,10 +11,10 @@ export class LocalSource {
   get rootPath() { return this.cfg.path; }
   dirPath(e) { return e.path; }
 
-  async test() { const r = await this.list(this.cfg.path); return r.length + ' elementi'; }
+  async test() { const r = await this.list(this.cfg.path); return r.length + tr(' elementi'); }
 
   async list(dir) {
-    if (!window.desktop) throw new Error('Le cartelle locali richiedono l\'app per computer');
+    if (!window.desktop) throw new Error(tr('Le cartelle locali richiedono l\'app per computer'));
     const raw = await window.desktop.listDir(dir);
     const s = sep(dir), base = dir.replace(/[\\/]+$/, '');
     let entries = raw.map(r => ({ name: r.name, path: base + s + r.name, dir: r.dir, kind: kindOf(r.name, r.dir), size: r.size || 0, date: r.mtime ? new Date(r.mtime).toLocaleDateString() : '' }));

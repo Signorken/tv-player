@@ -1,6 +1,7 @@
 // Sorgente file di rete (NAS): WebDAV oppure indice HTTP (nginx/apache autoindex, miniserve, ecc.)
 import { request, fetchText, proxyBase, viaProxy } from '../core/net.js';
 import { extOf, decodeEntities } from '../core/util.js';
+import { tr } from '../core/i18n.js';
 
 const VIDEO = { mkv: 1, mp4: 1, avi: 1, mov: 1, m4v: 1, ts: 1, webm: 1, wmv: 1, mpg: 1, mpeg: 1, m3u8: 1, flv: 1 };
 const AUDIO = { mp3: 1, flac: 1, aac: 1, m4a: 1, ogg: 1, wav: 1 };
@@ -29,7 +30,7 @@ export class DavSource {
   get id() { return this.cfg.id; }
   get name() { return this.cfg.name; }
 
-  async test() { const r = await this.list(this.root); return r.length + ' elementi nella cartella principale'; }
+  async test() { const r = await this.list(this.root); return r.length + tr(' elementi nella cartella principale'); }
 
   // path = percorso assoluto url-encoded che termina con '/'
   async list(path) {

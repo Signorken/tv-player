@@ -1,3 +1,4 @@
+import { tr } from './i18n.js';
 // Utility leggere, compatibili con Chromium datato (webOS 4 / Tizen 4+)
 export const $ = (s, r) => (r || document).querySelector(s);
 
@@ -84,7 +85,7 @@ export function loadScript(src) {
   if (loaded[src]) return loaded[src];
   loaded[src] = new Promise((res, rej) => {
     const s = document.createElement('script');
-    s.src = src; s.onload = () => res(); s.onerror = () => { delete loaded[src]; rej(new Error('Impossibile caricare ' + src)); };
+    s.src = src; s.onload = () => res(); s.onerror = () => { delete loaded[src]; rej(new Error(tr('Impossibile caricare ') + src)); };
     document.head.appendChild(s);
   });
   return loaded[src];

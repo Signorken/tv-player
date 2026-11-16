@@ -1,0 +1,83 @@
+// Prove del lettore nativo (ExoPlayer / AVPlay) con un backend finto (window.__fakeNative):
+// apertura, posizione del video, pausa, scorrimento, tracce, finestrella con "buco" nell'interfaccia, chiusura, ripiego sul lettore web.
+const puppeteer = require('puppeteer-core');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS ' : 'FAIL ') + n + (x ? '  — ' + x : '')); };
+(async () => {
+  const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', env: Object.assign({}, process.env, { LANG: 'it_IT.UTF-8', LANGUAGE: 'it' }), args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'], defaultViewport: { width: 1920, height: 1080 } });
+  const p = await b.newPage();
+  const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.evaluateOnNewDocument(() => { window.__fakeNative = true; });
+  const key = async (k, n) => { for (let i = 0; i < (n || 1); i++) { await p.keyboard.press(k); await sleep(150); } };
+  const wait = (fn, ms) => p.waitForFunction(fn, { timeout: ms || 12000, polling: 100 }).then(() => true).catch(() => false);
+  const log = () => p.evaluate(() => (window.__fakeLog || []).join(' | '));
+  await p.goto('http://localhost:8787/app/'); await sleep(300);
+  await p.evaluate(() => localStorage.clear()); await p.reload(); await sleep(300);
+  await p.evaluate(() => { const s = window.__app.store; s.settings().proxyMedia = true; s.settings().sounds = false; s.addSource({ id: 'x1', type: 'xtream', name: 'Xtream', url: 'http://localhost:9100', user: 'u', pass: 'p', epgMode: 'short' }); s.setActive('x1'); s.save(true); });
+  await p.reload(); await sleep(800);
+  await p.evaluate(() => window.__app.router.current.openLive());
+  await wait(() => window.__app.router.current.all, 20000); await sleep(400);
+  await key('Enter');
+  ok('canale aperto col lettore nativo', await wait(() => { const c = window.__app.router.current; return c.isPlayer && c.video.isNative && c.video.currentTime > 0.3; }, 15000), await log());
+  ok('video nativo a schermo intero sotto la pagina (pagina trasparente)', await p.evaluate(() => document.documentElement.classList.contains('nv') && getComputedStyle(document.querySelector('video.pv')).visibility === 'hidden' && window.__fakeRect && window.__fakeRect.full));
+  ok('spinner nascosto quando il video parte', await p.evaluate(() => !document.querySelector('.pspin').classList.contains('show')));
+  await sleep(5600);
+  await key('Enter'); await key('Enter'); await sleep(400);
+  ok('OK, OK: pausa inviata al lettore nativo', /pause/.test(await log()) && await p.evaluate(() => window.__app.router.current.video.paused));
+  await key('Enter'); await sleep(300);
+  await key('ArrowRight'); await sleep(500);
+  ok('pannello Opzioni con Audio (tracce lette dal lettore nativo)', await p.evaluate(() => /Audio/.test(document.querySelector('.pdrawer').textContent)));
+  await p.evaluate(() => { const c = window.__app.router.current; c.optionsDrawer('audio'); }); await sleep(300);
+  await key('ArrowDown'); await key('Enter'); await sleep(300);
+  ok('cambio lingua audio inviato al lettore nativo', /select audio 0 1/.test(await log()), await log());
+  await key('Escape'); await sleep(700);
+  ok('finestrella: il video nativo si sposta nel riquadro', await p.evaluate(() => window.__fakeRect && !window.__fakeRect.full && window.__fakeRect.w < 800));
+  ok('finestrella: "buco" trasparente nello sfondo e nella schermata sotto', await p.evaluate(() => /polygon/.test(document.getElementById('bg').style.webkitClipPath || document.getElementById('bg').style.clipPath) && /polygon/.test(window.__app.router.current.el.style.webkitClipPath || window.__app.router.current.el.style.clipPath)));
+  await p.evaluate(() => window.__app.Mini.player.expand()); await sleep(700);
+  ok('di nuovo a schermo intero', await p.evaluate(() => window.__fakeRect.full && !document.getElementById('bg').style.clipPath));
+  await p.evaluate(() => window.__app.router.current._exit()); await sleep(500);
+  ok('chiudendo il player il lettore nativo si ferma e la pagina torna normale', /stop/.test(await log()) && await p.evaluate(() => !document.documentElement.classList.contains('nv')));
+  // film: scorrimento
+  await p.evaluate(() => window.__app.router.home()); await sleep(300);
+  await p.evaluate(() => window.__app.router.current.openVod('movie'));
+  await wait(() => document.querySelectorAll('.cell').length > 2, 15000); await sleep(600);
+  await key('Enter'); await wait(() => document.querySelector('.screen.detail .dbtns .btn')); await sleep(300); await key('Enter');
+  await wait(() => { const c = window.__app.router.current; return c.isPlayer && c.video.currentTime > 0.3; }, 15000);
+  await key('ArrowRight'); await sleep(900);
+  ok('film: Destra con le informazioni visibili = scorrimento nativo', /seek \d+/.test(await log()), (await log()).slice(-120));
+  await p.evaluate(() => window.__app.router.current._exit()); await sleep(400);
+  // ripiego sul lettore web se il nativo fallisce
+  await p.evaluate(() => { window.__fakeFail = true; window.__app.router.home(); }); await sleep(300);
+  await p.evaluate(() => window.__app.router.current.openLive());
+  await wait(() => window.__app.router.current.all, 20000); await sleep(300);
+  await key('Enter');
+  ok('lettore nativo in errore: si passa da solo al lettore web e il canale parte', await wait(() => { const c = window.__app.router.current; return c.isPlayer && !c.video.isNative && c.video.currentTime > 0.3; }, 25000));
+  await p.evaluate(() => { window.__fakeFail = false; window.__app.router.current._exit(); }); await sleep(300);
+  // ---- 2.5: On Demand ordinamento e FILM/SERIE, La mia lista in Home, Impostazioni A-Z, inglese
+  await p.evaluate(() => window.__app.router.home()); await sleep(300);
+  await p.evaluate(() => window.__app.router.current.openVod('movie', 'all'));
+  await wait(() => document.querySelectorAll('.cell').length > 2, 15000); await sleep(600);
+  ok('On Demand Tutto: etichette FILM / SERIE TV sulle locandine', await p.evaluate(() => { const b = [...document.querySelectorAll('.cell .kbadge')].map(x => x.textContent); return b.includes('FILM') && b.includes('SERIE TV'); }));
+  ok('voce "Ordina" nella colonna', await p.evaluate(() => window.__app.router.current.catList.some(x => x.kind === 'sort')));
+  await p.evaluate(() => { const c = window.__app.router.current; c.setZone('cats'); c.cats.select(c.catList.findIndex(x => x.kind === 'sort')); }); await sleep(200);
+  await key('Enter'); await sleep(300); await key('ArrowDown'); await key('Enter'); await sleep(500);
+  ok('Ordina › Titolo A-Z', await p.evaluate(() => { const n = window.__app.router.current.items.map(x => x.name.toLowerCase()); return window.__app.store.settings().odSort === 'az' && n.every((x, i) => !i || n[i - 1].localeCompare(x, 'it', { numeric: true }) <= 0); }));
+  await p.evaluate(() => { const c = window.__app.router.current; window.__app.store.settings().odSort = 'rd'; c.pickCat(c.catList[c.defaultIndex()]); }); await sleep(600);
+  ok('Ordina › valutazione migliori prima (senza voto in fondo)', await p.evaluate(() => { const v = window.__app.router.current.items.map(x => parseFloat(x.rating) || 0); return v.every((x, i) => !i || v[i - 1] >= x || x === 0); }));
+  await p.evaluate(() => { window.__app.store.settings().odSort = ''; const c = window.__app.router.current; const it = c.items[0]; window.__app.store.toggleList(window.__app.store.favKey(c.src.id, it._mode, it.id), { kind: it._mode, src: c.src.id, id: it.id, name: it.name, poster: it.poster, item: it }); window.__ln = it.name; window.__app.router.home(); }); await sleep(600);
+  ok('Home (Aspetto A): riga "La mia lista" al posto dei pulsanti', await p.evaluate(() => { const r = document.querySelector('.home .listrow'); return r && r.offsetParent && r.textContent.indexOf(window.__ln) >= 0 && getComputedStyle(document.querySelector('.home .tiles')).display === 'none'; }));
+  await p.evaluate(() => { window.__app.store.settings().layout = 'B'; window.__app.applyUi && window.__app.applyUi(); }); await sleep(300);
+  ok('Home (Aspetto B): pulsanti e sotto "La mia lista"', await p.evaluate(() => { document.body.classList.remove('layA'); const t = document.querySelector('.home .tiles').getBoundingClientRect(), l = document.querySelector('.home .listrow').getBoundingClientRect(); return t.height > 0 && l.top > t.bottom; }));
+  await p.evaluate(() => { window.__app.store.settings().layout = 'A'; window.__app.store.save(true); });
+  ok('Impostazioni: voci di ogni categoria in ordine A-Z', await p.evaluate(() => { const S = window.__app.SettingsScreen; if (!S) return null; const s = new S(); for (let i = 0; i < s.cats.length; i++) { s.show(i); const l = s.rows.map(r => r._it.label); if (l.some((x, k) => k && l[k - 1].localeCompare(x, 'it', { sensitivity: 'base' }) > 0)) return false; } return true; }));
+  // inglese: impostato a mano e rilevato in automatico
+  await p.evaluate(() => { window.__app.store.settings().lang = 'en'; window.__app.store.save(true); }); await p.reload(); await sleep(900);
+  ok('Lingua inglese: interfaccia tradotta', await p.evaluate(() => document.documentElement.lang === 'en' && /Live TV/.test(document.body.textContent) && /Settings/.test(document.body.textContent)));
+  await p.evaluate(() => { window.__app.store.settings().lang = ''; window.__app.store.save(true); });
+  await p.evaluateOnNewDocument(() => { Object.defineProperty(navigator, 'language', { get: () => 'de-DE' }); });
+  await p.reload(); await sleep(900);
+  ok('Lingua automatica: dispositivo non italiano = inglese', await p.evaluate(() => document.documentElement.lang === 'en'));
+  console.log('Errori JS: ' + errs.length, errs.slice(0, 4));
+  const f = res.filter(x => !x).length; console.log('RISULTATO: ' + (res.length - f) + '/' + res.length);
+  await b.close(); process.exit(f ? 1 : 0);
+})().catch(e => { console.error('ERRORE TEST', e); process.exit(1); });

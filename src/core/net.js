@@ -1,5 +1,6 @@
 // Rete: fetch con timeout, Basic auth, fallback automatico sul proxy CORS del companion.
 import { settings } from './store.js';
+import { tr } from './i18n.js';
 
 function withTimeout(p, ms, ctl) {
   return new Promise((res, rej) => {
@@ -58,7 +59,7 @@ export async function request(url, o) {
     }
   }
   if (!res.ok && res.status !== 207) {
-    const hint = { 401: 'credenziali non valide', 403: 'accesso negato (limite connessioni, IP o app non consentiti dal provider)', 404: 'risorsa non trovata', 429: 'troppe richieste o connessioni simultanee', 458: 'limite connessioni raggiunto', 509: 'limite connessioni raggiunto', 884: 'limite connessioni raggiunto' }[res.status];
+    const hint = { 401: tr('credenziali non valide'), 403: tr('accesso negato (limite connessioni, IP o app non consentiti dal provider)'), 404: tr('risorsa non trovata'), 429: tr('troppe richieste o connessioni simultanee'), 458: tr('limite connessioni raggiunto'), 509: tr('limite connessioni raggiunto'), 884: tr('limite connessioni raggiunto') }[res.status];
     const e = new Error('HTTP ' + res.status + (hint ? ' - ' + hint : '')); e.status = res.status; throw e;
   }
   return res;
@@ -67,7 +68,7 @@ export async function request(url, o) {
 export async function fetchText(url, o) { return (await request(url, o)).text(); }
 export async function fetchJSON(url, o) {
   const t = await fetchText(url, o);
-  try { return JSON.parse(t); } catch (e) { throw new Error('Risposta non valida dal server'); }
+  try { return JSON.parse(t); } catch (e) { throw new Error(tr('Risposta non valida dal server')); }
 }
 
 // testo di un file eventualmente .gz
@@ -81,7 +82,7 @@ export async function fetchMaybeGz(url, o) {
       } catch (e) { /* fallback proxy */ }
     }
     if (proxyBase()) return fetchText(url, Object.assign({}, o, { forceProxy: true, gunzip: true, timeout: 90000 }));
-    throw new Error('File .gz: serve il companion (gunzip) su questo televisore');
+    throw new Error(tr('File .gz: serve il companion (gunzip) su questo televisore'));
   }
   return fetchText(url, Object.assign({ timeout: 90000 }, o));
 }

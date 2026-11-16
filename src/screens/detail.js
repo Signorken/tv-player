@@ -10,6 +10,7 @@ import * as Modal from '../ui/modal.js';
 import { showLoading, hideLoading, movieOpts, episodesOpts } from '../core/session.js';
 import { PlayerScreen } from './player.js';
 import { Rail } from '../ui/shell.js';
+import { tr } from '../core/i18n.js';
 
 export class DetailScreen {
   constructor(src, mode, item, cachedInfo) {
@@ -24,7 +25,7 @@ export class DetailScreen {
     this.eps = null;
     this.right = h('div', { class: 'dright' }, this.t, this.m, this.p, this.c, this.btns, this.seasonsBox);
     this.back = h('div', { class: 'dback' });
-    this.el = h('div', { class: 'screen detail' }, h('div', { class: 'backbtn floating', title: 'Indietro', onclick: () => router.back() }, icon('back')), h('div', { class: 'dwrap' }, h('div', { class: 'dleft' }, h('div', { class: 'dpbox' }, this.poster)), this.right), hints([['ok', 'Seleziona'], ['back', 'Indietro'], ['red', 'Preferito']]));
+    this.el = h('div', { class: 'screen detail' }, h('div', { class: 'backbtn floating', title: tr('Indietro'), onclick: () => router.back() }, icon('back')), h('div', { class: 'dwrap' }, h('div', { class: 'dleft' }, h('div', { class: 'dpbox' }, this.poster)), this.right), hints([['ok', tr('Seleziona')], ['back', tr('Indietro')], ['red', tr('Preferito')]]));
     this.zone = 'btns';
   }
 
@@ -32,7 +33,7 @@ export class DetailScreen {
     if (!first) { this.refreshButtons(); if (this.eps) this.eps.render(); return; }
     this.fill();
     this.refreshButtons();
-    showLoading('Carico la scheda…');
+    showLoading(tr('Carico la scheda…'));
     try {
       if (this.mode === 'movie') {
         if (!this.info.plot) this.info = await this.src.vodInfo(this.item) || {};
@@ -42,7 +43,7 @@ export class DetailScreen {
         this.info = r.info || {}; this.seasons = r.seasons || [];
         this.fill(); this.buildEpisodes();
       }
-    } catch (e) { Modal.toast('Errore: ' + e.message, 4000); }
+    } catch (e) { Modal.toast(tr('Errore: ') + e.message, 4000); }
     hideLoading();
     this.refreshButtons();
     this.setFocus();
@@ -52,7 +53,7 @@ export class DetailScreen {
     const i = this.info, it = this.item;
     this.t.textContent = it.name;
     this.m.textContent = [i.year || it.year, i.rating && +i.rating ? '★ ' + i.rating : '', i.genre || it.genre, i.duration ? Math.round(i.duration / 60) + ' min' : ''].filter(Boolean).join('  •  ');
-    this.p.textContent = i.plot || it.plot || 'Nessuna descrizione disponibile.';
+    this.p.textContent = i.plot || it.plot || tr('Nessuna descrizione disponibile.');
     this.c.textContent = [i.director ? 'Regia: ' + i.director : '', i.cast ? 'Cast: ' + String(i.cast).slice(0, 160) : ''].filter(Boolean).join('   ');
     if (i.poster && !this.item.poster) setImg(this.poster, i.poster);
   }
@@ -62,13 +63,13 @@ export class DetailScreen {
     const prog = this.mode === 'movie' ? store.getProgress(this.key.replace('|series|', '|movie|')) : null;
     if (this.mode === 'movie') {
       if (prog && prog.pos > 30) {
-        this.btns.appendChild(this.btn('play', 'Riprendi da ' + fmtDur(prog.pos), () => this.playMovie(), true));
-        this.btns.appendChild(this.btn('refresh', 'Dall\'inizio', () => { store.clearProgress(store.favKey(this.src.id, 'movie', this.item.id)); this.playMovie(); }));
-      } else this.btns.appendChild(this.btn('play', 'Riproduci', () => this.playMovie(), true));
+        this.btns.appendChild(this.btn('play', tr('Riprendi da ') + fmtDur(prog.pos), () => this.playMovie(), true));
+        this.btns.appendChild(this.btn('refresh', tr('Dall\'inizio'), () => { store.clearProgress(store.favKey(this.src.id, 'movie', this.item.id)); this.playMovie(); }));
+      } else this.btns.appendChild(this.btn('play', tr('Riproduci'), () => this.playMovie(), true));
     }
-    this.favBtn = this.btn('star', store.isFav(this.key) ? 'Nei preferiti' : 'Preferiti', () => this.toggleFav());
+    this.favBtn = this.btn('star', store.isFav(this.key) ? tr('Nei preferiti') : tr('Preferiti'), () => this.toggleFav());
     this.btns.appendChild(this.favBtn);
-    this.listBtn = this.btn('plus', store.inList(this.key) ? 'Nella mia lista' : 'La mia lista', () => this.toggleList());
+    this.listBtn = this.btn('plus', store.inList(this.key) ? tr('Nella mia lista') : tr('La mia lista'), () => this.toggleList());
     this.btns.appendChild(this.listBtn);
   }
   btn(ic, label, fn, primary) { return h('div', { class: 'btn' + (primary ? ' primary' : ''), 'data-f': 1, onclick: fn }, icon(ic), h('span', { text: label })); }
@@ -88,10 +89,10 @@ export class DetailScreen {
 
   buildEpisodes() {
     this.seasonsBox.innerHTML = '';
-    if (!this.seasons.length) { this.seasonsBox.appendChild(h('div', { class: 'dp', text: 'Nessun episodio disponibile.' })); return; }
+    if (!this.seasons.length) { this.seasonsBox.appendChild(h('div', { class: 'dp', text: tr('Nessun episodio disponibile.') })); return; }
     this.curSeason = 0;
     const last = store.get().recents.filter(r => r.kind === 'episode' && r.src === this.src.id && r.show === this.item.name)[0];
-    this.chips = h('div', { class: 'chips' }, this.seasons.map((s, i) => h('div', { class: 'chip' + (i === 0 ? ' on' : ''), 'data-f': 1, text: 'Stagione ' + s.n, onclick: () => { this.pickSeason(i); this.setZone('eps'); } })));
+    this.chips = h('div', { class: 'chips' }, this.seasons.map((s, i) => h('div', { class: 'chip' + (i === 0 ? ' on' : ''), 'data-f': 1, text: tr('Stagione ') + s.n, onclick: () => { this.pickSeason(i); this.setZone('eps'); } })));
     this.seasonsBox.appendChild(this.chips);
     this.eps = new VList({
       rowH: () => Math.round(remPx() * 3.6),
@@ -99,7 +100,7 @@ export class DetailScreen {
       fill: (n, ep) => {
         n._n.textContent = ep.num; n._1.textContent = ep.title; n._2.textContent = ep.plot ? ep.plot.slice(0, 110) : '';
         const ek = store.favKey(this.src.id, 'ep', ep.id);
-        n._d.textContent = (store.isWatched(ek) ? '✓ visto  ' : '') + (ep.duration ? Math.round(ep.duration / 60) + ' min' : '');
+        n._d.textContent = (store.isWatched(ek) ? tr('✓ visto  ') : '') + (ep.duration ? Math.round(ep.duration / 60) + ' min' : '');
         const p = store.getProgress(ek);
         n._b.style.display = p ? '' : 'none'; if (p) n._b.firstChild.style.width = Math.min(100, p.pos / p.dur * 100) + '%';
       },
@@ -151,14 +152,14 @@ export class DetailScreen {
   toggleList() {
     const it = this.item, kind = this.mode === 'movie' ? 'movie' : 'series';
     const on = store.toggleList(store.favKey(this.src.id, kind, it.id), { kind: kind, src: this.src.id, id: it.id, name: it.name, poster: it.poster, ext: it.ext, item: it });
-    Modal.toast(on ? 'Aggiunto alla tua lista' : 'Tolto dalla tua lista', 1500);
+    Modal.toast(on ? tr('Aggiunto alla tua lista') : tr('Tolto dalla tua lista'), 1500);
     this.refreshButtons(); if (this.zone === 'btns') this.setZone('btns');
   }
   toggleFav() {
     const kind = this.mode === 'movie' ? 'movie' : 'series';
     const it = this.item;
     const on = store.toggleFav(store.favKey(this.src.id, kind, it.id), { kind: kind, src: this.src.id, id: it.id, name: it.name, logo: it.poster, poster: it.poster, ext: it.ext, item: it });
-    Modal.toast(on ? '★ Aggiunto ai preferiti' : 'Rimosso dai preferiti', 1500);
+    Modal.toast(on ? tr('★ Aggiunto ai preferiti') : tr('Rimosso dai preferiti'), 1500);
     this.refreshButtons(); if (this.zone === 'btns') this.setZone('btns');
   }
 

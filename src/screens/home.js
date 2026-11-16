@@ -18,6 +18,7 @@ import { DetailScreen } from './detail.js';
 import { PlayerScreen, Mini } from './player.js';
 import { MENU } from '../ui/shell.js';
 import { TYPE_LABEL } from '../sources/index.js';
+import { tr } from '../core/i18n.js';
 
 const DEMO = '#EXTM3U\n' +
   '#EXTINF:-1 group-title="Demo HLS" tvg-id="bipbop",Apple BipBop (HLS)\nhttps://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8\n' +
@@ -27,15 +28,15 @@ const DEMO = '#EXTM3U\n' +
 export async function addDemo() {
   const id = 'demo';
   await store.idbSet('file:' + id, DEMO);
-  store.addSource({ id: id, type: 'm3ufile', name: 'Demo (flussi di prova pubblici)' });
-  Modal.toast('Sorgente demo aggiunta');
+  store.addSource({ id: id, type: 'm3ufile', name: tr('Demo (flussi di prova pubblici)') });
+  Modal.toast(tr('Sorgente demo aggiunta'));
   const c = router.current; if (c && c.refresh) c.refresh();
 }
 
 export async function needMedia() {
   const cfg = store.activeSource();
   if (cfg) return cfg;
-  const ok = await Modal.confirm('Nessuna sorgente', 'Aggiungi una playlist M3U, un account Xtream o un server di rete per iniziare.', 'Aggiungi sorgente', 'Più tardi');
+  const ok = await Modal.confirm(tr('Nessuna sorgente'), tr('Aggiungi una playlist M3U, un account Xtream o un server di rete per iniziare.'), tr('Aggiungi sorgente'), tr('Più tardi'));
   if (ok) addSourceFlow();
   return null;
 }
@@ -44,7 +45,7 @@ export async function chooseSource(replaceCurrent) {
   const list = store.mediaSources();
   if (!list.length) { addSourceFlow(); return; }
   const act = store.activeSource();
-  const r = await Modal.menu('Scegli la sorgente', list.map(s => ({ label: s.name + (act && act.id === s.id ? '   ✓' : ''), sub: TYPE_LABEL[s.type], value: s.id, icon: s.type === 'xtream' ? 'cloud' : 'list' })));
+  const r = await Modal.menu(tr('Scegli la sorgente'), list.map(s => ({ label: s.name + (act && act.id === s.id ? '   ✓' : ''), sub: TYPE_LABEL[s.type], value: s.id, icon: s.type === 'xtream' ? 'cloud' : 'list' })));
   if (!r) return;
   store.setActive(r);
   if (act && act.id === r) return;
@@ -59,13 +60,13 @@ export async function chooseSource(replaceCurrent) {
 // riproduce un elemento salvato in preferiti/recenti
 export async function playMeta(meta) {
   const cfg = sourceById(meta.src);
-  if (!cfg) { Modal.toast('La sorgente non esiste più'); return; }
+  if (!cfg) { Modal.toast(tr('La sorgente non esiste più')); return; }
   try {
     const src = await openSource(cfg);
     if (meta.kind === 'live') {
       const live = await src.live();
       const idx = live.items.findIndex(c => c.id === meta.id);
-      if (idx < 0) { Modal.toast('Canale non più presente nella playlist'); return; }
+      if (idx < 0) { Modal.toast(tr('Canale non più presente nella playlist')); return; }
       router.push(new PlayerScreen(liveOpts(src, live.items, idx)));
     } else if (meta.kind === 'movie') {
       router.push(new PlayerScreen(movieOpts(src, { id: meta.id, name: meta.name, poster: meta.poster || meta.logo, ext: meta.ext, url: meta.url })));
@@ -80,7 +81,7 @@ export async function playMeta(meta) {
     } else if (meta.kind === 'file') {
       router.push(new PlayerScreen(fileOpts(src, [{ path: meta.id, name: meta.name, url: meta.url }], 0)));
     }
-  } catch (e) { Modal.toast('Errore: ' + e.message, 5000); }
+  } catch (e) { Modal.toast(tr('Errore: ') + e.message, 5000); }
 }
 
 export class HomeScreen {
@@ -96,50 +97,57 @@ export class HomeScreen {
     this.tLive = this.tileEls[0]; this.tSet = this.tileEls[this.tileEls.length - 1];
 
     this.cont = h('div', { class: 'contbox' });
-    this.contT = h('div', { class: 'contt', text: 'Continua a guardare' });
+    this.contT = h('div', { class: 'contt', text: tr('Continua a guardare') });
     // "Rimuovi riga" è l'ultima tessera di ogni riga: si raggiunge andando sempre a destra
-    const xcard = (cls, fn) => h('div', { class: 'ccard xcard ' + cls, 'data-f': 1, onclick: fn }, h('div', { class: 'cthumb' }, h('div', { class: 'xin' }, icon('x'), h('span', { text: 'Rimuovi riga' }))));
+    const xcard = (cls, fn) => h('div', { class: 'ccard xcard ' + cls, 'data-f': 1, onclick: fn }, h('div', { class: 'cthumb' }, h('div', { class: 'xin' }, icon('x'), h('span', { text: tr('Rimuovi riga') }))));
     this.contX = xcard('', () => this.clearRow());
     this.nowBox = h('div', { class: 'nowbox' });
     this.hero = h('div', { class: 'hero' });
-    this.contHd = h('div', { class: 'conthd' }, this.contT, h('span', { class: 'contnote', text: 'Solo film e serie' }));
+    this.contHd = h('div', { class: 'conthd' }, this.contT, h('span', { class: 'contnote', text: tr('Solo film e serie') }));
     this.empty = h('div', { class: 'empty' });
     this.liveX = xcard('lcard', () => this.clearLive());
-    this.liveHd = h('div', { class: 'conthd' }, h('div', { class: 'contt', text: 'Canali visti di recente' }));
+    this.liveHd = h('div', { class: 'conthd' }, h('div', { class: 'contt', text: tr('Canali visti di recente') }));
     this.liveRow = h('div', { class: 'contbox liverow' });
+    // "La mia lista" di On Demand della sorgente scelta in alto
+    this.listHd = h('div', { class: 'conthd' }, h('div', { class: 'contt', text: tr('La mia lista') }), h('span', { class: 'contnote' }));
+    this.listRow = h('div', { class: 'contbox listrow' });
     this.el = h('div', { class: 'screen home' },
-      h('div', { class: 'hbar' }, h('div', { class: 'brand' }, h('img', { class: 'blogo', src: 'icon.png', alt: '' }), h('span', { text: 'MAXENTA' })), h('div', { class: 'hbr' }, platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: 'Aggiungi sorgente (Ctrl+V per incollare un link)', onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: 'Aggiungi' })) : null, this.srcBtn)),
-      this.tiles, h('div', { class: 'hmain', 'data-scroll': 1 }, this.nowBox, this.hero, this.empty, this.contHd, this.cont, this.liveHd, this.liveRow),
-      hints([['ok', 'Apri'], ['menu', 'Opzioni'], ['back', 'Esci']]));
+      h('div', { class: 'hbar' }, h('div', { class: 'brand' }, h('img', { class: 'blogo', src: 'icon.png', alt: '' }), h('span', { text: 'MAXENTA' })), h('div', { class: 'hbr' }, platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: tr('Aggiungi sorgente (Ctrl+V per incollare un link)'), onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: tr('Aggiungi') })) : null, this.srcBtn)),
+      this.tiles, h('div', { class: 'hmain', 'data-scroll': 1 }, this.nowBox, this.listHd, this.listRow, this.hero, this.empty, this.contHd, this.cont, this.liveHd, this.liveRow),
+      hints([['ok', tr('Apri')], ['menu', tr('Opzioni')], ['back', tr('Esci')]]));
   }
   onShow(first) {
     const act = store.activeSource();
-    this.srcBtn.lastChild.textContent = act ? act.name : 'Nessuna sorgente';
+    this.srcBtn.lastChild.textContent = act ? act.name : tr('Nessuna sorgente');
     this.renderCont();
     this.renderNow();
+    this.renderList();
     if (!store.get().sources.length) {
       this.empty.innerHTML = '';
-      this.empty.appendChild(h('div', { class: 'e1', text: 'Benvenuto! Inizia aggiungendo una sorgente.' }));
+      this.empty.appendChild(h('div', { class: 'e1', text: tr('Benvenuto! Inizia aggiungendo una sorgente.') }));
       if (platform.isDesktop) {
-        this.empty.appendChild(h('div', { class: 'e2', text: 'Niente da digitare: copia un link o una playlist e incollalo (Ctrl+V), trascina qui un file .m3u, oppure lascia che cerchi i NAS nella tua rete.' }));
+        this.empty.appendChild(h('div', { class: 'e2', text: tr('Niente da digitare: copia un link o una playlist e incollalo (Ctrl+V), trascina qui un file .m3u, oppure lascia che cerchi i NAS nella tua rete.') }));
         const B = (ic, t, fn, p) => h('div', { class: 'btn' + (p ? ' primary' : ''), 'data-f': 1, onclick: fn }, icon(ic), h('span', { text: t }));
         this.empty.appendChild(h('div', { class: 'ebtns' },
-          B('clip', 'Incolla link o playlist', () => addFromClipboard(), true),
-          B('list', 'Scegli file playlist…', () => pickPlaylistFile()),
-          B('cloud', 'Cerca NAS in rete', () => discoverFlow()),
-          B('folder', 'NAS Windows (\\\\NAS\\cartella)', () => addNetworkFolderFlow()),
-          B('folder', 'Cartella del computer…', () => addFolderFlow()),
-          B('plus', 'Altre opzioni (manuale)', () => addSourceFlow()),
-          B('play', 'Prova con la demo', () => addDemo())));
+          B('clip', tr('Incolla link o playlist'), () => addFromClipboard(), true),
+          B('list', tr('Scegli file playlist…'), () => pickPlaylistFile()),
+          B('cloud', tr('Cerca NAS in rete'), () => discoverFlow()),
+          B('folder', tr('NAS Windows (\\\\NAS\\cartella)'), () => addNetworkFolderFlow()),
+          B('folder', tr('Cartella del computer…'), () => addFolderFlow()),
+          B('plus', tr('Altre opzioni (manuale)'), () => addSourceFlow()),
+          B('play', tr('Prova con la demo'), () => addDemo())));
       } else {
-        this.empty.appendChild(h('div', { class: 'e2', text: 'Playlist M3U, account Xtream oppure un NAS in rete locale. Puoi inserire i dati con il telecomando, una tastiera o dal telefono.' }));
-        this.empty.appendChild(h('div', { class: 'btn primary', 'data-f': 1, text: 'Aggiungi sorgente', onclick: () => addSourceFlow() }));
+        this.empty.appendChild(h('div', { class: 'e2', text: tr('Playlist M3U, account Xtream oppure un NAS in rete locale. Puoi inserire i dati con il telecomando, una tastiera o dal telefono.') }));
+        this.empty.appendChild(h('div', { class: 'btn primary', 'data-f': 1, text: tr('Aggiungi sorgente'), onclick: () => addSourceFlow() }));
         this.empty.appendChild(h('span', { style: 'display:inline-block;width:1rem' }));
-        this.empty.appendChild(h('div', { class: 'btn', 'data-f': 1, text: 'Prova con la sorgente demo', onclick: () => addDemo() }));
+        this.empty.appendChild(h('div', { class: 'btn', 'data-f': 1, text: tr('Prova con la sorgente demo'), onclick: () => addDemo() }));
       }
       this.empty.style.display = '';
     } else this.empty.style.display = 'none';
     const cf = nav.getFocus();
+    // appena comparsa la barra "In riproduzione" (si torna dal player in finestrella) il cursore va lì
+    const had = this._hadNow; this._hadNow = !!Mini.player;
+    if (Mini.player && !had && this.nowBox.firstChild) { nav.focus(this.nowBox.firstChild); return true; }
     if (first || !cf || !this.el.contains(cf) || !cf.offsetParent) {
       nav.focus(this.firstFocus());
     }
@@ -172,7 +180,7 @@ export class HomeScreen {
     });
     if (live.length) this.liveRow.appendChild(this.liveX);
     // niente da riprendere: in Aspetto A mostra comunque i pulsanti delle sezioni
-    this.el.classList.toggle('nocont', !rec.length && !live.length);
+    this.el.classList.toggle('nocont', !rec.length && !live.length && !this.listItems().length);
   }
   // video nella finestrella: tessera in cima alla Home per tornarci o chiuderlo
   renderNow() {
@@ -180,22 +188,53 @@ export class HomeScreen {
     this.nowBox.innerHTML = '';
     this.nowBox.style.display = m ? '' : 'none';
     if (!m) return;
-    this.nowBox.appendChild(h('div', { class: 'nowt' }, h('div', { class: 'hg', text: 'IN RIPRODUZIONE' }), h('div', { class: 'nown', text: m.cur ? m.cur.title : '' })));
-    const b1 = h('div', { class: 'btn small', 'data-f': 1, onclick: () => { if (Mini.player) Mini.player.expand(); } }, icon('full'), h('span', { text: 'Schermo intero' }));
-    b1.onfocusnav = () => { this.nowBox.parentNode.scrollTop = 0; };
-    this.nowBox.appendChild(b1);
-    this.nowBox.appendChild(h('div', { class: 'btn small', 'data-f': 1, onclick: () => { Mini.close(); } }, icon('x'), h('span', { text: 'Chiudi' })));
+    // tutta la barra è selezionabile (larga quanto lo schermo, così Su/Giù la trovano sempre); OK = schermo intero
+    const main = h('div', { class: 'nowmain', 'data-f': 1, onclick: () => { if (Mini.player) Mini.player.expand(); } },
+      icon('play'), h('div', { class: 'nowt' }, h('div', { class: 'hg', text: tr('IN RIPRODUZIONE') }), h('div', { class: 'nown', text: m.cur ? m.cur.title : '' })),
+      h('div', { class: 'nowok' }, icon('full'), h('span', { text: tr('Schermo intero') })));
+    main.onfocusnav = () => { this.nowBox.parentNode.scrollTop = 0; };
+    this.nowBox.appendChild(main);
+    this.nowBox.appendChild(h('div', { class: 'btn small nowx', 'data-f': 1, onclick: () => { Mini.close(); } }, icon('x'), h('span', { text: tr('Chiudi') })));
+  }
+  listItems() {
+    const act = store.activeSource(); if (!act) return [];
+    const l = store.get().mylist || {};
+    return Object.keys(l).map(k => l[k]).filter(x => x && x.src === act.id).sort((a, b) => (b.t || 0) - (a.t || 0)).slice(0, 20);
+  }
+  renderList() {
+    const items = this.listItems();
+    this.listRow.innerHTML = '';
+    this.listHd.style.display = this.listRow.style.display = items.length ? '' : 'none';
+    this.listHd.lastChild.textContent = items.length ? (store.activeSource().name) : '';
+    items.forEach(r => {
+      const im = img(); setImg(im, r.poster);
+      const c = h('div', { class: 'ccard', 'data-f': 1, onclick: () => this.openListItem(r) },
+        h('div', { class: 'cthumb' }, im, h('div', { class: 'kbadge ' + (r.kind === 'series' ? 'k-s' : 'k-m'), text: r.kind === 'series' ? tr('SERIE TV') : tr('FILM') })),
+        h('div', { class: 'cname', text: r.name }));
+      c._list = r; this.listRow.appendChild(c);
+    });
+    this.el.classList.toggle('haslist', items.length > 0);
+  }
+  async openListItem(r) {
+    const cfg = sourceById(r.src); if (!cfg) { Modal.toast(tr('La sorgente non esiste più')); return; }
+    try { const src = await openSource(cfg); router.push(new DetailScreen(src, r.kind === 'series' ? 'series' : 'movie', r.item || { id: r.id, name: r.name, poster: r.poster, ext: r.ext })); }
+    catch (e) { Modal.toast(tr('Errore: ') + e.message, 5000); }
+  }
+  async listMenu(r) {
+    const v = await Modal.menu(r.name, [{ label: tr('Apri'), value: 'open', icon: 'play' }, { label: tr('Togli dalla mia lista'), value: 'rm', icon: 'x' }]);
+    if (v === 'open') this.openListItem(r);
+    else if (v === 'rm') { store.toggleList(store.favKey(r.src, r.kind, r.id), r); this.renderList(); nav.focus(this.firstFocus()); }
   }
   renderHero(r) {
     this.hero.innerHTML = '';
     this.hero.style.display = r ? '' : 'none';
     if (!r) return;
     const p = store.getProgress(r.key);
-    this.hero.appendChild(h('div', { class: 'hg', text: 'RIPRENDI DA DOVE ERI RIMASTO' }));
+    this.hero.appendChild(h('div', { class: 'hg', text: tr('RIPRENDI DA DOVE ERI RIMASTO') }));
     this.hero.appendChild(h('div', { class: 'hn', text: r.name }));
     this.hero.appendChild(h('div', { class: 'hs', text: r.sub || '' }));
     if (p && p.dur) this.hero.appendChild(h('div', { class: 'hbar2' }, h('div', { style: 'width:' + Math.min(100, p.pos / p.dur * 100) + '%' })));
-    const b = h('div', { class: 'btn primary', 'data-f': 1, onclick: () => playMeta(r) }, icon('play'), h('span', { text: p && p.pos > 30 ? ' Riprendi' : ' Guarda' }));
+    const b = h('div', { class: 'btn primary', 'data-f': 1, onclick: () => playMeta(r) }, icon('play'), h('span', { text: p && p.pos > 30 ? tr(' Riprendi') : tr(' Guarda') }));
     b.onfocusnav = () => { this.hero.parentNode.scrollTop = 0; };
     this.hero.appendChild(b);
   }
@@ -204,55 +243,55 @@ export class HomeScreen {
     const f = nav.getFocus();
     store.clearContRow();
     this.renderCont();
-    Modal.toast('Riga rimossa. I progressi di film e serie restano salvati.');
+    Modal.toast(tr('Riga rimossa. I progressi di film e serie restano salvati.'));
     if (!f || !document.body.contains(f)) nav.focus(this.firstFocus());
   }
 
-  async openLive() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new LiveScreen(s)); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
-  async openSport() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, 'movie', { mix: 'sport' })); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
-  async openVod(mode, mix) { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, mode, { mix: mix })); } catch (e) { Modal.toast('Errore: ' + e.message, 6000); } }
+  async openLive() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new LiveScreen(s)); } catch (e) { Modal.toast(tr('Errore: ') + e.message, 6000); } }
+  async openSport() { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, 'movie', { mix: 'sport' })); } catch (e) { Modal.toast(tr('Errore: ') + e.message, 6000); } }
+  async openVod(mode, mix) { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, mode, { mix: mix })); } catch (e) { Modal.toast(tr('Errore: ') + e.message, 6000); } }
   playMeta(r) { return playMeta(r); }
   openFavs() { router.push(new FavsScreen()); }
   openSettings() { router.push(new SettingsScreen()); }
   // focus iniziale: in Aspetto A non ci sono pulsanti, si parte dal contenuto
   firstFocus() {
     if (!store.get().sources.length) return this.empty.querySelector('.btn');
-    if (document.body.classList.contains('layA')) return this.hero.querySelector('[data-f]') || this.cont.querySelector('[data-f]') || this.srcBtn;
+    if (document.body.classList.contains('layA')) return this.hero.querySelector('[data-f]') || this.listRow.querySelector('[data-f]') || this.cont.querySelector('[data-f]') || this.liveRow.querySelector('[data-f]') || this.srcBtn;
     return this.tLive;
   }
   async openFiles() {
     const list = store.fileSources();
     if (!list.length) {
-      const ok = await Modal.confirm('Nessun server di rete', 'Aggiungi un NAS (WebDAV oppure indice HTTP) per sfogliare i tuoi file.', 'Aggiungi NAS', 'Più tardi');
+      const ok = await Modal.confirm(tr('Nessun server di rete'), tr('Aggiungi un NAS (WebDAV oppure indice HTTP) per sfogliare i tuoi file.'), tr('Aggiungi NAS'), tr('Più tardi'));
       if (ok) addSourceFlow(platform.isDesktop ? undefined : 'webdav');
       return;
     }
     let cfg = list[0];
-    if (list.length > 1) { const id = await Modal.menu('Scegli il server', list.map(s => ({ label: s.name, sub: TYPE_LABEL[s.type], value: s.id, icon: 'folder' }))); if (!id) return; cfg = list.find(s => s.id === id); }
+    if (list.length > 1) { const id = await Modal.menu(tr('Scegli il server'), list.map(s => ({ label: s.name, sub: TYPE_LABEL[s.type], value: s.id, icon: 'folder' }))); if (!id) return; cfg = list.find(s => s.id === id); }
     const { createSource } = await import('../sources/index.js');
     router.push(new FilesScreen(createSource(cfg)));
   }
 
   onKey(a) {
     // con la finestrella aperta, Indietro dalla Home la chiude (prima di chiedere se uscire)
-    if (a.a === 'back') { if (Mini.player) { Mini.close(); Modal.toast('Riproduzione chiusa', 1500); return true; } this.confirmExit(); return true; }
+    if (a.a === 'back') { if (Mini.player) { Mini.close(); Modal.toast(tr('Riproduzione chiusa'), 1500); return true; } this.confirmExit(); return true; }
     if (a.a === 'green' || a.a === 'guide') { this.openLive(); return true; }
     if (a.a === 'yellow' || a.a === 'del') { const f = nav.getFocus(); if (a.a === 'yellow' || (f && this.cont.contains(f))) { this.clearRow(); return true; } }
-    if (a.a === 'menu') { const f = nav.getFocus(); if (f && f._meta) { this.cardMenu(f._meta); return true; } }
+    if (a.a === 'menu') { const f = nav.getFocus(); if (f && f._meta) { this.cardMenu(f._meta); return true; } if (f && f._list) { this.listMenu(f._list); return true; } }
     return false;
   }
   clearLive() {
     store.clearLiveRow(); this.renderCont();
-    Modal.toast('Riga dei canali rimossa: tornerà con i prossimi canali che guardi.');
+    Modal.toast(tr('Riga dei canali rimossa: tornerà con i prossimi canali che guardi.'));
     nav.focus(this.firstFocus());
   }
   async cardMenu(r) {
     const lv = r.kind === 'live';
-    const v = await Modal.menu(r.name, [{ label: 'Guarda', value: 'play', icon: 'play' }, { label: 'Togli dalla riga', value: 'one', icon: 'x' }, { label: lv ? 'Svuota la riga dei canali' : 'Svuota la riga “Continua a guardare”', value: lv ? 'live' : 'all', icon: 'trash' }]);
+    const v = await Modal.menu(r.name, [{ label: tr('Guarda'), value: 'play', icon: 'play' }, { label: tr('Togli dalla riga'), value: 'one', icon: 'x' }, { label: lv ? tr('Svuota la riga dei canali') : tr('Svuota la riga “Continua a guardare”'), value: lv ? 'live' : 'all', icon: 'trash' }]);
     if (v === 'play') playMeta(r);
     else if (v === 'one') { store.hideRecent(r.key); this.renderCont(); nav.focus(this.firstFocus()); }
     else if (v === 'all') this.clearRow();
     else if (v === 'live') this.clearLive();
   }
-  async confirmExit() { if (await Modal.confirm('Uscire dall\'app?', '', 'Esci', 'Resta')) exitApp(); }
+  async confirmExit() { if (await Modal.confirm(tr('Uscire dall\'app?'), '', tr('Esci'), tr('Resta'))) exitApp(); }
 }

@@ -5,17 +5,18 @@ import * as nav from '../core/nav.js';
 import { router } from '../core/router.js';
 import { icon } from './icons.js';
 import { Sel } from './sound.js';
+import { tr } from '../core/i18n.js';
 
 export const VERSION = typeof __VERSION__ !== 'undefined' ? __VERSION__ : 'dev';
 
 // voci della barra: id, icona, etichetta, azione (chiamata sulla Home)
 const ITEMS = [
   ['home', 'home', 'Home', hm => { }],
-  ['live', 'tv', 'TV in diretta', hm => hm.openLive()],
+  ['live', 'tv', tr('TV in diretta'), hm => hm.openLive()],
   ['ondemand', 'film', 'On Demand', hm => hm.openVod('movie', 'all')],
-  ['files', 'folder', 'File di rete', hm => hm.openFiles()],
-  ['favs', 'star', 'Preferiti', hm => hm.openFavs()],
-  ['set', 'gear', 'Impostazioni', hm => hm.openSettings()]
+  ['files', 'folder', tr('File di rete'), hm => hm.openFiles()],
+  ['favs', 'star', tr('Preferiti'), hm => hm.openFavs()],
+  ['set', 'gear', tr('Impostazioni'), hm => hm.openSettings()]
 ];
 export const MENU = ITEMS.map(x => ({ id: x[0], icon: x[1], label: x[2], go: x[3] }));
 // sezioni raggiungibili (anche come schermata all'avvio) senza una voce propria nel menu
@@ -97,7 +98,7 @@ export function applyShell() {
 export function initShell() {
   const list = h('div', { class: 'rlist' });
   rail = h('div', { id: 'rail' }, h('div', { class: 'rhead' }, h('img', { class: 'rlogo', src: 'icon.png', alt: '' }), h('div', { class: 'rtx' }, h('div', { class: 'rname', text: 'MAXENTA' }), h('div', { class: 'rver', text: 'v' + VERSION }))), list);
-  items = [{ id: 'now', icon: 'play', label: 'In riproduzione' }].concat(MENU).map(m => {
+  items = [{ id: 'now', icon: 'play', label: tr('In riproduzione') }].concat(MENU).map(m => {
     const e = h('div', { class: 'ri' + (m.id === 'set' ? ' last' : '') + (m.id === 'now' ? ' now' : ''), onclick: () => { if (Rail.active) Rail.exit(); if (m.id === 'now') { if (Rail.expandMini) Rail.expandMini(); } else goSection(m.id); } }, icon(m.icon), h('span', { text: m.label }));
     e._id = m.id; list.appendChild(e); return e;
   });

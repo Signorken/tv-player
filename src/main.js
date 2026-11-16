@@ -8,13 +8,14 @@ import * as Modal from './ui/modal.js';
 import { active as kbActive, promptText } from './ui/keyboard.js';
 import { HomeScreen } from './screens/home.js';
 import { PlayerScreen, Mini } from './screens/player.js';
-import { applyUi } from './screens/settings.js';
+import { applyUi, SettingsScreen } from './screens/settings.js';
 import { addSourceFlow, addFromText, addFromClipboard, importFiles, pickPlaylistFile, discoverFlow, addFolderFlow, playUrl } from './screens/addflow.js';
 import { uid } from './core/util.js';
 import { initShell, Rail, goSection } from './ui/shell.js';
 import { Sound, Sel } from './ui/sound.js';
 import { Perf } from './core/perf.js';
 import { setImg } from './ui/chrome.js';
+import { tr } from './core/i18n.js';
 Perf.detect();
 
 function defaultNav(a) {
@@ -63,15 +64,15 @@ function onRemote(m) {
     case 'text': if (kbActive.prompt) kbActive.prompt.setValue(String(m.v || '')); break;
     case 'submit': if (kbActive.prompt) kbActive.prompt.submit(); break;
     case 'addSource':
-      if (m.cfg && m.cfg.type && m.cfg.url) { m.cfg.id = uid(); store.addSource(m.cfg); Modal.toast('Sorgente aggiunta dal telefono: ' + (m.cfg.name || m.cfg.type)); const c = router.current; if (c && c.refresh) c.refresh(); }
+      if (m.cfg && m.cfg.type && m.cfg.url) { m.cfg.id = uid(); store.addSource(m.cfg); Modal.toast(tr('Sorgente aggiunta dal telefono: ') + (m.cfg.name || m.cfg.type)); const c = router.current; if (c && c.refresh) c.refresh(); }
       break;
     case 'm3u':
-      if (m.text) { const id = uid(); store.idbSet('file:' + id, m.text).then(() => { store.addSource({ id: id, type: 'm3ufile', name: m.name || 'Playlist dal telefono' }); Modal.toast('Playlist ricevuta: ' + (m.name || '')); const c = router.current; if (c && c.refresh) c.refresh(); }); }
+      if (m.text) { const id = uid(); store.idbSet('file:' + id, m.text).then(() => { store.addSource({ id: id, type: 'm3ufile', name: m.name || tr('Playlist dal telefono') }); Modal.toast(tr('Playlist ricevuta: ') + (m.name || '')); const c = router.current; if (c && c.refresh) c.refresh(); }); }
       break;
     case 'play':
       if (m.url) {
         const live = /\.(m3u8|ts)(\?|$)/i.test(m.url);
-        router.push(new PlayerScreen({ kind: live ? 'live' : 'vod', list: [{ id: m.url, num: '' }], index: 0, resolve: it => ({ url: it.id, title: m.name || 'Dal telefono', sub: 'Inviato dal telefono' }) }));
+        router.push(new PlayerScreen({ kind: live ? 'live' : 'vod', list: [{ id: m.url, num: '' }], index: 0, resolve: it => ({ url: it.id, title: m.name || tr('Dal telefono'), sub: tr('Inviato dal telefono') }) }));
       }
       break;
   }
@@ -79,8 +80,8 @@ function onRemote(m) {
 
 // play() interrotto da pause()/nuovo caricamento (zapping, flusso alternativo) è normale, non un errore
 const benign = r => { const m = String(r && (r.message || r) || ''); return (r && r.name === 'AbortError') || /interrupted by a (call to pause|new load request)|The play\(\) request/i.test(m); };
-window.addEventListener('error', e => { if (benign(e.error || e.message)) return; try { Modal.toast('Errore: ' + (e.message || e.error), 5000); } catch (x) { /* */ } });
-window.addEventListener('unhandledrejection', e => { if (benign(e.reason)) { e.preventDefault(); return; } try { Modal.toast('Errore: ' + (e.reason && e.reason.message || e.reason), 5000); } catch (x) { /* */ } });
+window.addEventListener('error', e => { if (benign(e.error || e.message)) return; try { Modal.toast(tr('Errore: ') + (e.message || e.error), 5000); } catch (x) { /* */ } });
+window.addEventListener('unhandledrejection', e => { if (benign(e.reason)) { e.preventDefault(); return; } try { Modal.toast(tr('Errore: ') + (e.reason && e.reason.message || e.reason), 5000); } catch (x) { /* */ } });
 
 store.load();
 // se l'app è servita dal companion (/app/), usa lo stesso server come proxy/relay
@@ -93,7 +94,7 @@ installKeys(dispatch);
 Remote.onMessage(onRemote);
 Remote.start();
 router.push(new HomeScreen());
-if (window.__shell && window.__shell.updatedFrom) setTimeout(() => Modal.toast('MAXENTA aggiornata alla versione ' + window.__shell.version, 5000), 800);
+if (window.__shell && window.__shell.updatedFrom) setTimeout(() => Modal.toast(tr('MAXENTA aggiornata alla versione ') + window.__shell.version, 5000), 800);
 // schermata all'avvio scelta nelle impostazioni
 (function () {
   const st = store.settings().startScreen;
@@ -121,7 +122,7 @@ function zoomUi(cmd) {
   const s = store.settings(), i = ZOOM.indexOf(s.uiScale || 100);
   s.uiScale = cmd === 'zoomreset' ? 100 : ZOOM[Math.max(0, Math.min(ZOOM.length - 1, (i < 0 ? 3 : i) + (cmd === 'zoomin' ? 1 : -1)))];
   store.save(); applyUi();
-  Modal.toast('Dimensione interfaccia: ' + s.uiScale + '%', 1200);
+  Modal.toast(tr('Dimensione interfaccia: ') + s.uiScale + '%', 1200);
 }
 window.addEventListener('resize', applyUi);
 // browser (TV o PC): Ctrl +/-/0 regolano la dimensione dell'interfaccia
@@ -136,7 +137,7 @@ if (platform.isDesktop) {
   });
   // Trascina file playlist/video o link nella finestra
   let dragN = 0;
-  const ov = document.createElement('div'); ov.id = 'dropov'; ov.textContent = 'Rilascia qui una playlist, un video o un link'; document.body.appendChild(ov);
+  const ov = document.createElement('div'); ov.id = 'dropov'; ov.textContent = tr('Rilascia qui una playlist, un video o un link'); document.body.appendChild(ov);
   window.addEventListener('dragenter', e => { e.preventDefault(); dragN++; ov.classList.add('show'); });
   window.addEventListener('dragleave', () => { if (--dragN <= 0) { dragN = 0; ov.classList.remove('show'); } });
   window.addEventListener('dragover', e => e.preventDefault());
@@ -162,23 +163,23 @@ if (platform.isDesktop) {
       }
     });
     window.desktop.onOpenPath(async p => {
-      try { const t = await window.desktop.readText(p); await addFromText(t); } catch (e) { Modal.toast('Impossibile aprire il file: ' + e.message, 4000); }
+      try { const t = await window.desktop.readText(p); await addFromText(t); } catch (e) { Modal.toast(tr('Impossibile aprire il file: ') + e.message, 4000); }
     });
     window.desktop.onUpdate(async m => {
       if (m.state === 'available') {
-        const ok = await Modal.confirm('Aggiornamento disponibile: versione ' + m.version, (m.notes ? m.notes + '\n\n' : '') + (m.auto ? 'Si scarica in background e si installa al riavvio.' : (/Mac/.test(navigator.platform) ? 'Su Mac scarico il file .dmg: aprilo e trascina MAXENTA in Applicazioni sostituendo la versione precedente.' : 'Questa installazione (.deb/.rpm) si aggiorna a mano: apro la pagina di download.')), m.auto ? 'Scarica' : 'Apri pagina', 'Più tardi');
-        if (ok) { window.desktop.updateDownload(); if (m.auto) Modal.toast('Scarico l\'aggiornamento…', 4000); }
-      } else if (m.state === 'progress') { Modal.toast('Scarico l\'aggiornamento… ' + m.percent + '%', 1500); }
+        const ok = await Modal.confirm(tr('Aggiornamento disponibile: versione ') + m.version, (m.notes ? m.notes + '\n\n' : '') + (m.auto ? tr('Si scarica in background e si installa al riavvio.') : (/Mac/.test(navigator.platform) ? tr('Su Mac scarico il file .dmg: aprilo e trascina MAXENTA in Applicazioni sostituendo la versione precedente.') : tr('Questa installazione (.deb/.rpm) si aggiorna a mano: apro la pagina di download.'))), m.auto ? tr('Scarica') : tr('Apri pagina'), tr('Più tardi'));
+        if (ok) { window.desktop.updateDownload(); if (m.auto) Modal.toast(tr('Scarico l\'aggiornamento…'), 4000); }
+      } else if (m.state === 'progress') { Modal.toast(tr('Scarico l\'aggiornamento… ') + m.percent + '%', 1500); }
       else if (m.state === 'ready') {
-        if (await Modal.confirm('Aggiornamento pronto: versione ' + m.version, 'Riavvio l\'app per installarlo. La tua configurazione e i preferiti restano.', 'Riavvia ora', 'Al prossimo avvio')) window.desktop.updateInstall();
-      } else if (m.state === 'none') Modal.toast('Sei già aggiornato (versione ' + m.version + ')', 4000);
+        if (await Modal.confirm(tr('Aggiornamento pronto: versione ') + m.version, tr('Riavvio l\'app per installarlo. La tua configurazione e i preferiti restano.'), tr('Riavvia ora'), tr('Al prossimo avvio'))) window.desktop.updateInstall();
+      } else if (m.state === 'none') Modal.toast(tr('Sei già aggiornato (versione ') + m.version + ')', 4000);
       else if (m.state === 'disabled') {
-        const r = await promptText({ title: 'Repository GitHub degli aggiornamenti', value: '', hint: 'Formato utente/repository (es. mario/tv-player). È il repository dove pubblichi le Release.', quick: false });
-        if (r && r.trim()) { const okr = await window.desktop.setRepoAndCheck(r); if (!okr) Modal.toast('Formato non valido: usa utente/repository', 5000); }
+        const r = await promptText({ title: tr('Repository GitHub degli aggiornamenti'), value: '', hint: tr('Formato utente/repository (es. mario/tv-player). È il repository dove pubblichi le Release.'), quick: false });
+        if (r && r.trim()) { const okr = await window.desktop.setRepoAndCheck(r); if (!okr) Modal.toast(tr('Formato non valido: usa utente/repository'), 5000); }
       }
-      else if (m.state === 'error') { if (await Modal.confirm('Aggiornamento non riuscito', m.message + '\n\nPuoi scaricare l\'ultima versione dalla pagina del progetto.', 'Apri pagina', 'Chiudi')) window.desktop.updatePage(); }
+      else if (m.state === 'error') { if (await Modal.confirm(tr('Aggiornamento non riuscito'), m.message + tr('\n\nPuoi scaricare l\'ultima versione dalla pagina del progetto.'), tr('Apri pagina'), tr('Chiudi'))) window.desktop.updatePage(); }
     });
     if (store.settings().userAgent && window.desktop.setUserAgent) window.desktop.setUserAgent(store.settings().userAgent);
   }
 }
-window.__app = { Mini: Mini, Sound: Sound, setImg: setImg, applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };
+window.__app = { SettingsScreen: SettingsScreen, Mini: Mini, Sound: Sound, setImg: setImg, applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };

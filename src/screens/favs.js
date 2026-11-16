@@ -6,13 +6,14 @@ import * as Modal from '../ui/modal.js';
 import { playMeta } from './home.js';
 import { Rail } from '../ui/shell.js';
 import { Mini } from './player.js';
+import { tr } from '../core/i18n.js';
 
-const KIND = { live: 'Canale', movie: 'Film', series: 'Serie TV', episode: 'Episodio', file: 'File' };
+const KIND = { live: tr('Canale'), movie: tr('Film'), series: tr('Serie TV'), episode: tr('Episodio'), file: 'File' };
 
 export class FavsScreen {
   constructor() {
     this.railId = 'favs';
-    this.hd = header('Preferiti', '', []);
+    this.hd = header(tr('Preferiti'), '', []);
     this.list = new VList({
       rowH: () => Math.round(remPx() * 3.6),
       build: () => { const im = img(); const r = h('div', { class: 'row favrow' }, h('div', { class: 'lg' }, im), h('div', { class: 'cmid' }, h('div', { class: 'cn' }), h('div', { class: 'cnow' })), h('span', { class: 'rc' })); r._im = im; r._n = r.querySelector('.cn'); r._s = r.querySelector('.cnow'); r._k = r.lastChild; return r; },
@@ -20,8 +21,8 @@ export class FavsScreen {
       onSelect: f => playMeta(f),
       onMenu: f => this.menu(f), onEdge: d => { if (d === 'left') Rail.enter(); else if (d === 'down') Mini.focusFrom(d); return true; }
     });
-    this.empty = h('div', { class: 'empty', text: 'Nessun preferito. Tieni premuto OK su un canale, film o serie.' });
-    this.el = h('div', { class: 'screen favs' }, this.hd.el, h('div', { class: 'single' }, this.list.el), this.empty, hints([['ok', 'Apri'], ['menu', 'Rimuovi'], ['back', 'Indietro']]));
+    this.empty = h('div', { class: 'empty', text: tr('Nessun preferito. Tieni premuto OK su un canale, film o serie.') });
+    this.el = h('div', { class: 'screen favs' }, this.hd.el, h('div', { class: 'single' }, this.list.el), this.empty, hints([['ok', tr('Apri')], ['menu', tr('Rimuovi')], ['back', tr('Indietro')]]));
   }
   onShow() { this.load(); this.list.setActive(true); this.list.relayout(); }
   load() {
@@ -32,7 +33,7 @@ export class FavsScreen {
     this.empty.style.display = arr.length ? 'none' : '';
   }
   async menu(f) {
-    const r = await Modal.menu(f.name, [{ label: 'Apri', value: 'open', icon: 'play' }, { label: 'Rimuovi dai preferiti', value: 'rm', icon: 'trash', danger: true }]);
+    const r = await Modal.menu(f.name, [{ label: tr('Apri'), value: 'open', icon: 'play' }, { label: tr('Rimuovi dai preferiti'), value: 'rm', icon: 'trash', danger: true }]);
     if (r === 'open') playMeta(f); else if (r === 'rm') { store.toggleFav(f.key, {}); this.load(); }
   }
   onRailEnter() { this.list.setActive(false); }

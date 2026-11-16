@@ -2,6 +2,7 @@
 import { fetchText } from '../core/net.js';
 import { parseM3U, buildCatalogFromM3U } from '../core/parsers.js';
 import { idbGet, idbSet, cached } from '../core/store.js';
+import { tr } from '../core/i18n.js';
 
 export class M3USource {
   constructor(cfg) { this.cfg = cfg; this.kind = 'media'; this.cat = null; this.epgUrl = cfg.epgUrl || ''; }
@@ -11,7 +12,7 @@ export class M3USource {
   async _text() {
     if (this.cfg.type === 'm3ufile') {
       const t = await idbGet('file:' + this.cfg.id);
-      if (!t) throw new Error('Playlist importata non trovata, reimportala');
+      if (!t) throw new Error(tr('Playlist importata non trovata, reimportala'));
       return t;
     }
     return fetchText(this.cfg.url, { timeout: 90000 });
@@ -36,7 +37,7 @@ export class M3USource {
 
   async test() {
     const cat = await this._build();
-    return cat.live.items.length + ' canali, ' + cat.movies.items.length + ' film, ' + cat.series.items.length + ' serie';
+    return cat.live.items.length + tr(' canali, ') + cat.movies.items.length + tr(' film, ') + cat.series.items.length + tr(' serie');
   }
 
   async live() { return this.cat.live; }

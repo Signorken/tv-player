@@ -11,6 +11,9 @@ for p in tizen webos vidaa web; do
   # TV: guscio che si aggiorna da solo (vedi packaging/shell/loader.js)
   [ "$p" != web ] && node scripts/shell.js "dist/$p"
 done
+# Samsung: carica le API della TV (AVPlay, lettore video hardware) prima dell'app
+sed -i 's#<head>#<head>\n<script src="$WEBAPIS/webapis/webapis.js"></script>#' dist/tizen/index.html
+grep -q 'webapis.js' dist/tizen/index.html || { echo "webapis non inserito"; exit 1; }
 echo "OK:"
 ls dist
 echo

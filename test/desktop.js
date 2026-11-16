@@ -33,7 +33,7 @@ const dl = http.createServer((req, res2) => {
   await sleep(800);
   const el = spawn(path.join(__dirname, '..', 'node_modules', 'electron', 'dist', 'electron'),
     ['.', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=9333', '--user-data-dir=' + userData],
-    { cwd: path.join(__dirname, '..'), env: Object.assign({}, process.env, { DISPLAY: ':77' }), stdio: ['ignore', 'pipe', 'pipe'] });
+    { cwd: path.join(__dirname, '..'), env: Object.assign({}, process.env, { DISPLAY: ':77', LANG: 'it_IT.UTF-8', LANGUAGE: 'it' }), stdio: ['ignore', 'pipe', 'pipe'] });
   let log = ''; el.stdout.on('data', d => log += d); el.stderr.on('data', d => log += d);
   const done = async code => { try { el.kill(); xv.kill(); dl.close(); } catch (e) { /* */ } fs.rmSync(tmp, { recursive: true, force: true }); process.exit(code); };
   let browser;

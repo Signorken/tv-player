@@ -15,14 +15,15 @@ import { PlayerScreen, Mini } from './player.js';
 import { Rail } from '../ui/shell.js';
 
 import { isSportChannel } from '../core/sport.js';
+import { tr } from '../core/i18n.js';
 export class LiveScreen {
   constructor(src, opts) {
     this.src = src; this.opts = opts || {};
     this.railId = this.opts.sport ? 'sport' : 'live';
     this.zone = 'chs'; this.query = ''; this.catId = '__all';
-    this.hd = header(this.opts.sport ? 'Sport in diretta' : 'TV in diretta', src.name, [
-      { icon: 'search', label: 'Cerca', onclick: () => this.search() },
-      { icon: 'list', label: 'Sorgente', onclick: () => this.switchSource() }
+    this.hd = header(this.opts.sport ? tr('Sport in diretta') : tr('TV in diretta'), src.name, [
+      { icon: 'search', label: tr('Cerca'), onclick: () => this.search() },
+      { icon: 'list', label: tr('Sorgente'), onclick: () => this.switchSource() }
     ]);
     const rh = () => Math.round(remPx() * 3.1);
     this.cats = new VList({
@@ -54,12 +55,12 @@ export class LiveScreen {
     this.pvLogo = img('pvlogo');
     this.pvBox = h('div', { class: 'pbox' }, this.pvLogo, this.pv);
     this.pvT = h('div', { class: 'pvt' }); this.pvS = h('div', { class: 'pvs' });
-    this.prev = h('div', { class: 'pane prev' }, this.pvBox, this.pvT, this.pvS, h('div', { class: 'pvn', text: 'OK: guarda · la guida programmi compare a canale aperto' }));
+    this.prev = h('div', { class: 'pane prev' }, this.pvBox, this.pvT, this.pvS, h('div', { class: 'pvn', text: tr('OK: guarda · la guida programmi compare a canale aperto') }));
     this.panes = h('div', { class: 'panes' },
       h('div', { class: 'pane cats' }, this.cats.el),
       h('div', { class: 'pane chs' }, this.chs.el), this.prev);
     this.status = h('div', { class: 'status' });
-    this.el = h('div', { class: 'screen live' }, this.hd.el, this.panes, hints([['ok', 'Guarda'], ['menu', 'Preferito / opzioni'], ['back', 'Indietro']]), this.status);
+    this.el = h('div', { class: 'screen live' }, this.hd.el, this.panes, hints([['ok', tr('Guarda')], ['menu', tr('Preferito / opzioni')], ['back', tr('Indietro')]]), this.status);
     this.updPrev = debounce(() => this.renderPreview(), 180);
     this.pvEngine = null; this.pvTimer = null;
     this.loaded = false;
@@ -67,9 +68,9 @@ export class LiveScreen {
 
   async onShow(first) {
     if (first) {
-      showLoading('Caricamento canali…', this.src.name);
+      showLoading(tr('Caricamento canali…'), this.src.name);
       let live;
-      try { live = await this.src.live(); } catch (e) { hideLoading(); Modal.toast('Errore: ' + e.message, 5000); router.back(); return; }
+      try { live = await this.src.live(); } catch (e) { hideLoading(); Modal.toast(tr('Errore: ') + e.message, 5000); router.back(); return; }
       hideLoading();
       if (Epg.srcId !== this.src.id) Epg.reset();
       this.all = live.items; this.baseCats = live.cats;
@@ -98,8 +99,8 @@ export class LiveScreen {
   rebuildCats() {
     const favCount = this.all.filter(c => store.isFav(store.favKey(this.src.id, 'live', c.id))).length;
     if (this.sportN === undefined) this.sportN = this.opts.sport ? 0 : this.all.filter(isSportChannel).length;
-    const cats = [{ id: '__fav', name: 'Preferiti', count: favCount }, { id: '__all', name: 'Tutti i canali', count: this.all.length }].concat(this.sportN ? [{ id: '__sport', name: 'Sport', count: this.sportN }] : [], this.baseCats);
-    if (this.query) cats.unshift({ id: '__q', name: 'Ricerca: ' + this.query, count: 0 });
+    const cats = [{ id: '__fav', name: tr('Preferiti'), count: favCount }, { id: '__all', name: tr('Tutti i canali'), count: this.all.length }].concat(this.sportN ? [{ id: '__sport', name: 'Sport', count: this.sportN }] : [], this.baseCats);
+    if (this.query) cats.unshift({ id: '__q', name: tr('Ricerca: ') + this.query, count: 0 });
     this.catList = cats;
     const keepIdx = Math.max(0, cats.findIndex(c => c.id === this.catId));
     this.cats.setItems(cats); this.cats.sel = keepIdx; this.cats.render();
@@ -165,7 +166,7 @@ export class LiveScreen {
     const ch = this.chs.current(); if (!ch) return;
     const key = store.favKey(this.src.id, 'live', ch.id);
     const on = store.toggleFav(key, { kind: 'live', src: this.src.id, id: ch.id, name: ch.name, logo: ch.logo });
-    Modal.toast(on ? '★ ' + ch.name + ' aggiunto ai preferiti' : ch.name + ' rimosso dai preferiti', 1800);
+    Modal.toast(on ? '★ ' + ch.name + tr(' aggiunto ai preferiti') : ch.name + tr(' rimosso dai preferiti'), 1800);
     const fav = this.catList.find(c => c.id === '__fav'); if (fav) { fav.count += on ? 1 : -1; }
     if (this.catId === '__fav') this.pickCat(this.catList.find(c => c.id === '__fav'));
     this.cats.render(); this.chs.render();
@@ -174,13 +175,13 @@ export class LiveScreen {
   async channelMenu(ch) {
     const key = store.favKey(this.src.id, 'live', ch.id);
     const r = await Modal.menu(ch.name, [
-      { label: 'Guarda ora', value: 'play', icon: 'play' },
-      { label: store.isFav(key) ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti', value: 'fav', icon: 'star' }]);
+      { label: tr('Guarda ora'), value: 'play', icon: 'play' },
+      { label: store.isFav(key) ? tr('Rimuovi dai preferiti') : tr('Aggiungi ai preferiti'), value: 'fav', icon: 'star' }]);
     if (r === 'play') this.play(this.chs.sel); else if (r === 'fav') this.toggleFav();
   }
 
   async search() {
-    const q = await promptText({ title: 'Cerca un canale', value: this.query, quick: false, hint: 'Cerca in tutti i canali di questa sorgente' });
+    const q = await promptText({ title: tr('Cerca un canale'), value: this.query, quick: false, hint: tr('Cerca in tutti i canali di questa sorgente') });
     if (q === null) { this.setZone(this.zone === 'bar' ? 'chs' : this.zone); return; }
     this.query = q.trim();
     this.catId = this.query ? '__q' : '__all';
@@ -206,7 +207,7 @@ export class LiveScreen {
 
   renderPreview() {
     const ch = this.chs.current();
-    if (!ch) { this.pvT.textContent = this.list && !this.list.length ? 'Nessun canale' : ''; this.pvS.textContent = ''; setImg(this.pvLogo, ''); return; }
+    if (!ch) { this.pvT.textContent = this.list && !this.list.length ? tr('Nessun canale') : ''; this.pvS.textContent = ''; setImg(this.pvLogo, ''); return; }
     setImg(this.pvLogo, ch.logo);
     this.pvT.textContent = ch.num + '  ' + ch.name;
     this.pvS.textContent = ch.group || '';

@@ -3,10 +3,11 @@ import { loadScript, extOf } from '../core/util.js';
 import { settings } from '../core/store.js';
 import { mediaUrl } from '../core/net.js';
 import { platform } from '../core/platform.js';
+import { tr } from '../core/i18n.js';
 
 // ---- lingua audio: nomi leggibili e preferenza ricordata
 const L3 = { ita: 'it', eng: 'en', spa: 'es', fra: 'fr', fre: 'fr', deu: 'de', ger: 'de', por: 'pt', rus: 'ru', jpn: 'ja', zho: 'zh', chi: 'zh', ara: 'ar', tur: 'tr', pol: 'pl', nld: 'nl', dut: 'nl' };
-export const LANG = { it: 'Italiano', en: 'English', es: 'Español', fr: 'Français', de: 'Deutsch', pt: 'Português', ru: 'Русский', ja: '日本語', zh: '中文', ar: 'العربية', tr: 'Türkçe', pl: 'Polski', nl: 'Nederlands' };
+export const LANG = { it: tr('Italiano'), en: tr('English'), es: 'Español', fr: 'Français', de: 'Deutsch', pt: 'Português', ru: 'Русский', ja: '日本語', zh: '中文', ar: 'العربية', tr: 'Türkçe', pl: 'Polski', nl: 'Nederlands' };
 export function langCode(x) {
   x = String(x || '').toLowerCase().trim(); if (!x) return '';
   const m = x.match(/^[a-z]{2,3}/); if (!m) return '';
@@ -21,7 +22,7 @@ function codeFromTrack(t) {
 export function trackLabel(t, i) {
   const c = codeFromTrack(t);
   const base = (c && LANG[c]) || t.name || t.label || t.lang || t.language || ('Audio ' + (i + 1));
-  const extra = [t.codec ? String(t.codec).toUpperCase() : '', t.ch ? ({ 1: 'mono', 2: 'stereo', 6: '5.1', 8: '7.1' })[t.ch] || t.ch + ' canali' : ''].filter(Boolean).join(' · ');
+  const extra = [t.codec ? String(t.codec).toUpperCase() : '', t.ch ? ({ 1: 'mono', 2: 'stereo', 6: '5.1', 8: '7.1' })[t.ch] || t.ch + tr(' canali') : ''].filter(Boolean).join(' · ');
   return base + (extra ? '  (' + extra + ')' : '');
 }
 // indice della traccia che corrisponde alla lingua preferita (o -1)
@@ -77,10 +78,10 @@ export class Engine {
     const p = this.v.play(); if (p && p.catch) p.catch(() => { });
   }
   async _ffBegin(a, gen) {
-    this.timer = setTimeout(() => { if (gen === this.gen) this._next('timeout convertitore'); }, 90000);
+    this.timer = setTimeout(() => { if (gen === this.gen) this._next(tr('timeout convertitore')); }, 90000);
     const info = await window.desktop.ffProbe(a.u);
     if (gen !== this.gen || this.attempts[this.ai] !== a) return;
-    if (info.error) { this._next('convertitore: ' + info.error); return; }
+    if (info.error) { this._next(tr('convertitore: ') + info.error); return; }
     this.ff = { src: a.u, off: 0, dur: info.duration || 0, audio: info.audio.length ? info.audio : [{ idx: 0, codec: 'aac', lang: '' }], ai: 0, v: 'copy', retried: false };
     const pi = this.audioIdx != null ? this.audioIdx : pickLang(this.ff.audio, settings().audioLang); if (pi > 0 && pi < this.ff.audio.length) this.ff.ai = pi;
     this.ff.v = info.vcodec === 'h264' ? 'copy' : 'tx';
@@ -93,7 +94,7 @@ export class Engine {
     if (!a || a.eng !== 'native' || !n || n.eng !== 'ff') return;
     const v = this.v, d = v.duration, sk = v.seekable;
     const ok = isFinite(d) && d > 0 && sk && sk.length && sk.end(sk.length - 1) >= d - 2;
-    if (!ok) { this.startAt = v.currentTime || this.startAt; this._next('timeline non scorrevole'); }
+    if (!ok) { this.startAt = v.currentTime || this.startAt; this._next(tr('timeline non scorrevole')); }
   }
   // desktop: il lettore nativo non elenca le tracce audio dei file MP4/MKV -> le legge ffmpeg; se serve cambia lingua passando al convertitore
   _probeAudio() {
@@ -120,12 +121,14 @@ export class Engine {
     this._silT = setTimeout(() => {
       if (gen !== this.gen || this.ff) return;
       const v = this.v;
-      if (!v.paused && v.currentTime > 1.5 && typeof v.webkitAudioDecodedByteCount === 'number' && v.webkitAudioDecodedByteCount === 0 && !v.muted) { this.startAt = v.currentTime; this._next('audio non supportato'); }
+      if (!v.paused && v.currentTime > 1.5 && typeof v.webkitAudioDecodedByteCount === 'number' && v.webkitAudioDecodedByteCount === 0 && !v.muted) { this.startAt = v.currentTime; this._next(tr('audio non supportato')); }
     }, 4500);
   }
 
   plan(url, live, alt) {
     const out = [];
+    // lettore nativo (ExoPlayer / AVPlay): legge da solo HLS, TS, MP4, MKV
+    if (this.v.isNative) { out.push({ u: url, eng: 'native' }); if (alt) out.push({ u: alt, eng: 'native' }); return out; }
     const mk = (u) => {
       const e = extOf(u), isHls = e === 'm3u8' || /m3u8/i.test(u), isTs = e === 'ts' || (live && !e && !isHls);
       if (isHls) { if (nativeHls(this.v)) { out.push({ u: u, eng: 'native' }); out.push({ u: u, eng: 'hls' }); } else { out.push({ u: u, eng: 'hls' }); out.push({ u: u, eng: 'native' }); } }
