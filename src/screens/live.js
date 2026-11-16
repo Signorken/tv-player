@@ -198,7 +198,7 @@ export class LiveScreen {
     this.stopPreview();
     this.updPrev();
     const o = store.settings();
-    if (o.previewVideo && ch) {
+    if (o.previewVideo && ch && !document.body.classList.contains('lite')) {
       clearTimeout(this.pvTimer);
       this.pvTimer = setTimeout(() => this.startPreview(ch), 1400);
     }

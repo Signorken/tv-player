@@ -240,6 +240,14 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   await key('Enter'); await sleep(300);
   ok('...e con OK toglie la riga', await page.evaluate(() => getComputedStyle(document.querySelector('.liverow')).display === 'none'));
 
+  // --- 2.4 prestazioni
+  ok('profilo prestazioni: voce in Aspetto e indicatore attivabile', await page.evaluate(() => { const s = window.__app.store.settings(); s.perfHud = true; s.perf = 'lite'; window.__app.applyUi(); const ok1 = !!document.getElementById('hud') && document.body.classList.contains('lite'); s.perfHud = false; s.perf = 'full'; window.__app.applyUi(); return ok1 && !document.getElementById('hud') && !document.body.classList.contains('lite'); }));
+  await sleep(1300);
+  ok('locandine TMDB ridotte alla misura che serve', await page.evaluate(() => { const i = document.createElement('img'); i.className = 'cposter'; window.__app.setImg(i, 'https://image.tmdb.org/t/p/original/abc.jpg'); const a = i.getAttribute('src'); const j = document.createElement('img'); window.__app.setImg(j, 'https://image.tmdb.org/t/p/w600_and_h900_bestv2/x.jpg'); return a === 'https://image.tmdb.org/t/p/w342/abc.jpg' && j.getAttribute('src') === 'https://image.tmdb.org/t/p/w342/x.jpg'; }));
+  await goHome(); await page.evaluate(() => window.__app.router.current.openLive()); await wait(() => window.__app.router.current.all, 15000); await sleep(300);
+  const reuse = await page.evaluate(() => { const c = window.__app.router.current; const rows = [].slice.call(c.chs.el.querySelectorAll('.vl-row')); c.chs.select(c.chs.sel + 15); const before = rows.map(r => r._ch); c.chs.select(c.chs.sel + 1); return rows.filter((r, k) => r._ch && r._ch === before[k]).length; });
+  ok('lista: scorrendo le righe già visibili non vengono ricaricate', reuse >= 5, 'righe riusate: ' + reuse);
+
   // --- 2.3: pannelli del player interi, barra con nome e versione, dimensione proporzionata
   ok('barra: nome e versione accanto al logo', await page.evaluate(() => /MAXENTA/.test(document.querySelector('.rname').textContent) && /^v\d/.test(document.querySelector('.rver').textContent)));
   const fs1 = await page.evaluate(() => parseFloat(document.documentElement.style.fontSize));

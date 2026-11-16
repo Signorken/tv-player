@@ -18,6 +18,8 @@ import { showLoading, hideLoading, invalidate } from '../core/session.js';
 import { Epg } from '../core/epg.js';
 
 import { applyShell, VERSION, Rail } from '../ui/shell.js';
+import { Perf } from '../core/perf.js';
+import { Hud } from '../ui/hud.js';
 export function applyUi() {
   const s = store.settings();
   const k = (s.uiScale || 100) / 100;
@@ -28,7 +30,10 @@ export function applyUi() {
   let base = Math.min(W * 0.0105, H * 0.0187);
   if (platform.isDesktop) base = Math.max(12, Math.min(28, base));
   document.documentElement.style.fontSize = (base * k).toFixed(2) + 'px';
-  document.body.classList.toggle('lowpower', !!s.lowPower);
+  const lite = Perf.mode(s.perf) === 'lite';
+  document.body.classList.toggle('lowpower', lite);
+  document.body.classList.toggle('lite', lite);
+  Hud.show(!!s.perfHud);
   applyShell();
   relayoutAll();
   applyWallpaper();
@@ -231,7 +236,8 @@ export class SettingsScreen {
         choice('Sfondo', 'wallpaper', WALLPAPERS, null, applyUi),
         choice('Dimensione interfaccia', 'uiScale', [[70, '70%'], [80, 'Piccola (80%)'], [90, '90%'], [100, 'Automatica (100%)'], [110, '110%'], [115, '115%'], [120, '120%'], [130, 'Grande (130%)'], [150, 'Molto grande (150%)']], null, applyUi),
         toggle('Suoni di navigazione', 'sounds'),
-        toggle('Risparmio risorse (niente animazioni)', 'lowPower', applyUi)] },
+        choice('Prestazioni', 'perf', [['auto', 'Automatiche (leggere sui dispositivi deboli)'], ['full', 'Massima qualità (animazioni)'], ['lite', 'Leggere (niente animazioni)']], null, applyUi),
+        toggle('Indicatore prestazioni (fotogrammi e ritardo dei tasti)', 'perfHud', applyUi)] },
       { id: 'net', label: platform.isDesktop ? 'Rete' : 'Rete e telefono', icon: 'cloud', items: list(
         platform.isDesktop ? choice('Identità del lettore (se il provider blocca)', 'userAgent', UA, null, () => window.desktop && window.desktop.setUserAgent && window.desktop.setUserAgent(S().userAgent)) : toggle('Video tramite proxy (se il server blocca CORS)', 'proxyMedia'),
         platform.isDesktop ? null : { label: 'Telefono come tastiera / telecomando', value: () => Remote.configured() ? (Remote.phoneSeen ? 'collegato' : 'pronto') : 'non configurato', act: () => router.push(new PairScreen()) },

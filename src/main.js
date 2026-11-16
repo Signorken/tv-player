@@ -13,6 +13,9 @@ import { addSourceFlow, addFromText, addFromClipboard, importFiles, pickPlaylist
 import { uid } from './core/util.js';
 import { initShell, Rail, goSection } from './ui/shell.js';
 import { Sound, Sel } from './ui/sound.js';
+import { Perf } from './core/perf.js';
+import { setImg } from './ui/chrome.js';
+Perf.detect();
 
 function defaultNav(a) {
   switch (a.a) {
@@ -178,4 +181,4 @@ if (platform.isDesktop) {
     if (store.settings().userAgent && window.desktop.setUserAgent) window.desktop.setUserAgent(store.settings().userAgent);
   }
 }
-window.__app = { Mini: Mini, Sound: Sound, applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };
+window.__app = { Mini: Mini, Sound: Sound, setImg: setImg, applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };

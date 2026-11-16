@@ -29,7 +29,15 @@ export function img(cls) {
   i.onload = () => { i.style.visibility = ''; };
   return i;
 }
+// immagini TMDB (usate da molti provider, a volte in risoluzione originale fino a 2000 px):
+// si chiede direttamente la misura che serve. Decodificare una locandina enorme su una chiavetta costa più che disegnarla.
+const TMDB = /^(https?:\/\/image\.tmdb\.org\/t\/p\/)(original|w\d+(_and_h\d+[a-z0-9_]*)?)(\/)/;
+export function smallImg(src, big) {
+  if (!src || src.indexOf('tmdb.org') < 0) return src;
+  return src.replace(TMDB, '$1' + (big ? 'w500' : 'w342') + '$4');
+}
 export function setImg(i, src) {
+  src = smallImg(src, i.classList && (i.classList.contains('ipost') || i.classList.contains('dpost')));
   const cur = i.getAttribute('src') || '';
   if (cur === (src || '')) return;
   if (!src) { i.removeAttribute('src'); i.style.visibility = 'hidden'; return; }

@@ -13,7 +13,8 @@ const DEFAULTS = {
     startScreen: 'home',     // schermata all'avvio: home | live | movie | series | sport | favs | last
     miniPlayer: 'always',    // Indietro dal player = finestrella: always | live | vod | never
     sounds: true,            // suoni di navigazione
-    lowPower: false,         // niente animazioni/ombre
+    perf: 'auto',            // prestazioni: auto | full | lite (lite = niente animazioni, sfondo semplice, niente anteprime)
+    perfHud: false,          // indicatore prestazioni
     liveFormat: 'm3u8',      // m3u8 | ts  (per Xtream)
     uiScale: 100,
     bufferSec: 20,
@@ -54,6 +55,8 @@ export function load() {
   const st = data.settings;
   if (st.miniPlayer === true) st.miniPlayer = 'always'; else if (st.miniPlayer === false) st.miniPlayer = 'never';
   if (!st.mig21) { st.mig21 = 1; st.lowPower = false; }
+  // 2.4: "Risparmio risorse" diventa il profilo prestazioni (chi l'aveva attivato resta in modalità leggera)
+  if (!st.mig24) { st.mig24 = 1; st.perf = st.lowPower ? 'lite' : 'auto'; }
   window.addEventListener('pagehide', flush);
   document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
   return data;

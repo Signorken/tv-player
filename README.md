@@ -36,7 +36,7 @@ Gira su **Android TV · Google TV · Fire OS · Samsung Tizen · LG webOS · His
 | **Player** | Pensato per telecomandi **senza numeri né tasti colorati**: pannelli laterali per canali/episodi e per le opzioni (audio, sottotitoli, preferiti, formato, flusso alternativo). Lingua audio ricordata. **Finestrella** per continuare a guardare mentre navighi |
 | **Sorgenti** | M3U/M3U8 (URL o file), Xtream Codes (live, film, serie, guida, stato account e connessioni), **NAS**: WebDAV, indice HTTP, cartelle del computer, condivisioni Windows/SMB (app per computer), DLNA (app per computer). Legge locandine e trame dei file Kodi (`.nfo`, `-poster.jpg`) |
 | **Formati** | HLS (nativo o hls.js), MPEG-TS (mpegts.js), MP4/MKV nativi; sull'app per computer anche un **convertitore ffmpeg** per HEVC, AC3/DTS e server che non permettono di scorrere |
-| **Aspetto** | Due disposizioni (barra laterale **A** o pulsanti **B**), orologio 12/24 h, 8 sfondi astratti, dimensione automatica rispetto allo schermo + zoom manuale, suoni di navigazione, transizioni, modalità *Risparmio risorse* |
+| **Aspetto** | Due disposizioni (barra laterale **A** o pulsanti **B**), orologio 12/24 h, 8 sfondi astratti, dimensione automatica rispetto allo schermo + zoom manuale, suoni di navigazione, transizioni leggere, **profilo prestazioni automatico** e indicatore di prestazioni |
 | **Input** | Telecomando, tastiera Bluetooth/USB, tastiera a schermo (Shift e blocco maiuscole), tastiera di sistema della TV, **smartphone** come tastiera e telecomando |
 
 ---
@@ -159,7 +159,7 @@ Sul computer: frecce, Invio, Esc, F1–F4 = colori, PagSu/PagGiù = CH±, **Ctrl
 |---|---|
 | **Sorgenti** | aggiungi, modifica, aggiorna elenco, elimina, sorgente attiva |
 | **Riproduzione** | formato dirette Xtream (HLS/TS), lingua audio preferita, **finestrella**, anteprima video scorrendo i canali, buffer, convertitore (computer) |
-| **Aspetto** | **disposizione A/B**, orologio 12/24 h, **schermata all'avvio** (Home, TV, On Demand, Sport, Preferiti, ultimo canale), sfondo, **dimensione interfaccia** (automatica 100%, 70–150%), **suoni di navigazione**, *Risparmio risorse* |
+| **Aspetto** | **disposizione A/B**, orologio 12/24 h, **schermata all'avvio** (Home, TV, On Demand, Sport, Preferiti, ultimo canale), sfondo, **dimensione interfaccia** (automatica 100%, 70–150%), **suoni di navigazione**, **prestazioni** (automatiche / massima qualità / leggere), **indicatore prestazioni** |
 | **Rete e telefono** | telefono come tastiera/telecomando (QR), server companion, identità del lettore (computer) |
 | **Guida e dati** | finestra della guida programmi (6–48 h), svuota cache e guida |
 | **Informazioni** | versione, verifica aggiornamenti, piattaforma e comandi, crediti |
@@ -234,6 +234,18 @@ Compatibilità: il bundle è compilato per **Chromium 53+** (webOS 4, Tizen 4): 
 - **Non verificato**: Hisense VIDAA reale, Fire TV, installer Windows su macchina reale.
 
 ---
+
+## Prestazioni
+
+Dispositivo di riferimento **minimo**: **Thomson Streaming Stick 140** (Amlogic S905Y4, 4× Cortex-A35 a 2 GHz, GPU Mali-G31 MP2, 2 GB di RAM).
+
+- **Profilo automatico**: all'avvio un breve test misura la CPU; sui televisori e sulle chiavette con ≤2 GB di RAM o CPU lenta si usa il profilo **leggero** (nessuna animazione, niente anteprime video in lista). Si può forzare in *Impostazioni › Aspetto › Prestazioni*.
+- **Animazioni solo "economiche"**: si animano opacità e spostamento di blocchi interi, mai colori, ingrandimenti o larghezze (che costringono la GPU a ridisegnare a ogni fotogramma).
+- **Liste virtualizzate** con scorrimento ai bordi e riuso delle righe: scorrendo si riempie solo la riga nuova e si ridisegnano poche righe.
+- **Tasto tenuto premuto**: al massimo un passo per fotogramma, così la lista non accumula ritardo.
+- **Guida programmi** solo a canale aperto; **locandine TMDB** richieste alla misura necessaria (w342) invece che in originale; librerie video e QR caricate solo quando servono; sfondo e righe senza livelli grafici superflui.
+- **Indicatore prestazioni** (*Impostazioni › Aspetto*): fotogrammi al secondo, ritardo dei tasti, profilo, RAM, core e risultato del test.
+- Banco di prova: `node test/perf.js 12` (CPU rallentata 12 volte, circa la Thomson) misura ogni schermata tasto per tasto.
 
 ## Limiti noti
 
