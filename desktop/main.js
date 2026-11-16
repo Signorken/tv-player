@@ -1,5 +1,6 @@
 // MAXENTA per computer (Windows, macOS, Linux): stesso codice dell'app per TV dentro una finestra Electron.
 'use strict';
+const os = require('os');
 const { app, BrowserWindow, ipcMain, dialog, clipboard, session, shell, powerSaveBlocker } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -135,6 +136,27 @@ ipcMain.handle('fs:list', async (e, dir) => {
       out.push({ name: d.name, dir: st.isDirectory(), size: st.size, mtime: st.mtimeMs });
     } catch (err) { /* permessi / link spezzati */ }
   }
+  return out;
+});
+// chiavette e dischi esterni collegati (per la riga "File di rete" della Home)
+ipcMain.handle('drives:list', async () => {
+  const out = [];
+  const add = (p, name) => { try { if (fs.statSync(p).isDirectory()) out.push({ path: p, name: name || path.basename(p) }); } catch (e) { /* */ } };
+  try {
+    if (process.platform === 'darwin') {
+      fs.readdirSync('/Volumes').forEach(n => { const p = '/Volumes/' + n; try { if (fs.realpathSync(p) !== '/') add(p, n); } catch (e) { /* */ } });
+    } else if (process.platform === 'win32') {
+      // unità rimovibili (DriveType 2) e dischi esterni USB: Get-CimInstance, con un tempo massimo
+      const { execFile } = require('child_process');
+      const txt = await new Promise(res => execFile('powershell.exe', ['-NoProfile', '-Command',
+        "Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -eq 2 } | ForEach-Object { $_.DeviceID + '|' + $_.VolumeName }"],
+        { timeout: 6000, windowsHide: true }, (err, so) => res(err ? '' : String(so))));
+      txt.split(/\r?\n/).forEach(l => { const m = /^([A-Z]:)\|(.*)$/.exec(l.trim()); if (m) add(m[1] + '\\', (m[2] || 'USB') + ' (' + m[1] + ')'); });
+    } else {
+      const u = os.userInfo().username;
+      ['/media/' + u, '/run/media/' + u, '/media'].forEach(d => { try { fs.readdirSync(d).forEach(n => { const p = d + '/' + n; if (d === '/media' && n === u) return; add(p, n); }); } catch (e) { /* */ } });
+    }
+  } catch (e) { /* */ }
   return out;
 });
 ipcMain.handle('fs:read', async (e, p) => {

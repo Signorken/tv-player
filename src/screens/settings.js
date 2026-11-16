@@ -22,6 +22,7 @@ import { Perf } from '../core/perf.js';
 import { nativeName } from '../ui/native/index.js';
 import { Hud } from '../ui/hud.js';
 import { tr, LANG as UILANG } from '../core/i18n.js';
+import { Android } from '../core/android.js';
 export function applyUi() {
   const s = store.settings();
   const k = (s.uiScale || 100) / 100;
@@ -278,7 +279,7 @@ export class SettingsScreen {
         choice(tr('Guida programmi (finestra)'), 'epgHours', [[6, tr('6 ore')], [12, tr('12 ore')], [24, tr('24 ore')], [48, tr('48 ore')]]),
         { label: tr('Svuota cache e guida programmi'), value: () => '', act: async () => { await store.idbClear(); Epg.reset(); Modal.toast(tr('Cache svuotata')); } }] },
       { id: 'info', label: tr('Informazioni'), icon: 'info', items: list(
-        platform.isDesktop ? { label: tr('Versione'), value: () => 'v' + VERSION, button: { label: tr('Verifica aggiornamenti'), act: () => window.desktop.updateCheck() } } : window.__shell ? { label: tr('Versione'), value: () => 'v' + VERSION + tr(' · aggiornamento automatico attivo'), button: { label: tr('Verifica aggiornamenti'), act: () => { Modal.toast(tr('Riavvio e controllo gli aggiornamenti…'), 1500); setTimeout(() => location.reload(), 600); } } } : { label: tr('Versione'), value: () => 'v' + VERSION },
+        platform.isDesktop ? { label: tr('Versione'), value: () => 'v' + VERSION, button: { label: tr('Verifica aggiornamenti'), act: () => window.desktop.updateCheck() } } : window.__shell ? { label: tr('Versione'), value: () => 'v' + VERSION + tr(' · aggiornamento automatico attivo'), button: { label: tr('Verifica aggiornamenti'), act: async () => { if (Android.available && await Android.check(true)) return; Modal.toast(tr('Riavvio e controllo gli aggiornamenti…'), 1500); setTimeout(() => location.reload(), 600); } } } : { label: tr('Versione'), value: () => 'v' + VERSION },
         { label: tr('Crediti'), value: () => tr('Icone Solar (480 Design, CC BY 4.0) · Font Plus Jakarta Sans (OFL)') },
         { label: tr('Piattaforma e comandi'), value: () => platform.name, act: () => Modal.confirm('MAXENTA', tr('Piattaforma rilevata: ') + platform.name + (platform.isDesktop ? '\nMouse: clic per aprire, tasto destro = opzioni, rotella = scorri.\nTastiera: Ctrl+V incolla un link/playlist, Spazio pausa, F schermo intero, M muto, ← → ±10 s, Esc indietro.' : '\nTasti: frecce + OK; OK lungo = menu; Rosso = preferito; Verde = cerca; Blu = audio/sottotitoli/finestrella; Giallo = rimuovi riga; numeri = canale.'), 'OK', '') }) }
     ];

@@ -80,6 +80,48 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   ok('…scelta con il telecomando', await p.evaluate(() => window.__app.store.settings().wallpaper === 'l2-petali'));
   const thumbs = await p.evaluate(async () => { const r = await fetch('wallpapers/thumbs/01-aurora.jpg'); return r.ok; });
   ok('Miniature disponibili anche per gli sfondi scuri', thumbs);
+  // ---- 2.7: canali preferiti e archivi in Home
+  await p.evaluate(() => { const s = window.__app.store, st = s.settings(); st.theme = 'dark'; st.wallpaper = '01-aurora';
+    ['3', '7', '12'].forEach(id => s.toggleFav(s.favKey('x1', 'live', id), { kind: 'live', src: 'x1', id: id, name: 'Canale ' + id, logo: 'http://localhost:9100/img/l1.png' }));
+    s.addSource({ id: 'n1', type: 'webdav', name: 'NAS casa', url: 'http://localhost:9100/dav/' }); s.save(true); window.__app.applyUi(); window.__app.router.home(); });
+  await sleep(800);
+  ok('Home: riga "Canali preferiti" della sorgente scelta', await p.evaluate(() => document.querySelectorAll('.home .favrow2 .ccard').length === 3));
+  await p.evaluate(() => document.querySelectorAll('.home .favrow2 .ccard')[1].click());
+  await wait(() => window.__app.router.current.isPlayer, 15000); await sleep(600);
+  ok('…OK apre il canale e nel player ▲▼ scorre solo tra i preferiti', await p.evaluate(() => { const c = window.__app.router.current; return c.o.list.length === 3 && c.i === 1; }));
+  await key('ArrowUp'); await sleep(500);
+  ok('…▲ passa al preferito successivo', await p.evaluate(() => window.__app.router.current.cur.title === 'Canale 12'));
+  await p.evaluate(() => window.__app.router.current._exit()); await sleep(500);
+  await p.evaluate(() => window.__app.router.home()); await sleep(400);
+  ok('Home: riga "File di rete" con le tessere degli archivi', await p.evaluate(() => /NAS casa/.test(document.querySelector('.home .filerow').textContent)));
+  await p.evaluate(() => document.querySelector('.home .filerow .ccard').click()); await sleep(1500);
+  ok('…OK apre direttamente l\'archivio', await p.evaluate(() => /NAS casa/.test((document.querySelector('.screen.files .crumb') || {}).textContent || '')));
+  // ---- Android: aggiornamento dell'APK dall'app e chiavette USB (plugin nativo simulato)
+  const ap = await b.newPage(); ap.on('pageerror', e => errs.push(e.message));
+  await ap.setUserAgent('Mozilla/5.0 (Linux; Android 12; Streaming Stick 140 Build/STT2; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0 Mobile Safari/537.36');
+  await ap.evaluateOnNewDocument(() => {
+    window.__mxVersionUrl = 'http://localhost:9100/version.json'; window.__log = [];
+    const L = {};
+    window.Capacitor = { Plugins: { MaxSystem: {
+      info: async () => ({ version: '2.6.0', sdk: 31, canInstall: true }),
+      installApk: async o => { window.__log.push('install ' + o.url); (L.apkProgress || []).forEach(f => f({ p: 50 })); return { started: true }; },
+      usbVolumes: async () => ({ volumes: [{ id: 'AB12-34CD', name: 'SanDisk USB', granted: false }] }),
+      usbGrant: async o => { window.__log.push('grant ' + o.id); return { tree: 'content://com.android.externalstorage.documents/tree/AB12-34CD%3A' }; },
+      usbList: async o => ({ items: o.doc ? [{ doc: 'AB12-34CD:Film/a.mkv', name: 'a.mkv', dir: false, size: 1e9, mtime: 0, uri: 'content://x/a.mkv' }] : [{ doc: 'AB12-34CD:Film', name: 'Film', dir: true, size: 0, mtime: 0, uri: 'content://x/Film' }, { doc: 'AB12-34CD:b.mp4', name: 'b.mp4', dir: false, size: 5e8, mtime: 0, uri: 'content://x/b.mp4' }] }),
+      addListener: async (ev, f) => { (L[ev] = L[ev] || []).push(f); return { remove() { } }; }
+    } } };
+  });
+  await ap.goto('http://localhost:8787/app/'); await sleep(1500);
+  const ak = async (k, n) => { for (let i = 0; i < (n || 1); i++) { await ap.keyboard.press(k); await sleep(180); } };
+  const aw = (fn, ms) => ap.waitForFunction(fn, { timeout: ms || 12000, polling: 100 }).then(() => true).catch(() => false);
+  ok('Android: APK più vecchio -> dopo l\'avvio propone l\'aggiornamento dall\'app', await aw(() => /versione 2\.7\.0/.test((document.querySelector('.modal') || {}).textContent || ''), 15000));
+  await ak('Enter'); await sleep(600);
+  ok('…"Aggiorna ora" scarica e installa l\'APK della release', await ap.evaluate(() => window.__log.some(x => /install .*MAXENTA-2\.7\.0-android-tv\.apk/.test(x))));
+  ok('Android: la chiavetta USB compare nella riga "File di rete"', await aw(() => /SanDisk USB/.test((document.querySelector('.home .filerow') || {}).textContent || ''), 8000));
+  await ap.evaluate(() => [...document.querySelectorAll('.home .filerow .ccard')].find(c => /SanDisk/.test(c.textContent)).click()); await sleep(500);
+  await ak('Enter'); await sleep(1200);
+  ok('…la prima volta chiede il permesso e poi apre la chiavetta', await ap.evaluate(() => window.__log.some(x => x === 'grant AB12-34CD') && /SanDisk USB/.test((document.querySelector('.screen.files .crumb') || {}).textContent || '') && window.__app.router.current.entries.length === 2));
+  await ap.close();
   console.log('Errori JS: ' + errs.length, errs.slice(0, 4));
   const f = res.filter(x => !x).length; console.log('RISULTATO: ' + (res.length - f) + '/' + res.length);
   await b.close(); process.exit(f ? 1 : 0);

@@ -70,6 +70,7 @@ http.createServer((req, res) => {
   const u = new URL(req.url, HOST); const p = u.pathname;
   if (process.env.LOG) console.log(req.method, req.url);
   let m;
+  if (p === '/version.json') { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }); return res.end(JSON.stringify({ version: '2.7.0', minShell: 1, apk: '2.7.0', apkUrl: HOST + '/MAXENTA-2.7.0-android-tv.apk' })); }
   if (p === '/list.m3u') { res.writeHead(200, { 'Content-Type': 'audio/x-mpegurl' }); return res.end(m3u()); }
   if (p === '/epg.xml') { res.writeHead(200, { 'Content-Type': 'application/xml' }); return res.end(epg()); }
   if (p === '/player_api.php') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify(xtream(u.searchParams))); }

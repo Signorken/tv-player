@@ -31,7 +31,8 @@ export function avplayBackend() {
     open(url) {
       try { av.stop(); av.close(); } catch (e) { /* */ }
       st = { state: 'loading', error: '', ended: false, buffering: true };
-      av.open(url);
+      // file della chiavetta USB: AVPlay vuole il percorso, non l'indirizzo file://
+      av.open(/^file:\/\//.test(url) ? decodeURI(url.slice(7)) : url);
       av.setListener(listener);
       applyRect();
       try { av.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX'); } catch (e) { /* */ }

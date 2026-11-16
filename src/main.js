@@ -182,4 +182,6 @@ if (platform.isDesktop) {
     if (store.settings().userAgent && window.desktop.setUserAgent) window.desktop.setUserAgent(store.settings().userAgent);
   }
 }
+// Android: APK più vecchio del necessario -> propone l'aggiornamento dall'app (qualche secondo dopo l'avvio)
+setTimeout(() => { import('./core/android.js').then(m => m.Android.check(false)).catch(() => {}); }, 7000);
 window.__app = { SettingsScreen: SettingsScreen, Mini: Mini, Sound: Sound, setImg: setImg, applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };

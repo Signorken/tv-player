@@ -13,6 +13,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(MaxPlayerPlugin.class); // lettore ExoPlayer (video sotto la pagina)
+        registerPlugin(MaxSystemPlugin.class); // aggiornamento dell'APK dall'app, chiavette USB
         super.onCreate(savedInstanceState);
         // la dimensione del testo la decide l'app (Aspetto > Dimensione testo): ignora lo zoom dei caratteri di sistema,
         // che ingrandiva le scritte senza ingrandire i riquadri (testi dei tasti fuori dai tondi)

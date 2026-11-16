@@ -226,7 +226,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   // Indietro dalla Home: prima chiude l'eventuale finestrella, poi chiede se uscire
   if (await page.$('.modal')) { await key('Escape'); await sleep(300); }
   await page.keyboard.press('F3'); await sleep(500); // giallo = rimuovi riga
-  const after = await page.evaluate(() => ({ rec: window.__app.store.get().recents.length, prog: Object.keys(window.__app.store.get().progress).length, cards: document.querySelectorAll('.screen.home .ccard:not(.lcard)').length }));
+  const after = await page.evaluate(() => ({ rec: window.__app.store.get().recents.length, prog: Object.keys(window.__app.store.get().progress).length, cards: document.querySelectorAll('.screen.home .contbox:not(.filerow):not(.listrow) .ccard:not(.lcard)').length }));
   ok('home: tasto giallo rimuove la riga ma non recenti né progressi', after.cards === 0 && after.rec === before.rec && after.prog === before.prog, JSON.stringify({ before, after }));
 
   ok('visto: segna e legge i contenuti completati', await page.evaluate(() => { const s = window.__app.store; s.markWatched('k|movie|9'); return s.isWatched('k|movie|9') && !s.isWatched('k|movie|8'); }));

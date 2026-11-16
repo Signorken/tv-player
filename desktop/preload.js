@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('desktop', {
   smbResolve: t => ipcRenderer.invoke('smb:resolve', t),
   smbShares: h => ipcRenderer.invoke('smb:shares', h),
   listDir: dir => ipcRenderer.invoke('fs:list', dir),
+  listDrives: () => ipcRenderer.invoke('drives:list'),
   readText: p => ipcRenderer.invoke('fs:read', p),
   readClipboard: () => ipcRenderer.invoke('clipboard:read'),
   setUserAgent: ua => ipcRenderer.invoke('set-ua', ua),

@@ -8,6 +8,8 @@ import { hints, img, setImg } from '../ui/chrome.js';
 import * as Modal from '../ui/modal.js';
 import { openSource, sourceById, liveOpts, movieOpts, fileOpts, isReady } from '../core/session.js';
 import { createSource } from '../sources/index.js';
+import { Android } from '../core/android.js';
+import { AndroidUsbSource, TizenUsbSource, tizenUsbAvailable, tizenUsbVolumes, tizenOnUsb } from '../sources/usb.js';
 import { exitApp, platform } from '../core/platform.js';
 import { LiveScreen } from './live.js';
 import { VodScreen } from './vod.js';
@@ -113,9 +115,16 @@ export class HomeScreen {
     // "La mia lista" di On Demand della sorgente scelta in alto
     this.listHd = h('div', { class: 'conthd' }, h('div', { class: 'contt', text: tr('La mia lista') }), h('span', { class: 'contnote' }));
     this.listRow = h('div', { class: 'contbox listrow' });
+    // canali TV preferiti della sorgente scelta (OK = guarda; nel player ▲▼ scorre solo tra i preferiti)
+    this.favHd = h('div', { class: 'conthd' }, h('div', { class: 'contt', text: tr('Canali preferiti') }));
+    this.favRow = h('div', { class: 'contbox favrow2' });
+    // archivi: NAS, cartelle, DLNA e chiavette USB collegate
+    this.fileHd = h('div', { class: 'conthd' }, h('div', { class: 'contt', text: tr('File di rete') }), h('span', { class: 'contnote', text: tr('NAS, cartelle e chiavette USB') }));
+    this.fileRow = h('div', { class: 'contbox filerow' });
+    this.usb = [];
     this.el = h('div', { class: 'screen home' },
       h('div', { class: 'hbar' }, h('div', { class: 'brand' }, h('img', { class: 'blogo', src: 'icon.png', alt: '' }), h('span', { text: 'MAXENTA' })), h('div', { class: 'hbr' }, platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: tr('Aggiungi sorgente (Ctrl+V per incollare un link)'), onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: tr('Aggiungi') })) : null, this.srcBtn)),
-      this.tiles, h('div', { class: 'hmain', 'data-scroll': 1 }, this.nowBox, this.listHd, this.listRow, this.hero, this.empty, this.contHd, this.cont, this.liveHd, this.liveRow),
+      this.tiles, h('div', { class: 'hmain', 'data-scroll': 1 }, this.nowBox, this.listHd, this.listRow, this.favHd, this.favRow, this.hero, this.empty, this.contHd, this.cont, this.liveHd, this.liveRow, this.fileHd, this.fileRow),
       hints([['ok', tr('Apri')], ['menu', tr('Opzioni')], ['back', tr('Esci')]]));
   }
   onShow(first) {
@@ -125,6 +134,8 @@ export class HomeScreen {
     this.renderNow();
     this.renderList();
     this.loadProviderList();
+    this.renderFavs();
+    this.renderFiles(); this.scanUsb();
     if (!store.get().sources.length) {
       this.empty.innerHTML = '';
       this.empty.appendChild(h('div', { class: 'e1', text: tr('Benvenuto! Inizia aggiungendo una sorgente.') }));
@@ -183,7 +194,7 @@ export class HomeScreen {
     });
     if (live.length) this.liveRow.appendChild(this.liveX);
     // niente da riprendere: in Aspetto A mostra comunque i pulsanti delle sezioni
-    this.el.classList.toggle('nocont', !rec.length && !live.length && !this.listItems().length);
+    this.el.classList.toggle('nocont', !rec.length && !live.length && !this.listItems().length && !this.favItems().length);
   }
   // video nella finestrella: tessera in cima alla Home per tornarci o chiuderlo
   renderNow() {
@@ -239,9 +250,99 @@ export class HomeScreen {
       c._list = r; this.listRow.appendChild(c);
     });
     this.el.classList.toggle('haslist', items.length > 0);
-    this.el.classList.toggle('nocont', !store.contItems(1).length && !store.liveItems(1).length && !items.length);
+    this.el.classList.toggle('nocont', !store.contItems(1).length && !store.liveItems(1).length && !items.length && !this.favItems().length);
     if (fi >= 0 && this.listRow.children.length) nav.focus(this.listRow.children[Math.min(fi, this.listRow.children.length - 1)], true);
   }
+  // ---- canali preferiti
+  favItems() {
+    const act = store.activeSource(); if (!act) return [];
+    const f = store.get().favorites || {};
+    return Object.keys(f).map(k => f[k]).filter(x => x && x.kind === 'live' && x.src === act.id);
+  }
+  renderFavs() {
+    const items = this.favItems();
+    this.favRow.innerHTML = '';
+    this.favHd.style.display = this.favRow.style.display = items.length ? '' : 'none';
+    items.forEach(r => {
+      const im = img(); setImg(im, r.logo);
+      const c = h('div', { class: 'ccard lcard', 'data-f': 1, onclick: () => this.playFav(r) }, h('div', { class: 'cthumb' }, im), h('div', { class: 'cname', text: r.name }));
+      c._fav = r; this.favRow.appendChild(c);
+    });
+  }
+  async playFav(r) {
+    const cfg = sourceById(r.src); if (!cfg) { Modal.toast(tr('La sorgente non esiste più')); return; }
+    try {
+      const src = await openSource(cfg), live = await src.live();
+      const ids = this.favItems().map(x => x.id), by = {};
+      live.items.forEach(c => { by[c.id] = c; });
+      const list = ids.map(id => by[id]).filter(Boolean);
+      const i = list.findIndex(c => c.id === r.id);
+      if (i < 0) { Modal.toast(tr('Canale non più presente nella playlist')); return; }
+      router.push(new PlayerScreen(liveOpts(src, list, i)));
+    } catch (e) { Modal.toast(tr('Errore: ') + e.message, 5000); }
+  }
+  async favMenu(r) {
+    const v = await Modal.menu(r.name, [{ label: tr('Guarda'), value: 'play', icon: 'play' }, { label: tr('Rimuovi dai preferiti'), value: 'rm', icon: 'x' }]);
+    if (v === 'play') this.playFav(r);
+    else if (v === 'rm') { store.toggleFav(store.favKey(r.src, 'live', r.id), r); this.renderFavs(); nav.focus(this.firstFocus()); }
+  }
+
+  // ---- archivi e chiavette USB
+  async scanUsb() {
+    let v = [];
+    try {
+      if (window.desktop && window.desktop.listDrives) v = (await window.desktop.listDrives()).map(d => ({ kind: 'drive', id: 'drive:' + d.path, name: d.name, path: d.path }));
+      else if (Android.available) v = (await Android.usbVolumes()).map(d => ({ kind: 'android', id: 'usb:' + d.id, vid: d.id, name: d.name, tree: d.tree, granted: d.granted }));
+      else if (tizenUsbAvailable()) v = (await tizenUsbVolumes()).map(d => ({ kind: 'tizen', id: 'usb:' + d.id, label: d.id, name: d.name }));
+    } catch (e) { v = []; }
+    const sig = JSON.stringify(v);
+    if (sig === this._usbSig) return;
+    this._usbSig = sig; this.usb = v;
+    if (router.current === this) this.renderFiles(true);
+    if (!this._usbWatch) {
+      this._usbWatch = 1;
+      const again = () => setTimeout(() => this.scanUsb(), 1500);
+      if (Android.available) Android.onUsb(again);
+      else if (tizenUsbAvailable()) tizenOnUsb(again);
+      else if (window.desktop && window.desktop.listDrives) setInterval(() => { if (router.current === this) this.scanUsb(); }, 6000);
+    }
+  }
+  fileTargets() {
+    return store.fileSources().map(c => ({ kind: 'saved', id: c.id, name: c.name, cfg: c, sub: TYPE_LABEL[c.type] })).concat(this.usb.map(u => Object.assign({ sub: tr('Chiavetta / disco USB') }, u)));
+  }
+  renderFiles(keepFocus) {
+    const items = this.fileTargets();
+    const f = nav.getFocus(), fi = keepFocus && f && this.fileRow.contains(f) ? Array.prototype.indexOf.call(this.fileRow.children, f) : -1;
+    this.fileRow.innerHTML = '';
+    this.fileHd.style.display = this.fileRow.style.display = items.length ? '' : 'none';
+    items.forEach(t => {
+      const c = h('div', { class: 'ccard fcard2', 'data-f': 1, onclick: () => this.openTarget(t) },
+        h('div', { class: 'cthumb' }, h('div', { class: 'fin' }, icon(t.kind === 'saved' ? (t.cfg.type === 'dlna' ? 'tv' : t.cfg.type === 'local' ? 'folder' : 'cloud') : 'usb'))),
+        h('div', { class: 'cname', text: t.name }), h('div', { class: 'csub', text: t.sub || '' }));
+      this.fileRow.appendChild(c);
+    });
+    if (fi >= 0 && this.fileRow.children.length) nav.focus(this.fileRow.children[Math.min(fi, this.fileRow.children.length - 1)], true);
+  }
+  async openTarget(t) {
+    try {
+      let src;
+      if (t.kind === 'saved') src = createSource(t.cfg);
+      else if (t.kind === 'drive') src = createSource({ type: 'local', id: t.id, name: t.name, path: t.path });
+      else if (t.kind === 'tizen') src = new TizenUsbSource({ id: t.id, name: t.name, label: t.label });
+      else if (t.kind === 'android') {
+        let tree = t.tree;
+        if (!tree) {
+          await Modal.confirm(t.name, tr('La prima volta Android chiede il permesso di leggere la chiavetta: nella finestra che si apre premi "Usa questa cartella" (o "Consenti").'), 'OK', '');
+          tree = await Android.usbGrant(t.vid);
+          if (!tree) return;
+          t.tree = tree; this._usbSig = '';
+        }
+        src = new AndroidUsbSource({ id: t.id, name: t.name, tree: tree });
+      }
+      if (src) router.push(new FilesScreen(src));
+    } catch (e) { Modal.toast(tr('Errore: ') + (e.message || e), 5000); }
+  }
+
   async openListItem(r) {
     const cfg = sourceById(r.src); if (!cfg) { Modal.toast(tr('La sorgente non esiste più')); return; }
     try { const src = await openSource(cfg); router.push(new DetailScreen(src, r.kind === 'series' ? 'series' : 'movie', r.item || { id: r.id, name: r.name, poster: r.poster, ext: r.ext })); }
@@ -288,6 +389,13 @@ export class HomeScreen {
     return this.tLive;
   }
   async openFiles() {
+    await this.scanUsb();
+    const all = this.fileTargets();
+    if (all.length && (all.length > 1 || all[0].kind !== 'saved')) {
+      if (all.length === 1) { this.openTarget(all[0]); return; }
+      const id = await Modal.menu(tr('Scegli il server'), all.map(t => ({ label: t.name, sub: t.sub, value: t.id, icon: t.kind === 'saved' ? 'folder' : 'usb' })));
+      const t = all.find(x => x.id === id); if (t) this.openTarget(t); return;
+    }
     const list = store.fileSources();
     if (!list.length) {
       const ok = await Modal.confirm(tr('Nessun server di rete'), tr('Aggiungi un NAS (WebDAV oppure indice HTTP) per sfogliare i tuoi file.'), tr('Aggiungi NAS'), tr('Più tardi'));
@@ -305,7 +413,7 @@ export class HomeScreen {
     if (a.a === 'back') { if (Mini.player) { Mini.close(); Modal.toast(tr('Riproduzione chiusa'), 1500); return true; } this.confirmExit(); return true; }
     if (a.a === 'green' || a.a === 'guide') { this.openLive(); return true; }
     if (a.a === 'yellow' || a.a === 'del') { const f = nav.getFocus(); if (a.a === 'yellow' || (f && this.cont.contains(f))) { this.clearRow(); return true; } }
-    if (a.a === 'menu') { const f = nav.getFocus(); if (f && f._meta) { this.cardMenu(f._meta); return true; } if (f && f._list) { this.listMenu(f._list); return true; } }
+    if (a.a === 'menu') { const f = nav.getFocus(); if (f && f._meta) { this.cardMenu(f._meta); return true; } if (f && f._list) { this.listMenu(f._list); return true; } if (f && f._fav) { this.favMenu(f._fav); return true; } }
     return false;
   }
   clearLive() {

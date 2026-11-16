@@ -23,6 +23,7 @@ import androidx.media3.common.TrackSelectionParameters;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.VideoSize;
 import androidx.media3.common.text.CueGroup;
+import androidx.media3.datasource.DefaultDataSource;
 import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.exoplayer.DecoderCounters;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
@@ -79,7 +80,8 @@ public class MaxPlayerPlugin extends Plugin {
             .setUserAgent(ua != null && ua.length() > 0 ? ua : "MAXENTA");
         player = new ExoPlayer.Builder(getContext(),
                 new DefaultRenderersFactory(getContext()).setEnableDecoderFallback(true))
-            .setMediaSourceFactory(new DefaultMediaSourceFactory(getContext()).setDataSourceFactory(http))
+            // rete (http/https) e file locali o della chiavetta USB (content://)
+            .setMediaSourceFactory(new DefaultMediaSourceFactory(getContext()).setDataSourceFactory(new DefaultDataSource.Factory(getContext(), http)))
             .build();
         player.setVideoSurfaceView(sv);
         player.addListener(new Player.Listener() {
