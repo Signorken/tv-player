@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Samsung Tizen TV (web app). Cambia "id" e "package" con i tuoi valori (10 caratteri alfanumerici). -->
 <widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
-        id="https://example.com/tvplayer" version="1.0.0" viewmodes="maximized">
-  <tizen:application id="TvPlayr001.TvPlayer" package="TvPlayr001" required_version="4.0"/>
+        id="https://github.com/Signorken/tv-player" version="1.0.0" viewmodes="maximized">
+  <tizen:application id="MaxentaTV1.Maxenta" package="MaxentaTV1" required_version="4.0"/>
   <content src="index.html"/>
   <feature name="http://tizen.org/feature/screen.size.all"/>
   <icon src="icon.png"/>

@@ -1,248 +1,253 @@
-# MAXENTA — Android TV · Google TV · Fire OS · Tizen · webOS · VIDAA · Windows · macOS · Linux
+# MAXENTA
 
-Player multimediale per televisori: **TV in diretta, film e serie** da playlist **M3U/M3U8**, da **Xtream Codes API** e da **server di rete (NAS)**, pensato per il **solo telecomando**, con interfaccia leggera.
+**Player IPTV e multimediale per TV e computer**: TV in diretta, film e serie da playlist **M3U/M3U8**, account **Xtream Codes** e **NAS** di casa, pensato per essere usato **solo col telecomando**.
 
-Una sola codebase web (HTML/CSS/JS, nessun framework, ~105 KB). Tizen, webOS e VIDAA sono nativamente piattaforme web; per Android TV/Google TV la stessa app viene impacchettata in una WebView (Capacitor).
+Gira su **Android TV · Google TV · Fire OS · Samsung Tizen · LG webOS · Hisense VIDAA · Windows · macOS · Linux**, con un'unica base di codice web (JavaScript senza framework, ~185 KB) e si **aggiorna da solo** su tutte le piattaforme.
 
-![Home](docs/home.png)
+![Home](docs/screenshots/01-home.jpg)
+
+> MAXENTA non contiene né fornisce contenuti: riproduce solo le playlist e i servizi che hai il diritto di usare. Le immagini qui sotto usano un account dimostrativo con canali, film e locandine di fantasia.
+
+---
+
+## Indice
+- [Cosa fa](#cosa-fa)
+- [Schermate](#schermate)
+- [Piattaforme e installazione](#piattaforme-e-installazione)
+- [Aggiornamenti automatici](#aggiornamenti-automatici)
+- [Comandi](#comandi)
+- [Impostazioni principali](#impostazioni-principali)
+- [Telefono come tastiera e telecomando (companion)](#telefono-come-tastiera-e-telecomando-companion)
+- [App per computer](#app-per-computer)
+- [Sviluppo](#sviluppo)
+- [Cosa è verificato](#cosa-è-verificato)
+- [Limiti noti](#limiti-noti)
+- [Crediti e licenze](#crediti-e-licenze)
+
+---
 
 ## Cosa fa
 
 | Area | Funzioni |
 |---|---|
-| **TV live** | Categorie · canali (loghi, numero) · **"ora in onda" con barra di avanzamento** · pannello anteprima con descrizione e prossimi 4 programmi · anteprima video opzionale · zapping ▲▼ e **numerico** · preferiti · ricerca |
-| **Guida (EPG)** | XMLTV (anche `.gz`) da `url-tvg` o URL manuale; per Xtream anche EPG breve per il solo canale selezionato (leggerissimo) |
-| **Film / Serie** | Griglia di locandine · scheda laterale con **trama, anno, voto, genere, cast** · scheda dettaglio · stagioni/episodi · **"Riprendi da mm:ss"** · episodio successivo automatico |
-| **Xtream API** | Live, VOD, serie, info, EPG, verifica account (stato/scadenza/connessioni) |
-| **M3U** | URL o file (inviato dal telefono / scelto dal NAS); riconosce da solo live, film e serie (`S01E02`) |
-| **NAS** | **WebDAV** (Synology, QNAP, TrueNAS, Nextcloud…) e **indice HTTP** (nginx/apache/miniserve). Sfoglia cartelle, mostra **locandina e trama dai file Kodi** (`.nfo`, `-poster.jpg`), riproduce, importa `.m3u` come sorgente |
-| **Player** | HLS nativo se la TV lo ha, altrimenti **hls.js**; MPEG-TS con **mpegts.js**; MP4/MKV nativi. Catena di fallback automatica (HLS ⇄ TS), audio/sottotitoli, riempi/adatta schermo, ripresa |
-| **Input** | Telecomando · tastiera fisica Bluetooth/USB · tastiera a schermo · tastiera di sistema della TV · **smartphone come tastiera e telecomando** |
+| **TV in diretta** | Categorie (anche una categoria **Sport** automatica), loghi e numeri, preferiti, ricerca, zapping con ▲▼ e con i numeri. Guida programmi caricata **solo a canale aperto** (la lista resta leggera) |
+| **On Demand** | Film e serie **insieme** (filtro *Tutto*) o separati (*Film*, *Serie TV*, *Sport*). **Raccolte**: Tutti, Preferiti, **La mia lista** (da guardare più tardi, separata dai preferiti), Continua a guardare. Locandine, scheda con trama, voto, cast e durata; stagioni ed episodi; ripresa dal punto in cui eri |
+| **Home** | *Riprendi da dove eri rimasto*, **Continua a guardare** (locandine verticali), **Canali visti di recente**, tessera **In riproduzione** quando c'è un video nella finestrella. Ogni riga si toglie con l'ultima tessera *Rimuovi riga* |
+| **Player** | Pensato per telecomandi **senza numeri né tasti colorati**: pannelli laterali per canali/episodi e per le opzioni (audio, sottotitoli, preferiti, formato, flusso alternativo). Lingua audio ricordata. **Finestrella** per continuare a guardare mentre navighi |
+| **Sorgenti** | M3U/M3U8 (URL o file), Xtream Codes (live, film, serie, guida, stato account e connessioni), **NAS**: WebDAV, indice HTTP, cartelle del computer, condivisioni Windows/SMB (app per computer), DLNA (app per computer). Legge locandine e trame dei file Kodi (`.nfo`, `-poster.jpg`) |
+| **Formati** | HLS (nativo o hls.js), MPEG-TS (mpegts.js), MP4/MKV nativi; sull'app per computer anche un **convertitore ffmpeg** per HEVC, AC3/DTS e server che non permettono di scorrere |
+| **Aspetto** | Due disposizioni (barra laterale **A** o pulsanti **B**), orologio 12/24 h, 8 sfondi astratti, dimensione automatica rispetto allo schermo + zoom manuale, suoni di navigazione, transizioni, modalità *Risparmio risorse* |
+| **Input** | Telecomando, tastiera Bluetooth/USB, tastiera a schermo (Shift e blocco maiuscole), tastiera di sistema della TV, **smartphone** come tastiera e telecomando |
 
-## Provarlo subito su PC (2 minuti)
+---
 
-```bash
-npm install                 # solo per rigenerare/collaudare; l'app in www/ è già compilata
-node companion/server.js    # relay telefono + proxy CORS + ospita l'app
-# apri http://localhost:8787/app/   (frecce, Invio, Esc = telecomando)
-```
-Sulla home premi **“Prova con la sorgente demo”** (flussi pubblici di prova), oppure **Aggiungi sorgente**.
+## Schermate
 
-## Versione per computer (Windows · macOS · Linux)
-
-Lo stesso codice gira in una finestra **Electron** con adattamenti per mouse e tastiera. Pensata per **non dover digitare nulla**:
-
-| Cosa vuoi fare | Come |
+| | |
 |---|---|
-| Aggiungere una playlist o un account Xtream | Copia il link (anche l'URL `get.php?username=…&password=…` del provider) e premi **Ctrl+V** (⌘V su Mac) in qualunque schermata: riconosce da solo M3U, Xtream (estrae server/utente/password), WebDAV, flusso singolo, oppure il testo di una playlist `#EXTM3U` |
-| Aggiungere un file `.m3u` | Trascinalo nella finestra, oppure **Ctrl+O**, oppure doppio clic sul file (l'app si registra come lettore `.m3u/.m3u8`) |
-| Trovare il NAS | **Cerca NAS in rete**: SSDP/DLNA e mDNS (WebDAV, Synology/QNAP…) senza scrivere indirizzi |
-| Usare file del computer o un NAS già montato (SMB/NFS) | **Cartella del computer…**: sfogli film con locandine e trame `.nfo` |
-| Guardare | Clic = apri · tasto destro = opzioni · rotella = scorri · doppio clic nel player = schermo intero · barra di avanzamento cliccabile · Spazio, F, M, ←→, +/− |
+| ![Barra laterale](docs/screenshots/02-barra-laterale.jpg) **Barra laterale** (Aspetto A): a sole icone, si apre con i nomi quando ci entri | ![On Demand](docs/screenshots/03-on-demand.jpg) **On Demand**: filtri e raccolte a sinistra, film e serie insieme |
+| ![Scheda](docs/screenshots/04-scheda-film.jpg) **Scheda film** con Riprendi, Preferiti e La mia lista | ![TV in diretta](docs/screenshots/05-tv-in-diretta.jpg) **TV in diretta** con categoria Sport automatica |
+| ![Player](docs/screenshots/06-player.jpg) **Player** con guida programmi | ![Canali](docs/screenshots/07-player-canali.jpg) **Sinistra** nel player: elenco canali |
+| ![Opzioni](docs/screenshots/08-player-opzioni.jpg) **Destra** nel player: opzioni | ![Finestrella](docs/screenshots/09-finestrella.jpg) **Finestrella** e tessera *In riproduzione* |
+| ![Aspetto B](docs/screenshots/10-home-aspetto-b.jpg) **Aspetto B**: pulsanti a icone, il selezionato mostra il nome | ![Impostazioni](docs/screenshots/11-impostazioni.jpg) **Impostazioni** a categorie |
 
-Se il provider blocca i browser, in **Impostazioni › Identità del lettore** puoi presentarti come VLC, Kodi o okhttp. Il codice DLNA/mDNS gira nel processo principale: niente proxy né CORS.
+---
 
-### Installazione (formato nativo per ogni sistema)
+## Piattaforme e installazione
 
-| Sistema | File | Note |
+Tutti i pacchetti si scaricano dalla pagina **[Releases](https://github.com/Signorken/tv-player/releases/latest)**.
+
+| Piattaforma | File | Si aggiorna da solo? |
 |---|---|---|
-| **Windows 10/11** | `MAXENTA-x.y.z-win-x64.exe` (installer NSIS, per-utente, **senza permessi di amministratore**) e versione `portable` | Non firmato: SmartScreen mostra “Windows ha protetto il PC” → *Ulteriori informazioni › Esegui comunque* |
-| **macOS 11+** | `MAXENTA-x.y.z-mac-universal.dmg` (Intel + Apple Silicon): trascina nelle Applicazioni | Non firmato/notarizzato: la prima volta tasto destro › Apri, oppure `xattr -dr com.apple.quarantine "/Applications/MAXENTA.app"` |
-| **Linux** | `.AppImage` (qualunque distro: `chmod +x` e doppio clic) · `.deb` (Debian/Ubuntu/Mint: `sudo apt install ./MAXENTA-*.deb`) · `.rpm` (Fedora/openSUSE, solo da CI) | Il `.deb` aggiunge icona al menu e associazione `.m3u` |
+| **Android TV · Google TV** (Chromecast, Thomson, Xiaomi, TV Sony/TCL/Philips…) | `MAXENTA-x.y.z-android-tv.apk` | Sì |
+| **Amazon Fire TV** (Fire OS) | lo stesso `.apk` | Sì |
+| **Samsung** (Tizen 4.0+, TV dal 2018) | `MAXENTA-x.y.z-tizen-unsigned.wgt` (va firmato) | Sì |
+| **LG** (webOS 4.0+, TV dal 2018) | `MAXENTA-x.y.z-webos.ipk` | Sì |
+| **Hisense** (VIDAA) | `MAXENTA-x.y.z-vidaa.zip` | Sì (se ospitato) |
+| **Windows 10/11** | `MAXENTA-x.y.z-win-x64.exe` (+ versione portable) | Sì (installer) |
+| **macOS 11+** (Intel e Apple Silicon) | `MAXENTA-x.y.z-mac-universal.dmg` | No: si scarica il nuovo `.dmg` (app non firmata) |
+| **Linux** | `.AppImage` · `.deb` · `.rpm` | Sì (AppImage) |
 
-**Come ottenerli.** I pacchetti Windows e macOS si costruiscono solo sul rispettivo sistema: il file `.github/workflows/build.yml` li produce tutti su GitHub Actions (carica il progetto su un repository GitHub, poi *Actions › Build › Run workflow* oppure crea un tag `v1.1.0`: gli installer compaiono negli artefatti e nella Release). In locale: `npm install && npm run build`, poi `npm run desktop` (prova), `npm run dist:linux` / `dist:win` (su Windows) / `dist:mac` (su Mac).
+### Android TV / Google TV / Fire TV
+1. Sul dispositivo attiva le **Opzioni sviluppatore** (Impostazioni › Sistema › Info › premi 7 volte su *Build del sistema operativo*) e consenti l'installazione di **app sconosciute** per l'app che userai.
+2. Installa l'APK in uno di questi modi:
+   - con l'app **Downloader**: inserisci il link dell'APK dalla pagina Releases;
+   - da PC: `adb connect IP-DEL-DISPOSITIVO:5555` e poi `adb install -r MAXENTA-x.y.z-android-tv.apk`;
+   - copiandolo su una chiavetta USB e aprendolo con un file manager.
+3. MAXENTA compare tra le app del launcher.
 
-Prossimi passi consigliati per la distribuzione pubblica: certificato di firma Windows (evita SmartScreen) e Apple Developer ID + notarizzazione (necessario per gli aggiornamenti automatici su macOS).
+> **Dalla 2.4 il pacchetto si chiama `com.maxenta.app`** (prima `com.example.tvplayer`): per Android è un'app nuova. Disinstalla la vecchia versione e installa la nuova; sorgenti e preferiti vanno reinseriti una volta.
+>
+> Fire TV con **Vega OS** (Fire TV Stick 4K Select, Stick HD 2026) non esegue APK. I Fire TV più vecchi (Fire OS 5) non sono supportati.
 
-### Film e serie (VOD) che non partono o non scorrono — convertitore integrato
+### LG webOS
+Serve la **modalità sviluppatore** di LG (gratuita):
+1. Crea un account su [webostv.developer.lge.com](https://webostv.developer.lge.com).
+2. Sulla TV installa da *LG Content Store* l'app **Developer Mode**, accedi, attiva **Dev Mode Status** (la TV si riavvia), poi attiva **Key Server** e annota IP e passphrase.
+3. Sul PC usa **webOS Dev Manager** (programma gratuito con interfaccia grafica, progetto *dev-manager-desktop* su GitHub): aggiungi la TV con IP e passphrase e installa `MAXENTA-x.y.z-webos.ipk`. In alternativa da riga di comando: `ares-setup-device`, poi `ares-install MAXENTA-x.y.z-webos.ipk -d TV`.
+4. La modalità sviluppatore **scade dopo 50 ore**: apri ogni tanto l'app *Developer Mode* e premi *Extend*. Se scade, LG toglie le app installate così e va reinstallato l'`.ipk`.
 
-Il player usa il motore video di Chromium, che non legge alcuni formati (HEVC/H.265 su molti sistemi, audio AC3/E-AC3/DTS, certi MKV) e non permette di **scorrere la timeline** se il server non supporta le richieste a intervalli (*Range*), come capita con molti provider IPTV. Nell'app per computer c'è quindi un convertitore **ffmpeg** incluso:
+Senza modalità sviluppatore puoi usare il **browser della TV** con il companion (vedi sotto): `http://IP-DEL-PC:8787/app/`.
 
-- **Automatico** (predefinito): se il file non parte, parte muto, o la timeline non scorre, passa da solo al convertitore e riprende dallo stesso punto. Il video H.264 viene solo "ripacchettato" (poca CPU); il resto è ricodificato in H.264/AAC (usa più CPU).
-- Lo scorrimento funziona anche così: la barra riparte dal punto scelto. Si può cambiare traccia audio; i sottotitoli incorporati non sono ancora supportati in questa modalità.
-- Se qualcosa non va: nel player apri **Opzioni › “Non va / non scorre? Usa il convertitore video”**, oppure in **Impostazioni › Convertitore video** scegli *Sempre* o *Mai*.
-- Se il file non parte nemmeno così, il messaggio d'errore ora riporta i dettagli tecnici (es. `errore SRC_NOT_SUPPORTED → convertitore: HTTP error 403`) utili per capire se è un blocco del provider.
+### Samsung Tizen
+Il file `.wgt` va **firmato con un certificato Samsung** legato al tuo account e alla TV:
+1. Installa **Tizen Studio** con le estensioni *Samsung Certificate Extension* e *TV Extensions*.
+2. Sulla TV attiva la *Developer mode* (*App* › digita `12345` › ON, inserisci l'IP del PC, riavvia).
+3. In Tizen Studio apri il **Certificate Manager**, crea un profilo **Samsung** di tipo **TV** inserendo il **DUID** della TV (lo legge il *Device Manager* collegandosi alla TV).
+4. Firma e installa: `tizen package -t wgt -s PROFILO -- MAXENTA-x.y.z-tizen-unsigned.wgt`, poi `tizen install -n MAXENTA.wgt -t TV`.
 
-Nota licenze: ffmpeg-static include un binario ffmpeg con licenza GPL (libx264). Per uso personale non cambia nulla; se distribuisci l'app ad altri, rispetta la GPL (indicare l'uso di ffmpeg e rendere disponibili i sorgenti) o sostituiscilo con una build LGPL.
-**Sulle TV** (Tizen, webOS, Android TV…) il convertitore non esiste: lì conta ciò che il decoder della TV sa fare.
+La firma in automatico nella CI si attiva salvando i certificati come *secret* del repository (da configurare).
 
-### Aggiornamenti automatici (app per computer)
+### Hisense VIDAA
+Non esiste un'installazione libera: apri nel **browser della TV** l'indirizzo del companion (`http://IP:8787/app/`) e salvalo nei preferiti, oppure pubblica `MAXENTA-x.y.z-vidaa.zip` tramite il portale sviluppatori VIDAA.
 
-L'app controlla da sola gli aggiornamenti 6 secondi dopo l'avvio (e da **Impostazioni › Aggiornamenti dell'app** o dal menu *Aiuto › Controlla aggiornamenti*). Se c'è una versione nuova chiede se scaricarla, la scarica in background e propone **Riavvia ora**; configurazione, sorgenti e preferiti restano. Le versioni arrivano dalle **GitHub Releases** del tuo repository.
+### Windows, macOS, Linux
+- **Windows**: esegui l'installer `.exe` (per utente, senza permessi di amministratore). Non è firmato: SmartScreen mostra *Windows ha protetto il PC* → *Ulteriori informazioni* › *Esegui comunque*.
+- **macOS**: apri il `.dmg` e trascina MAXENTA in Applicazioni. La prima volta tasto destro › *Apri* (app non firmata), oppure `xattr -dr com.apple.quarantine /Applications/MAXENTA.app`.
+- **Linux**: `chmod +x MAXENTA-*.AppImage` e doppio clic; oppure `sudo apt install ./MAXENTA-*.deb`.
 
-**Una tantum:** crea un repository GitHub (pubblico) e carica il progetto. Non devi modificare nulla: il workflow imposta da solo repository e versione.
+---
 
-**A ogni modifica:** `npm run build` non serve, fa tutto la CI. Basta
+## Aggiornamenti automatici
 
-```
-git add -A && git commit -m "descrizione" && git tag v1.3.0 && git push && git push --tags
-```
-
-GitHub Actions compila Windows, macOS e Linux e pubblica la Release con i file `latest*.yml` che le app installate leggono. (La versione è quella del tag.)
-
-| Sistema | Aggiornamento dall'app aperta |
+| Dove | Come funziona |
 |---|---|
-| Windows (installer `.exe`) | Sì, automatico. La versione *portable* non si aggiorna da sola |
-| Linux **AppImage** | Sì, automatico (sostituisce il file) |
-| Linux `.deb` / `.rpm` | No: l'app avvisa e apre la pagina di download |
-| macOS | Richiede un'app **firmata** (Apple Developer ID, 99 $/anno): senza firma l'aggiornamento automatico fallisce e l'app ti manda alla pagina di download per installare a mano |
+| **TV** (Android, Fire TV, Tizen, webOS, VIDAA) | Il pacchetto installato è un **guscio**: a ogni avvio legge la versione pubblicata sul ramo [`updates`](https://github.com/Signorken/tv-player/tree/updates) di questo repository e, se è più nuova, scarica il programma (~200 KB), lo conserva sulla TV e lo avvia. Senza rete usa l'ultima copia salvata; se una versione scaricata non parte viene scartata e si torna alla precedente. Reinstallare il pacchetto serve solo se cambiano icona, permessi o file grafici di base. *Impostazioni › Informazioni › Verifica aggiornamenti* controlla subito |
+| **Windows, Linux AppImage** | Controllo all'avvio dalle GitHub Releases, download in background e *Riavvia ora* |
+| **macOS, Linux .deb/.rpm** | L'app avvisa e scarica il nuovo pacchetto da installare a mano |
 
-Per provarlo in locale senza GitHub: `UPDATE_FEED_URL=http://localhost:9300/ ./TV-Player.AppImage` con una cartella servita contenente `latest-linux.yml` e il nuovo AppImage.
+---
 
-## Amazon Fire TV (Fire OS)
+## Comandi
 
-I Fire TV con **Fire OS** sono Android: si usa lo **stesso APK** di Android TV (`packaging/android/setup.sh`, poi `assembleDebug`). L'app viene riconosciuta come `firetv` (tasti: D-pad, Indietro, Menu e tasti multimediali del telecomando Alexa funzionano come su Android TV).
+Il telecomando di riferimento è quello **moderno senza tasti numerici né colorati** (frecce, OK, Indietro, Home, Play/Pausa). Gli altri tasti, se ci sono, aggiungono scorciatoie.
 
-Installazione tramite sideload: *Impostazioni › Il mio Fire TV › Opzioni sviluppatore* → **Debug ADB** e **Installa app sconosciute** su ON; poi `adb connect <IP>:5555 && adb install -r app-debug.apk`, oppure scarica l'APK con l'app **Downloader**.
-
-Limiti da sapere: (1) i modelli con **Vega OS** (Fire TV Stick 4K Select, Stick HD 2026 e futuri) **non eseguono APK** e non permettono sideload: servirebbe una versione Vega ufficiale tramite Amazon Appstore (non fattibile con questo progetto così com'è); (2) Amazon ha iniziato a bloccare alcuni APK sideloaded anche su Fire OS e, secondo segnalazioni, certi aggiornamenti di TV Fire OS 8 hanno tolto il sideload; (3) i Fire TV più vecchi (Fire OS 5, Android 5.1) hanno WebView obsoleta e Capacitor recente richiede Android 6+/7+, quindi supporta Fire OS 6 in su; (4) il codice è lo stesso dell'APK Android TV, che qui **non ho potuto compilare né provare** (manca l'Android SDK nel sandbox).
-
-## Finestrella, lingua audio, "Continua a guardare"
-
-- **Finestrella (tutte le piattaforme):** nel player, *Indietro* riduce il video a un riquadro in un angolo e riporta alla schermata precedente: puoi navigare tra categorie, film e serie mentre il flusso continua (audio compreso). Per tornare a tutto schermo: **tasto Blu** (TV) o **clic** (desktop). **Stop** (o la X) chiude il player. Scegliendo un altro contenuto, la finestrella si chiude da sola. Disattivabile in Impostazioni ("Indietro dal player = finestrella").
-- **Lingua audio:** tasto **Blu** nel player (o menu *Audio e sottotitoli*). Le lingue hanno nomi leggibili (Italiano, English…) con codec e canali. La scelta viene **ricordata** e applicata ai contenuti successivi che offrono quella lingua. Funziona con HLS multi-audio su tutte le piattaforme; sul desktop anche con MP4/MKV multi-traccia (le tracce le legge ffmpeg e il cambio passa dal convertitore). Sulle TV i file MP4/MKV/TS multi-audio dipendono dal lettore nativo del sistema: se il sistema non espone le tracce, l'app non può elencarle.
-- **Continua a guardare:** solo film, episodi e file (mai canali live). *Rimuovi riga* (tasto **Giallo** / **Canc** / pulsante) la toglie dalla Home; recenti, "ultimo canale" e progressi di film e serie restano salvati.
-- **Sfondi:** 8 wallpaper astratti (SVG → JPG 1080p e 4K, in `www/wallpapers/`, rigenerabili con `scripts/gen-wallpapers.py`), inclusi nell'installer per tutte le piattaforme. Generati per il progetto, nessuna licenza di terzi.
-
-## Telecomando
-
+### Navigazione
 | Tasto | Azione |
 |---|---|
-| ◀▲▼▶ / OK / Indietro | navigazione, selezione, indietro |
-| **OK lungo** (>0,6 s) | menu opzioni dell'elemento (Android TV non ha tasti colorati) |
-| 🔴 Rosso | preferito · 🟢 Verde | cerca · 🟡 Giallo | cambia sorgente · 🔵 Blu | audio/sottotitoli |
-| CH± / ▲▼ (in player live) | canale successivo/precedente · **0‑9**: numero canale |
-| ◀▶ / ⏪⏩ (film) | ±10 s / ±30 s (pressioni ripetute accelerano) · ⏯ ⏹ ℹ |
+| Frecce / OK / Indietro | sposta, apri, torna indietro |
+| **OK tenuto premuto** | menu opzioni dell'elemento (preferiti, La mia lista, togli dalla riga…) |
+| **Sinistra** dal primo elemento | apre la **barra laterale** (Aspetto A); Destra o Indietro la richiudono |
+| **Indietro dalla Home** | chiude il video nella finestrella; poi chiede se uscire |
+| **Indietro tenuto premuto** | chiude il player o la finestrella |
 
-Sul PC: frecce, Invio, Esc/Backspace, F1‑F4 = colori, PagSu/PagGiù = CH±.
+### Nel player
+| Tasto | Diretta | Film ed episodi |
+|---|---|---|
+| **Su / Giù** | canale successivo / precedente | — |
+| **Sinistra** | pannello **Canali** | pannello **Episodi**; con le informazioni visibili: −10 s |
+| **Destra** | pannello **Opzioni** | pannello **Opzioni**; con le informazioni visibili: +10 s |
+| **OK** | informazioni, poi pausa / riprendi | informazioni, poi pausa / riprendi |
+| **OK tenuto premuto** | pannello Opzioni | pannello Opzioni |
+| **Indietro** | finestrella (o chiude, a seconda delle impostazioni) | idem |
+| **▶‖** | pausa / riprendi; con la finestrella: schermo intero | idem |
 
-## Tastiera: tutte le strade (richiesta chiave)
+### Finestrella
+- Si raggiunge dalla voce **In riproduzione** della barra laterale, dalla tessera in cima alla Home, oppure andando Giù dal fondo della pagina.
+- Selezionata mostra due pulsanti: **Schermo intero** e **Chiudi** (Sinistra/Destra per scegliere).
+- *Impostazioni › Riproduzione › Finestrella*: sempre, solo canali TV, solo film e serie, mai.
 
-1. **Tastiera a schermo** integrata, navigabile col D‑pad (minuscole/maiuscole, simboli, scorciatoie `http://`, `https://`, `www.`, `.com`, `:8080`). Funziona identica su tutte le TV.
-2. **Tastiera fisica** Bluetooth/USB: si scrive direttamente nel campo, **Invio conferma**.
-3. **Tastiera di sistema della TV** (pulsante *“Tastiera di sistema”*): l'app mette il focus su un vero `<input>`. È l'unico “API” necessario: su Tizen, webOS, VIDAA e Android (WebView) il focus su un campo di testo fa comparire la tastiera nativa, e quindi funzionano anche le app remote dei produttori che scrivono con la tastiera del telefono (Google TV remote, Samsung SmartThings, LG ThinQ, Hisense RemoteNOW). Su Android si può anche forzare con `@capacitor/keyboard` → `Keyboard.show()` (già incluso da `setup.sh`).
-4. **Smartphone come tastiera/telecomando** con il *companion* (sotto): QR code → pagina web sul telefono → ciò che scrivi compare **in tempo reale** nel campo aperto sulla TV; in più frecce/OK/CH±, invio di **playlist M3U**, **sorgenti Xtream/NAS** e **URL da riprodurre subito**.
+### Tasti facoltativi
+Numeri 0–9 (canale diretto) · CH± · 🔴 preferito · 🟢 cerca · 🟡 sorgente / rimuovi riga · 🔵 audio e sottotitoli · ⏪⏩ ±30 s.
+Sul computer: frecce, Invio, Esc, F1–F4 = colori, PagSu/PagGiù = CH±, **Ctrl + / Ctrl − / Ctrl 0** = dimensione dell'interfaccia, F11 o *Massimizza* = schermo intero.
 
-> Le web app TV non possono aprire un server HTTP in ascolto: per questo il telefono parla col companion e la TV si collega a lui. Se non vuoi il companion, restano i punti 1‑3.
+---
 
-## Companion (facoltativo ma consigliato)
+## Impostazioni principali
 
-Programma Node senza dipendenze da avviare su NAS / Raspberry Pi / PC (stessa LAN della TV):
+| Categoria | Voci |
+|---|---|
+| **Sorgenti** | aggiungi, modifica, aggiorna elenco, elimina, sorgente attiva |
+| **Riproduzione** | formato dirette Xtream (HLS/TS), lingua audio preferita, **finestrella**, anteprima video scorrendo i canali, buffer, convertitore (computer) |
+| **Aspetto** | **disposizione A/B**, orologio 12/24 h, **schermata all'avvio** (Home, TV, On Demand, Sport, Preferiti, ultimo canale), sfondo, **dimensione interfaccia** (automatica 100%, 70–150%), **suoni di navigazione**, *Risparmio risorse* |
+| **Rete e telefono** | telefono come tastiera/telecomando (QR), server companion, identità del lettore (computer) |
+| **Guida e dati** | finestra della guida programmi (6–48 h), svuota cache e guida |
+| **Informazioni** | versione, verifica aggiornamenti, piattaforma e comandi, crediti |
+
+---
+
+## Telefono come tastiera e telecomando (companion)
+
+Le app per TV non possono ricevere connessioni dirette, quindi il telefono passa da un piccolo server **companion** (Node.js, nessuna dipendenza) da avviare su un PC, NAS o Raspberry Pi della stessa rete:
 
 ```bash
-node companion/server.js                    # porta 8787
-docker compose up -d --build                # oppure con Docker
+node companion/server.js          # porta 8787
+docker compose up -d --build      # oppure con Docker
 ```
-Fa tre cose: **relay** telefono⇄TV · **proxy CORS** (`/proxy?url=…`: aggiunge CORS, inoltra Range/PROPFIND/Basic‑auth, decomprime `.gz`, riscrive i manifest HLS) · **hosting** dell'app su `/app/` (utile per VIDAA e per i browser TV). Accetta solo client della rete locale (`ALLOW_PUBLIC=1` per cambiarlo; `TOKEN=…` per proteggere il proxy).
-Nell'app: *Impostazioni → Server companion* (o *Telefono come tastiera*), poi inquadra il QR.
 
-**Quando serve il proxy?** Tizen e webOS (app impacchettate) e Android con `CapacitorHttp` di solito non hanno blocchi CORS. Servono invece per VIDAA/browser TV o se un server blocca CORS: l'app **riprova da sola tramite il companion** quando una richiesta fallisce. Per i video usa *“Video tramite proxy”* solo se necessario.
+Fa tre cose:
+- **relay** telefono ⇄ TV: inquadri il QR in *Impostazioni › Rete e telefono* e scrivi dal telefono, usi le frecce, invii playlist, account Xtream e link;
+- **proxy** per i server che bloccano le richieste dal browser (aggiunge CORS, gestisce Range, `.gz`, manifest HLS);
+- **ospita l'app** su `http://IP:8787/app/`, utile per VIDAA e per provarla nel browser di qualsiasi TV o PC.
 
-## Installazione sulle piattaforme
+Accetta solo dispositivi della rete locale (`ALLOW_PUBLIC=1` per cambiare, `TOKEN=…` per proteggere il proxy).
 
-`./scripts/dist.sh` prepara `dist/tizen`, `dist/webos`, `dist/vidaa`, `dist/web`.
+---
 
-**Samsung Tizen** — TV in *Developer mode* (App → `12345` → Developer mode ON + IP del PC). Con Tizen Studio/CLI: `tizen package -t wgt -s <profilo> -- dist/tizen`, poi `tizen install -n TvPlayer.wgt -t <TV>`. Il `config.xml` include i privilegi `internet` e `tv.inputdevice` (tasti colorati/multimediali, registrati in `platform.js`) e `<access origin="*">`. Compatibile da Tizen 4.0 (2018).
+## App per computer
 
-**LG webOS** — App *Developer Mode* sulla TV, poi: `ares-setup-device`, `ares-package dist/webos`, `ares-install com.example.tvplayer_1.0.0_all.ipk -d <TV>`, `ares-launch -d <TV> com.example.tvplayer`. Back = tasto 461. Compatibile da webOS 4.0 (2018).
+La stessa app in una finestra **Electron**, con adattamenti per mouse e tastiera:
+- **Ctrl+V** ovunque aggiunge ciò che hai copiato: link M3U, link `get.php?username=…` di un provider Xtream (riconosce da solo server, utente e password), WebDAV, testo di una playlist;
+- trascina un file `.m3u` nella finestra, oppure **Ctrl+O**; l'app si registra come lettore di `.m3u/.m3u8`;
+- **Cerca NAS in rete** (DLNA/SSDP e mDNS), **NAS Windows** (`\\NAS\cartella` o `smb://NAS/cartella`, con elenco delle condivisioni su Windows), cartelle del computer; le sottocartelle si salvano come accesso rapido;
+- clic, tasto destro (opzioni), rotella, barra di avanzamento cliccabile, Spazio, F, M;
+- **convertitore ffmpeg** integrato per i file che il motore di Chromium non legge (HEVC, AC3/DTS, alcuni MKV) o che non si possono scorrere: automatico, oppure da *Opzioni › Usa il convertitore video*;
+- se il provider blocca i browser, *Impostazioni › Identità del lettore* (VLC, Kodi, okhttp).
 
-**Hisense VIDAA** — non esiste un sideload libero come su Samsung/LG. Due strade: (a) aprire nel browser della TV `http://IP-companion:8787/app/` (preferiti del browser); (b) pubblicare `dist/vidaa` tramite il portale sviluppatori VIDAA per l'app store. I codici tasto VIDAA (Back/colori) sono gestiti con gli standard `Escape`/`ColorF*Red`… ma **vanno verificati su un televisore reale** (vedi “Cosa è verificato”).
+---
 
-**Android TV / Google TV** — `packaging/android/setup.sh` crea il progetto Capacitor, imposta `LEANBACK_LAUNCHER` (icona nel launcher TV), niente touchscreen obbligatorio, HTTP in chiaro, `CapacitorHttp` (niente CORS) e il tasto indietro. Poi `./gradlew assembleDebug` e `adb install`. Richiede Android Studio/SDK.
+## Sviluppo
 
-## Perché è leggero
-
-- Liste e griglie **virtualizzate**: ~16 nodi DOM anche con 50.000 canali (provato con 3.000: scorrimento rapido in ~0,4 s).
-- Solo `transform`/`opacity`, niente ombre/blur/animazioni (modalità *Risparmio risorse* attiva di default); loghi caricati solo se visibili.
-- hls.js e mpegts.js si caricano **solo quando servono**; un solo `<video>`, distrutto a ogni cambio canale; buffer configurabile (10/20/40 s).
-- Cataloghi in **IndexedDB** (avvio immediato, aggiornamento in background); EPG filtrato per i soli canali presenti e finestra di 6‑48 h; Xtream VOD/serie caricati **per categoria**.
-- Bundle compilato per **Chromium 53+** (webOS 4, Tizen 4): niente CSS grid/gap/clamp.
-
-## Struttura
-
+```bash
+npm install
+node companion/server.js        # app su http://localhost:8787/app/
+npm run build                   # src/ -> www/app.js
+npm run desktop                 # app per computer
+npm test                        # prove automatiche (servono test/mock.js e il companion avviati)
+node scripts/screenshots.js     # rigenera gli screenshot del README (serve anche test/demo.js)
 ```
-src/core      tasti, navigazione spaziale, storage, rete, parser M3U/XMLTV, EPG, router, relay
-src/sources   m3u.js · xtream.js · dav.js (WebDAV/HTTP)
-src/ui        lista virtualizzata, tastiera, modali, motore di riproduzione (nativo/hls.js/mpegts.js)
-src/screens   home · live · vod · detail · files · favs · settings · player
-companion/    server.js (relay+proxy+hosting) · remote.html (pagina del telefono) · Dockerfile
-packaging/    tizen · webos · vidaa · android
-test/         mock.js (server finto M3U/Xtream/XMLTV/WebDAV/HLS) · e2e.js · e2e2.js
-```
-Modifica `src/`, poi `./build.sh` → `www/app.js`.
 
-## Cosa è verificato (e cosa no)
+| Cartella | Contenuto |
+|---|---|
+| `src/core` | tasti, navigazione spaziale, archivio, rete, parser M3U/XMLTV, guida, router |
+| `src/sources` | M3U, Xtream, WebDAV/HTTP, cartelle locali |
+| `src/ui` | lista virtualizzata, barra laterale, tastiera, finestre, icone, suoni, motore video |
+| `src/screens` | home, diretta, on demand, scheda, file, preferiti, impostazioni, player |
+| `desktop/` | Electron: finestra, aggiornamenti, convertitore, DLNA, SMB |
+| `packaging/` | Android (Capacitor + `MainActivity` per Indietro lungo), Tizen, webOS, VIDAA, **guscio auto-aggiornante** (`shell/loader.js`) |
+| `companion/` | relay, proxy, pagina del telefono, Dockerfile |
+| `test/` | server finto (`mock.js`), server dimostrativo (`demo.js`), prove e2e |
+| `docs/` | screenshot e dati dimostrativi |
 
-**Verificato** in Chrome 153 headless a 1920×1080, guidando l'app **solo con tasti** e col relay del telefono, contro un server finto senza CORS (`npm test`, 44 controlli): aggiunta sorgente con tastiera fisica e a schermo · prova connessione · M3U + XMLTV · Xtream (3.000 canali, EPG breve, VOD, serie) · riproduzione HLS (nativo e hls.js con proxy), MPEG‑TS (mpegts.js) e MP4 con seek · zapping numerico · OK lungo · preferiti · ripresa film · NAS WebDAV con `.nfo` · scrittura dal telefono · QR. Durante i test è emerso e corretto un bug del proxy video.
+**Rilasciare una versione**: *Actions › Build › Run workflow* con il numero di versione. La CI compila Windows, macOS, Linux, APK, IPK, WGT e VIDAA, pubblica la Release e aggiorna il ramo `updates` letto dalle TV.
 
-**Versione desktop verificata** con Electron 45 reale (display virtuale Linux, pilotato via DevTools; `npm run test:desktop`, 22 controlli): riconoscimento di URL `get.php`/M3U/testo incollato, cartella locale con `.nfo`, clic e rotella, riproduzione `file://`, controlli del player col mouse, lettura DLNA (Browse SOAP/DIDL contro un server finto), blocco della lettura di file non consentiti, impostazioni specifiche del desktop. Gli installer **Linux (AppImage e deb) sono stati generati e l'app impacchettata è stata avviata**. **Non verificati**: installer **Windows e macOS** (non costruibili da Linux: affidati al workflow CI), firma/notarizzazione, la scoperta SSDP/mDNS su una rete con dispositivi veri (nel sandbox non ce ne sono: verificato solo che termini senza errori) e il DLNA contro un server reale (minidlna, Plex, Synology…).
+Compatibilità: il bundle è compilato per **Chromium 53+** (webOS 4, Tizen 4): niente CSS grid, `gap` nei flex o API recenti.
 
-**Non verificato** (nessun televisore/emulatore disponibile): installazione e tasti su **Tizen, webOS, VIDAA, Android TV reali**; i file `config.xml`/`appinfo.json` sono validi come XML/JSON ma non sono stati pacchettizzati con i tool ufficiali; `setup.sh` non è stato eseguito. Aspettati qualche ritocco al primo test su ciascuna TV (codici tasto, CORS, codec).
+---
 
-## Limiti noti / prossimi passi
+## Cosa è verificato
 
-- **Codec**: il video usa l'HTML5 `<video>` della TV. HEVC, AC3/E‑AC3, MKV dipendono dal modello. Per massima compatibilità si può aggiungere **AVPlay (Tizen)** / **ExoPlayer (Android)** dietro la stessa interfaccia `Engine`.
-- **DLNA/UPnP e SMB** non sono accessibili da una web app pura (servono socket UDP/TCP): sulle **TV** usa WebDAV/HTTP (o un plugin nativo su Android); sul **computer** DLNA/UPnP è supportato dall'app Electron e SMB si usa montando la condivisione dal sistema operativo.
-- Niente DRM, catch‑up/timeshift, registrazioni, profili multipli; interfaccia solo in italiano.
-- Nota: l'app non contiene né fornisce contenuti; usa solo playlist/servizi che hai il diritto di usare.
+- **Prove automatiche** (`npm test`, oltre 120 controlli) in Chrome guidando l'app **solo con i tasti**, contro server finti: sorgenti M3U e Xtream (3.000 canali), guida, film, serie, ricerca, preferiti, La mia lista, ripresa, finestrella e sua chiusura, barra laterale, Aspetto B, tastiera, OK e Indietro lunghi, pannelli del player, NAS WebDAV, telefono come telecomando, dimensione automatica.
+- **App per computer** provata con Electron reale (`test/desktop*.js`): incolla link, cartelle, NAS, convertitore, tracce audio multiple.
+- **Guscio delle TV** (`test/shell-test.js`): aggiornamento, funzionamento senza rete, scarto di una versione difettosa.
+- **Provato dall'autore** su Samsung QN90C (Tizen), Thomson Streaming Stick 140 (Google TV), portatile Linux e Mac.
+- **Non verificato**: Hisense VIDAA reale, Fire TV, installer Windows su macchina reale.
 
-## Sport, accesso rapido alla TV e connessioni multiple
+---
 
-- **Sport**: nuova tessera in Home. Riconosce da nome di gruppo/canale/categoria (calcio, Serie A, Champions, F1, NBA, DAZN, Sky Sport, Eurosport, tennis, UFC…) le dirette e gli eventi on demand di playlist M3U e account Xtream, e li mostra in un menu con "Dirette sportive", "Eventi on demand" e "Programmi e serie sportive".
-- **TV in diretta**: pulsante rapido in alto nella Home e tasto verde / Guida / CH+ / CH- del telecomando.
-- **Limite connessioni**: con Xtream l'app legge `max_connections`/`active_cons` e avvisa quando sono tutte in uso; gli errori HTTP 401/403/429/458/509/884 hanno ora un messaggio comprensibile. Se la stessa playlist è attiva su un altro dispositivo e il provider consente una sola connessione, il flusso viene rifiutato dal provider (non dall'app).
+## Limiti noti
 
-## MAXENTA 2.0
+- **Codec**: sulle TV conta il decoder del televisore (HEVC, AC3/E-AC3, MKV dipendono dal modello). Il convertitore esiste solo sull'app per computer.
+- **SMB e DLNA** sulle TV non sono raggiungibili da un'app web: usa WebDAV/HTTP sul NAS, oppure l'app per computer.
+- Niente DRM, registrazioni, catch-up; interfaccia solo in italiano.
+- macOS e Samsung richiedono certificati a pagamento o legati all'account per installazione e aggiornamento senza passaggi manuali.
 
-**Aspetto** (Impostazioni › Aspetto › Disposizione)
-- **A (predefinito)**: barra laterale a sole icone; si allarga con i nomi quando ci entri (Sinistra dal primo elemento di qualsiasi schermata, Destra o Indietro per uscire). Mostra la sezione corrente e, se c'è un video in finestrella, la voce "In riproduzione".
-- **B**: pulsanti in alto a sola icona; quello selezionato mostra il nome.
-- Orologio al centro (12/24 ore, fuso della TV), versione in basso a destra, scelta della schermata all'avvio (Home, TV, Film, Serie, Sport, Preferiti, ultimo canale).
-- Home: "Riprendi", "Continua a guardare" (locandine verticali) e "Canali visti di recente"; OK lungo su una locandina per toglierla dalla riga.
+---
 
-**Player pensato per telecomandi senza numeri né tasti colorati** (es. Samsung SolarCell)
+## Crediti e licenze
 
-| Tasto | Diretta | Film / episodi |
-|---|---|---|
-| Su / Giù | cambia canale | — |
-| Sinistra | pannello Canali | pannello Episodi · con le informazioni visibili: −10 s (tenuto premuto accelera) |
-| Destra | pannello Opzioni (audio, sottotitoli, preferiti, formato, flusso alternativo, finestrella…) | pannello Opzioni · con le informazioni visibili: +10 s |
-| OK | informazioni, poi pausa / riprendi | informazioni, poi pausa / riprendi |
-| OK lungo | pannello Opzioni | pannello Opzioni |
-| Indietro | finestrella | finestrella |
-| ▶‖ | — | — |
-
-La finestrella si riporta a schermo intero con ▶‖, dalla voce "In riproduzione" della barra o selezionandola col cursore (Giù dal fondo della pagina). Riaprire lo stesso film, episodio o canale la riespande senza ricaricare. L'OK lungo ora funziona anche sui telecomandi che non ripetono il tasto (timer invece dei keydown ripetuti). La tastiera a schermo ha Shift (una maiuscola) e blocco maiuscole (Shift due volte).
-
-**Leggerezza**
-- Guida programmi caricata solo a canale aperto (niente download/parse dell'XMLTV scorrendo la lista).
-- Righe delle liste e sfondo non sono più livelli grafici separati: nella lista canali si passa da ~30 livelli (7 megapixel da comporre) a 2.
-- Libreria QR caricata solo quando serve; immagini decodificate in modo asincrono; meno scritture di stile a ogni tasto nelle liste.
-
-Icone: [Solar](https://github.com/480-Design/Solar-Icon-Set) di 480 Design (CC BY 4.0). Font: Plus Jakarta Sans (SIL OFL).
-
-## 2.1
-- **On Demand**: Film, Serie TV e Sport (on demand) sono schede della stessa schermata; le dirette sportive sono in TV in diretta › categoria Sport.
-- **Finestrella** configurabile: sempre, solo canali TV, solo film e serie, mai.
-- **Indietro tenuto premuto** chiude il player o la finestrella (telecomandi senza tasto Stop).
-- Barra laterale: "In riproduzione" mostra solo il titolo, che scorre se è lungo.
-- Home: "Rimuovi riga" anche per i canali visti di recente.
-- Suoni di navigazione (sintetizzati, nessun file) disattivabili in Aspetto; muti dentro il player.
-- Transizioni più morbide (schermate, pulsanti, pannelli del player, finestrella, avvisi); restano spente con "Risparmio risorse".
-
-## Aggiornamento automatico sulle TV (dalla 2.2)
-I pacchetti per **Tizen, webOS, VIDAA e Android TV** sono un "guscio": a ogni avvio leggono
-`https://raw.githubusercontent.com/<repo>/updates/version.json` e, se c'è una versione più nuova, scaricano
-`app.js` e `app.css` (circa 200 KB), li salvano sulla TV e li avviano. Senza rete si usa l'ultima copia salvata
-(o quella inclusa nel pacchetto); se una versione scaricata non parte entro 9 secondi viene scartata.
-Il ramo `updates` viene pubblicato dalla CI a ogni release. Reinstallare il pacchetto serve solo quando cambiano
-il guscio, i permessi, l'icona o i file statici (font, sfondi, librerie): in quel caso `minShell` in `version.json`
-aumenta e le TV con il guscio vecchio restano sulla versione inclusa finché non lo reinstalli.
-Prova: `node test/shell-test.js`.
-
-## 2.3
-- On Demand si apre su **Tutto**: film e serie insieme (le categorie con lo stesso nome sono unite, le serie hanno l'etichetta SERIE); le schede Film, Serie TV e Sport restano come filtri.
-- Dimensione automatica proporzionata a larghezza **e** altezza dello schermo, ricalcolata a ogni ridimensionamento; zoom manuale in Aspetto (70–150%) o con Ctrl +/−/0.
-- Pulsanti affiancati sempre distanziati; pannelli Canali/Opzioni del player non più tagliati.
-- Desktop (Windows/Linux): "Massimizza" passa a schermo intero; uscendo si torna alla finestra.
-- Barra laterale: nome e versione accanto al logo, voci raggruppate e centrate.
+- Icone **[Solar](https://github.com/480-Design/Solar-Icon-Set)** di 480 Design — CC BY 4.0
+- Font **Plus Jakarta Sans** — SIL Open Font License
+- **hls.js** e **mpegts.js** — Apache 2.0
+- **ffmpeg** (app per computer, tramite ffmpeg-static) — GPL: se ridistribuisci l'app rispetta la licenza o sostituiscilo con una build LGPL
+- Sfondi astratti e dati dimostrativi creati per il progetto
