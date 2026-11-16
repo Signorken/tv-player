@@ -42,7 +42,6 @@ export function startEpg(src, channels, done) {
   Epg.loadXmltv(src.id, url, channels).then(() => { epgState[src.id] = 'done'; if (done) done(); })
     .catch(() => { epgState[src.id] = 'error'; });
 }
-export function epgStatus(id) { return epgState[id] || ''; }
 
 // ---- opzioni player
 export function liveOpts(src, items, index, extra) {
@@ -71,7 +70,7 @@ export function episodesOpts(src, show, episodes, index) {
     resolve: ep => ({
       url: src.urlFor(ep, 'series'), title: show.name, logo: show.poster,
       sub: 'S' + (ep.season < 10 ? '0' : '') + ep.season + 'E' + (ep.num < 10 ? '0' : '') + ep.num + ' · ' + ep.title,
-      key: store.favKey(src.id, 'ep', ep.id), meta: { kind: 'episode', src: src.id, id: ep.id, ext: ep.ext, url: ep.url, poster: show.poster, show: show.name }
+      key: store.favKey(src.id, 'ep', ep.id), meta: { kind: 'episode', src: src.id, id: ep.id, ext: ep.ext, url: ep.url, poster: show.poster, show: show.name, series: show.id, seriesItem: { id: show.id, name: show.name, poster: show.poster } }
     })
   };
 }

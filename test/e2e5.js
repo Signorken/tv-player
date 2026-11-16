@@ -57,12 +57,12 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   await key('Enter');
   await wait(() => { const c = window.__app.router.current; return c.isPlayer && c.video.currentTime > 0.2; }, 15000);
   await p.evaluate(() => { const c = window.__app.router.current; c._d = () => 1500; c._t = () => 1490; c._checkNext(); });
-  ok('Episodio successivo: negli ultimi secondi compare il riquadro con il conto alla rovescia', await p.evaluate(() => /Prossimo episodio/.test((document.querySelector('.pnext') || {}).textContent || '')));
+  ok('Episodio successivo: negli ultimi secondi compare il riquadro con il conto alla rovescia', await p.evaluate(() => /Prossimo episodio/.test((document.querySelector('.pnextep') || {}).textContent || '')));
   await key('Escape'); await sleep(200);
-  ok('Indietro lo annulla subito (resta nel player)', await p.evaluate(() => !document.querySelector('.pnext') && window.__app.router.current.isPlayer && window.__app.router.current.nextOff));
+  ok('Indietro lo annulla subito (resta nel player)', await p.evaluate(() => !document.querySelector('.pnextep') && window.__app.router.current.isPlayer && window.__app.router.current.nextOff));
   await p.evaluate(() => { const c = window.__app.router.current; c.nextOff = false; c._checkNext(); }); await sleep(200);
   await key('ArrowRight', 2); await key('Enter'); await sleep(300);
-  ok('"Disattiva" lo spegne nelle impostazioni', await p.evaluate(() => window.__app.store.settings().autoNext === false && !document.querySelector('.pnext')));
+  ok('"Disattiva" lo spegne nelle impostazioni', await p.evaluate(() => window.__app.store.settings().autoNext === false && !document.querySelector('.pnextep')));
   await p.evaluate(() => { window.__app.store.settings().autoNext = true; const c = window.__app.router.current; c.nextOff = false; c._checkNext(); }); await sleep(200);
   await key('Enter'); await sleep(800);
   ok('"Guarda ora" passa all\'episodio successivo', await p.evaluate(() => window.__app.router.current.i === 1));
@@ -122,6 +122,21 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   await ak('Enter'); await sleep(1200);
   ok('…la prima volta chiede il permesso e poi apre la chiavetta', await ap.evaluate(() => window.__log.some(x => x === 'grant AB12-34CD') && /SanDisk USB/.test((document.querySelector('.screen.files .crumb') || {}).textContent || '') && window.__app.router.current.entries.length === 2));
   await ap.close();
+  // ---- 2.8: "Continua a guardare" più furbo
+  await p.evaluate(() => { const s = window.__app.store; s.get().contClearedAt = 0;
+    const m = s.favKey('x1', 'movie', '840'); s.addRecent(m, { kind: 'movie', src: 'x1', id: '840', name: 'Film finito' }); s.markWatched(m); s.clearProgress(m);
+    const ep = (id, n) => ({ kind: 'episode', src: 'x1', id: id, name: 'La serie di prova', show: 'La serie di prova', series: '77', seriesItem: { id: '77', name: 'La serie di prova' }, sub: 'S01E0' + n });
+    s.addRecent(s.favKey('x1', 'ep', '901'), ep('901', 1)); s.setProgress(s.favKey('x1', 'ep', '901'), 300, 1500);
+    s.addRecent(s.favKey('x1', 'ep', '902'), Object.assign(ep('902', 2), { upnext: 1 }));
+    window.__app.router.home(); window.__app.router.current.refresh(); });
+  await sleep(500);
+  const cont = await p.evaluate(() => [...document.querySelectorAll('.home .contbox:not(.listrow):not(.liverow):not(.favrow2):not(.filerow) .ccard:not(.xcard)')].map(c => c.textContent));
+  ok('Continua a guardare: i film finiti spariscono', !cont.some(t => /Film finito/.test(t)), cont.join(' | '));
+  ok('…una sola tessera per serie, con il prossimo episodio', cont.filter(t => /La serie di prova/.test(t)).length === 1 && cont.some(t => /Prossimo: S01E02/.test(t)));
+  await p.evaluate(() => { const c = [...document.querySelectorAll('.home .ccard')].find(x => /Prossimo: S01E02/.test(x.textContent)); c.click(); });
+  ok('…aperto dalla Home, il player conosce tutti gli episodi della serie', await wait(() => { const c = window.__app.router.current; return c.isPlayer && c.o.list.length === 5 && c.i === 1; }, 15000));
+  ok('…e l\'informazione "DOPO" del player non è più disegnata come un riquadro', await p.evaluate(() => [...document.querySelectorAll('.pnext')].every(e => getComputedStyle(e).position !== 'absolute')));
+  await p.evaluate(() => window.__app.router.current._exit()); await sleep(400);
   console.log('Errori JS: ' + errs.length, errs.slice(0, 4));
   const f = res.filter(x => !x).length; console.log('RISULTATO: ' + (res.length - f) + '/' + res.length);
   await b.close(); process.exit(f ? 1 : 0);

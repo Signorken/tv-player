@@ -1,12 +1,12 @@
 // Home: tessere principali + "Continua a guardare"
-import { h, fmtClock } from '../core/util.js';
+import { h } from '../core/util.js';
 import * as store from '../core/store.js';
 import * as nav from '../core/nav.js';
 import { router } from '../core/router.js';
 import { icon } from '../ui/icons.js';
 import { hints, img, setImg } from '../ui/chrome.js';
 import * as Modal from '../ui/modal.js';
-import { openSource, sourceById, liveOpts, movieOpts, fileOpts, isReady } from '../core/session.js';
+import { openSource, sourceById, liveOpts, movieOpts, fileOpts, episodesOpts, isReady, showLoading, hideLoading } from '../core/session.js';
 import { createSource } from '../sources/index.js';
 import { Android } from '../core/android.js';
 import { AndroidUsbSource, TizenUsbSource, tizenUsbAvailable, tizenUsbVolumes, tizenOnUsb } from '../sources/usb.js';
@@ -15,7 +15,7 @@ import { LiveScreen } from './live.js';
 import { VodScreen } from './vod.js';
 import { FilesScreen } from './files.js';
 import { FavsScreen } from './favs.js';
-import { SettingsScreen, SourcesScreen } from './settings.js';
+import { SettingsScreen } from './settings.js';
 import { addNetworkFolderFlow, addSourceFlow, addFromClipboard, pickPlaylistFile, discoverFlow, addFolderFlow } from './addflow.js';
 import { DetailScreen } from './detail.js';
 import { SearchScreen } from './search.js';
@@ -75,6 +75,18 @@ export async function playMeta(meta) {
     } else if (meta.kind === 'movie') {
       router.push(new PlayerScreen(movieOpts(src, { id: meta.id, name: meta.name, poster: meta.poster || meta.logo, ext: meta.ext, url: meta.url })));
     } else if (meta.kind === 'episode') {
+      // con la serie nota si caricano tutti gli episodi: nel player funzionano elenco episodi ed episodio successivo
+      if (meta.series && src.seriesInfo) {
+        try {
+          const show = meta.seriesItem || { id: meta.series, name: meta.show, poster: meta.poster };
+          showLoading(tr('Caricamento…'), show.name || '');
+          let r; try { r = await src.seriesInfo(show); } finally { hideLoading(); }
+          const all = [];
+          (r.seasons || []).forEach(se => se.episodes.forEach(e => { e.season = se.n; all.push(e); }));
+          const i = all.findIndex(e => String(e.id) === String(meta.id));
+          if (i >= 0) { router.push(new PlayerScreen(episodesOpts(src, Object.assign({}, show, { poster: show.poster || (r.info && r.info.poster) }), all, i))); return; }
+        } catch (e) { /* si ripiega sull'episodio singolo */ }
+      }
       const ep = { id: meta.id, ext: meta.ext, url: meta.url, num: 0, season: 0, title: '' };
       router.push(new PlayerScreen({
         kind: 'vod', list: [ep], index: 0,
@@ -168,9 +180,13 @@ export class HomeScreen {
   }
   refresh() { this.onShow(false); }
 
+  // le righe si ridisegnano solo se è cambiato qualcosa (tornando alla Home dal player spesso non cambia nulla)
+  same(name, sig) { if (this['_sig' + name] === sig) return true; this['_sig' + name] = sig; return false; }
   renderCont() {
+    const rec = store.contItems(10), live0 = store.liveItems(8);
+    const sig = rec.map(r => { const p = store.getProgress(r.key); return r.key + ':' + (p ? Math.round(p.pos / 30) : '') + (r.upnext ? 'n' : ''); }).join() + '|' + live0.map(r => r.key).join() + '|' + store.settings().lang;
+    if (this.same('cont', sig)) return;
     this.cont.innerHTML = '';
-    const rec = store.contItems(10);
     this.contHd.style.display = rec.length ? '' : 'none';
     this.renderHero(rec[0]);
     rec.forEach(r => {
@@ -178,7 +194,7 @@ export class HomeScreen {
       const im = img(); setImg(im, r.logo || r.poster);
       const card = h('div', { class: 'ccard', 'data-f': 1, onclick: () => playMeta(r) },
         h('div', { class: 'cthumb' }, im, p && p.dur ? h('div', { class: 'cbar' }, h('div', { class: 'cfill', style: 'width:' + Math.min(100, p.pos / p.dur * 100) + '%' })) : null),
-        h('div', { class: 'cname', text: r.name }), h('div', { class: 'csub', text: r.sub || '' }));
+        h('div', { class: 'cname', text: r.name }), h('div', { class: 'csub', text: (r.upnext ? tr('Prossimo: ') : '') + (r.sub || '') }));
       card._meta = r;
       this.cont.appendChild(card);
     });
@@ -238,6 +254,7 @@ export class HomeScreen {
   }
   renderList(keepFocus) {
     const items = this.listItems();
+    if (this.same('list', items.map(x => x.kind + x.id).join() + '|' + (store.activeSource() || {}).id)) return;
     const f = nav.getFocus(), fi = keepFocus && f && this.listRow.contains(f) ? Array.prototype.indexOf.call(this.listRow.children, f) : -1;
     this.listRow.innerHTML = '';
     this.listHd.style.display = this.listRow.style.display = items.length ? '' : 'none';
@@ -261,6 +278,7 @@ export class HomeScreen {
   }
   renderFavs() {
     const items = this.favItems();
+    if (this.same('fav', items.map(x => x.id + x.name).join() + '|' + (store.activeSource() || {}).id)) return;
     this.favRow.innerHTML = '';
     this.favHd.style.display = this.favRow.style.display = items.length ? '' : 'none';
     items.forEach(r => {
@@ -304,7 +322,9 @@ export class HomeScreen {
       const again = () => setTimeout(() => this.scanUsb(), 1500);
       if (Android.available) Android.onUsb(again);
       else if (tizenUsbAvailable()) tizenOnUsb(again);
-      else if (window.desktop && window.desktop.listDrives) setInterval(() => { if (router.current === this) this.scanUsb(); }, 6000);
+      // computer: controllo leggero solo con la Home aperta e la finestra in primo piano (su Windows ogni 30 s: interroga PowerShell)
+      else if (window.desktop && window.desktop.listDrives) setInterval(() => { if (router.current === this && document.hasFocus()) this.scanUsb(); }, window.desktop.platform === 'win32' ? 30000 : 6000);
+      if (window.desktop && window.desktop.listDrives) window.addEventListener('focus', () => { if (router.current === this) this.scanUsb(); });
     }
   }
   fileTargets() {
@@ -312,6 +332,7 @@ export class HomeScreen {
   }
   renderFiles(keepFocus) {
     const items = this.fileTargets();
+    if (this.same('files', items.map(x => x.id + x.name + (x.tree ? 1 : 0)).join())) return;
     const f = nav.getFocus(), fi = keepFocus && f && this.fileRow.contains(f) ? Array.prototype.indexOf.call(this.fileRow.children, f) : -1;
     this.fileRow.innerHTML = '';
     this.fileHd.style.display = this.fileRow.style.display = items.length ? '' : 'none';
@@ -358,7 +379,7 @@ export class HomeScreen {
     this.hero.style.display = r ? '' : 'none';
     if (!r) return;
     const p = store.getProgress(r.key);
-    this.hero.appendChild(h('div', { class: 'hg', text: tr('RIPRENDI DA DOVE ERI RIMASTO') }));
+    this.hero.appendChild(h('div', { class: 'hg', text: r.upnext ? tr('PROSSIMO EPISODIO') : tr('RIPRENDI DA DOVE ERI RIMASTO') }));
     this.hero.appendChild(h('div', { class: 'hn', text: r.name }));
     this.hero.appendChild(h('div', { class: 'hs', text: r.sub || '' }));
     if (p && p.dur) this.hero.appendChild(h('div', { class: 'hbar2' }, h('div', { style: 'width:' + Math.min(100, p.pos / p.dur * 100) + '%' })));

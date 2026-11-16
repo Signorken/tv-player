@@ -102,8 +102,8 @@ export class XtreamSource {
   }
   seriesItems(catId) {
     return this._c('series:' + (catId || 'all'), 6 * 3600000, async () => arr(await this.api('get_series', catId ? { category_id: catId } : null)).map(s => ({
-      id: String(s.series_id), name: s.name || '', poster: s.cover || '', plot: s.plot || '', rating: s.rating_5based ? (s.rating_5based * 2).toFixed(1) : (s.rating || ''),
-      year: (s.releaseDate || s.release_date || '').slice(0, 4), genre: s.genre || '', cast: s.cast || '', group: catId || '', added: s.last_modified
+      id: String(s.series_id), name: s.name || '', poster: s.cover || '', plot: String(s.plot || '').slice(0, 300), rating: s.rating_5based ? (s.rating_5based * 2).toFixed(1) : (s.rating || ''),
+      year: (s.releaseDate || s.release_date || '').slice(0, 4), genre: s.genre || '', group: catId || '', added: s.last_modified
     })));
   }
   async seriesInfo(show) {

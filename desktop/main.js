@@ -149,7 +149,9 @@ ipcMain.handle('drives:list', async () => {
       // unità rimovibili (DriveType 2) e dischi esterni USB: Get-CimInstance, con un tempo massimo
       const { execFile } = require('child_process');
       const txt = await new Promise(res => execFile('powershell.exe', ['-NoProfile', '-Command',
-        "Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -eq 2 } | ForEach-Object { $_.DeviceID + '|' + $_.VolumeName }"],
+        // chiavette (DriveType 2) e dischi esterni collegati via USB (BusType USB)
+        "$u = @(Get-Disk -ErrorAction SilentlyContinue | Where-Object BusType -eq 'USB' | Get-Partition -ErrorAction SilentlyContinue | Where-Object DriveLetter | ForEach-Object { [string]$_.DriveLetter + ':' }); " +
+        "Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -eq 2 -or $u -contains $_.DeviceID } | ForEach-Object { $_.DeviceID + '|' + $_.VolumeName }"],
         { timeout: 6000, windowsHide: true }, (err, so) => res(err ? '' : String(so))));
       txt.split(/\r?\n/).forEach(l => { const m = /^([A-Z]:)\|(.*)$/.exec(l.trim()); if (m) add(m[1] + '\\', (m[2] || 'USB') + ' (' + m[1] + ')'); });
     } else {

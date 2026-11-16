@@ -71,7 +71,8 @@ export function applyWallpaper() {
   if (!w || w === 'none') { bg.style.backgroundImage = 'none'; return; }
   const px = Math.max(screen.width, screen.height) * (window.devicePixelRatio || 1);
   const mem = navigator.deviceMemory;
-  const q = px >= 3000 && (platform.isDesktop || platform.name === 'web' || (mem && mem >= 3)) ? '4k' : '1080';
+  // sui televisori i pacchetti contengono solo la versione 1080p (più leggera da installare e da decodificare)
+  const q = px >= 3000 && (platform.isDesktop || platform.name === 'web') && (!mem || mem >= 3) ? '4k' : '1080';
   bg.style.backgroundImage = 'url(wallpapers/' + w + '-' + q + '.jpg)';
 }
 
@@ -262,7 +263,7 @@ export class SettingsScreen {
           act: async () => { const r = await Modal.menu(tr('Lingua'), [{ label: tr('Automatica (come il dispositivo)'), value: 'auto' }, { label: tr('Italiano'), value: 'it' }, { label: tr('English'), value: 'en' }]);
             if (r == null) return; const v = r === 'auto' ? '' : r; if (v === (S().lang || '')) return;
             S().lang = v; store.save(true); Modal.toast(tr('Lingua: riavvio…'), 1200); setTimeout(() => location.reload(), 500); } },
-        choice(tr('Disposizione'), 'layout', [['A', tr('Aspetto A: barra laterale (consigliato)')], ['B', tr('Aspetto B: pulsanti in alto')]], null, () => { applyUi(); const hm = router.current; }),
+        choice(tr('Disposizione'), 'layout', [['A', tr('Aspetto A: barra laterale (consigliato)')], ['B', tr('Aspetto B: pulsanti in alto')]], null, applyUi),
         choice(tr('Orologio'), 'clock', [['24', tr('24 ore (21:45)')], ['12', tr('12 ore (9:45 PM)')]], null, applyUi),
         choice(tr('Schermata all\'avvio'), 'startScreen', [['home', 'Home'], ['live', tr('TV in diretta')], ['movie', tr('On Demand: Film')], ['series', tr('On Demand: Serie TV')], ['sport', tr('On Demand: Sport')], ['favs', tr('Preferiti')], ['last', tr('Ultimo canale visto')]]),
         { label: tr('Tema'), value: () => store.settings().theme === 'light' ? tr('Chiaro') : tr('Scuro (predefinito)'), act: async () => { const v = await Modal.menu(tr('Tema'), [{ label: tr('Scuro (predefinito)'), value: 'dark' }, { label: tr('Chiaro'), value: 'light' }]); if (v) { setTheme(v); self.sync(); } } },

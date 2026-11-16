@@ -93,8 +93,7 @@ function start() {
       args.push('-f', 'mp4', '-movflags', 'frag_keyframe+empty_moov+default_base_moof', 'pipe:1');
       const p = spawn(ffmpegPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] });
       procs.add(p);
-      let err = '';
-      p.stderr.on('data', d => { err += d; });
+      p.stderr.on('data', () => { }); // va letto (altrimenti ffmpeg si blocca) ma non serve conservarlo: in un film lungo cresceva senza limite
       res.writeHead(200, { 'Content-Type': 'video/mp4', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
       p.stdout.pipe(res);
       p.on('error', () => { try { res.end(); } catch (e) { /* */ } });

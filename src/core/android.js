@@ -15,7 +15,9 @@ export const Android = {
   async info() { const p = P(); return p ? p.info() : null; },
 
   // ---------- aggiornamento dell'APK
-  async latest() {
+  async latest(fresh) {
+    // all'avvio il guscio ha appena letto version.json: si riusa
+    if (!fresh && window.__mxLatest && window.__mxLatest.version) return window.__mxLatest;
     const r = await fetch((window.__mxVersionUrl || VERSION_URL) + '?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
@@ -23,7 +25,7 @@ export const Android = {
   /** all'avvio (auto) o da Impostazioni (manual): se serve un APK più nuovo propone di installarlo */
   async check(manual) {
     if (!isAndroidApk()) return false;
-    let r; try { r = await this.latest(); } catch (e) { if (manual) Modal.toast(tr('Verifica non riuscita')); return false; }
+    let r; try { r = await this.latest(manual); } catch (e) { if (manual) Modal.toast(tr('Verifica non riuscita')); return false; }
     if (!r.apk) { if (manual) Modal.toast(tr('L\'app è aggiornata')); return false; }
     const p = P();
     if (!p) {

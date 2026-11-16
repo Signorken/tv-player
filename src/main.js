@@ -182,6 +182,9 @@ if (platform.isDesktop) {
     if (store.settings().userAgent && window.desktop.setUserAgent) window.desktop.setUserAgent(store.settings().userAgent);
   }
 }
+// memoria dell'app piena: avviso una volta
+let storageWarned = false;
+window.addEventListener('mx-storage-full', () => { if (storageWarned) return; storageWarned = true; Modal.toast(tr('Memoria dell\'app piena: alcune modifiche potrebbero non essere salvate.'), 8000); });
 // Android: APK più vecchio del necessario -> propone l'aggiornamento dall'app (qualche secondo dopo l'avvio)
 setTimeout(() => { import('./core/android.js').then(m => m.Android.check(false)).catch(() => {}); }, 7000);
 window.__app = { SettingsScreen: SettingsScreen, Mini: Mini, Sound: Sound, setImg: setImg, applyUi: applyUi, router: router, store: store, nav: nav, dispatch: dispatch, addFromText: addFromText, playUrl: playUrl };

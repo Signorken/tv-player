@@ -54,7 +54,6 @@ export function fmtSize(b) {
   return (i ? b.toFixed(b < 10 ? 1 : 0) : b) + ' ' + u[i];
 }
 export function tick() { return new Promise(r => setTimeout(r, 0)); }
-export function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 export function debounce(fn, ms) {
   let t = null;
   const d = function () { const a = arguments, self = this; clearTimeout(t); t = setTimeout(() => fn.apply(self, a), ms); };
@@ -94,4 +93,3 @@ export function extOf(u) {
   const m = /\.([a-z0-9]{2,5})(?:[?#]|$)/i.exec(String(u || '').split('?')[0] + (u && u.indexOf('?') > 0 ? '?' : ''));
   return m ? m[1].toLowerCase() : '';
 }
-export function objValues(o) { const r = []; for (const k in o) r.push(o[k]); return r; }

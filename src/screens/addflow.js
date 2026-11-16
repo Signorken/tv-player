@@ -3,7 +3,7 @@ import { uid } from '../core/util.js';
 import * as store from '../core/store.js';
 import { router } from '../core/router.js';
 import * as Modal from '../ui/modal.js';
-import { detect, hostName } from '../core/detect.js';
+import { detect } from '../core/detect.js';
 import { platform } from '../core/platform.js';
 import { createSource, TYPE_LABEL } from '../sources/index.js';
 import { showLoading, hideLoading } from '../core/session.js';

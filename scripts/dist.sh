@@ -10,6 +10,8 @@ for p in tizen webos vidaa web; do
   [ -d "packaging/$p" ] && cp -r packaging/$p/* "dist/$p/" 2>/dev/null || true
   # TV: guscio che si aggiorna da solo (vedi packaging/shell/loader.js)
   [ "$p" != web ] && node scripts/shell.js "dist/$p"
+  # TV: sfondi solo in 1080p (i 4K servono al computer)
+  [ "$p" != web ] && rm -f dist/$p/wallpapers/*-4k.jpg
 done
 # Samsung: carica le API della TV (AVPlay, lettore video hardware) prima dell'app
 sed -i 's#<head>#<head>\n<script src="$WEBAPIS/webapis/webapis.js"></script>#' dist/tizen/index.html
