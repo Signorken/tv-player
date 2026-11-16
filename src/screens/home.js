@@ -6,7 +6,8 @@ import { router } from '../core/router.js';
 import { icon } from '../ui/icons.js';
 import { hints, img, setImg } from '../ui/chrome.js';
 import * as Modal from '../ui/modal.js';
-import { openSource, sourceById, liveOpts, movieOpts, fileOpts } from '../core/session.js';
+import { openSource, sourceById, liveOpts, movieOpts, fileOpts, isReady } from '../core/session.js';
+import { createSource } from '../sources/index.js';
 import { exitApp, platform } from '../core/platform.js';
 import { LiveScreen } from './live.js';
 import { VodScreen } from './vod.js';
@@ -15,6 +16,7 @@ import { FavsScreen } from './favs.js';
 import { SettingsScreen, SourcesScreen } from './settings.js';
 import { addNetworkFolderFlow, addSourceFlow, addFromClipboard, pickPlaylistFile, discoverFlow, addFolderFlow } from './addflow.js';
 import { DetailScreen } from './detail.js';
+import { SearchScreen } from './search.js';
 import { PlayerScreen, Mini } from './player.js';
 import { MENU } from '../ui/shell.js';
 import { TYPE_LABEL } from '../sources/index.js';
@@ -122,6 +124,7 @@ export class HomeScreen {
     this.renderCont();
     this.renderNow();
     this.renderList();
+    this.loadProviderList();
     if (!store.get().sources.length) {
       this.empty.innerHTML = '';
       this.empty.appendChild(h('div', { class: 'e1', text: tr('Benvenuto! Inizia aggiungendo una sorgente.') }));
@@ -196,13 +199,35 @@ export class HomeScreen {
     this.nowBox.appendChild(main);
     this.nowBox.appendChild(h('div', { class: 'btn small nowx', 'data-f': 1, onclick: () => { Mini.close(); } }, icon('x'), h('span', { text: tr('Chiudi') })));
   }
+  // "La mia lista" = lista dell'app + categoria "La mia lista / My list" del provider (salvata dal suo portale), senza doppioni
   listItems() {
     const act = store.activeSource(); if (!act) return [];
     const l = store.get().mylist || {};
-    return Object.keys(l).map(k => l[k]).filter(x => x && x.src === act.id).sort((a, b) => (b.t || 0) - (a.t || 0)).slice(0, 20);
+    const mine = Object.keys(l).map(k => l[k]).filter(x => x && x.src === act.id).sort((a, b) => (b.t || 0) - (a.t || 0));
+    const prov = this._pl && this._pl.id === act.id ? this._pl.items : [];
+    const seen = {}, out = [];
+    mine.concat(prov).forEach(x => { const k = x.kind + '|' + x.id; if (!seen[k]) { seen[k] = 1; out.push(x); } });
+    return out.slice(0, 30);
   }
-  renderList() {
+  // legge (senza bloccare la Home) le categorie del provider che si chiamano "La mia lista", "My list", "Watchlist"…
+  loadProviderList() {
+    const act = store.activeSource(); if (!act) return;
+    if (this._pl && this._pl.id === act.id && Date.now() - this._pl.t < 10 * 60000) return;
+    // M3U: solo se la playlist è già stata letta (non la si scarica apposta all'avvio)
+    if (act.type !== 'xtream' && !isReady(act.id)) return;
+    const pl = this._pl = { id: act.id, t: Date.now(), items: [] };
+    const isList = c => /^\W*(la\s+)?mia\s+lista|^\W*(my\s*list|watch\s*list|lista\s+personale|preferiti\s+del\s+portale)/i.test(String(c.name || ''));
+    let src; try { src = createSource(act); } catch (e) { return; }
+    const grab = async (cats, items, kind) => {
+      const cs = (await cats().catch(() => [])).filter(isList);
+      for (let i = 0; i < cs.length; i++) (await items(cs[i].id).catch(() => [])).forEach(it => pl.items.push({ kind: kind, src: act.id, id: it.id, name: it.name, poster: it.poster, ext: it.ext, item: Object.assign({ _mode: kind }, it), prov: 1 }));
+    };
+    Promise.all([grab(() => src.vodCats(), id => src.vodItems(id), 'movie'), src.seriesCats ? grab(() => src.seriesCats(), id => src.seriesItems(id), 'series') : null])
+      .then(() => { if (pl === this._pl && pl.items.length && router.current === this) this.renderList(true); });
+  }
+  renderList(keepFocus) {
     const items = this.listItems();
+    const f = nav.getFocus(), fi = keepFocus && f && this.listRow.contains(f) ? Array.prototype.indexOf.call(this.listRow.children, f) : -1;
     this.listRow.innerHTML = '';
     this.listHd.style.display = this.listRow.style.display = items.length ? '' : 'none';
     this.listHd.lastChild.textContent = items.length ? (store.activeSource().name) : '';
@@ -214,6 +239,8 @@ export class HomeScreen {
       c._list = r; this.listRow.appendChild(c);
     });
     this.el.classList.toggle('haslist', items.length > 0);
+    this.el.classList.toggle('nocont', !store.contItems(1).length && !store.liveItems(1).length && !items.length);
+    if (fi >= 0 && this.listRow.children.length) nav.focus(this.listRow.children[Math.min(fi, this.listRow.children.length - 1)], true);
   }
   async openListItem(r) {
     const cfg = sourceById(r.src); if (!cfg) { Modal.toast(tr('La sorgente non esiste più')); return; }
@@ -221,7 +248,7 @@ export class HomeScreen {
     catch (e) { Modal.toast(tr('Errore: ') + e.message, 5000); }
   }
   async listMenu(r) {
-    const v = await Modal.menu(r.name, [{ label: tr('Apri'), value: 'open', icon: 'play' }, { label: tr('Togli dalla mia lista'), value: 'rm', icon: 'x' }]);
+    const v = await Modal.menu(r.name, [{ label: tr('Apri'), value: 'open', icon: 'play' }].concat(store.inList(store.favKey(r.src, r.kind, r.id)) ? [{ label: tr('Togli dalla mia lista'), value: 'rm', icon: 'x' }] : [{ label: tr('Dal portale del provider: si toglie da lì'), value: '', icon: 'info' }]));
     if (v === 'open') this.openListItem(r);
     else if (v === 'rm') { store.toggleList(store.favKey(r.src, r.kind, r.id), r); this.renderList(); nav.focus(this.firstFocus()); }
   }
@@ -252,6 +279,7 @@ export class HomeScreen {
   async openVod(mode, mix) { const cfg = await needMedia(); if (!cfg) return; try { const s = await openSource(cfg); router.push(new VodScreen(s, mode, { mix: mix })); } catch (e) { Modal.toast(tr('Errore: ') + e.message, 6000); } }
   playMeta(r) { return playMeta(r); }
   openFavs() { router.push(new FavsScreen()); }
+  openSearch() { router.push(new SearchScreen()); }
   openSettings() { router.push(new SettingsScreen()); }
   // focus iniziale: in Aspetto A non ci sono pulsanti, si parte dal contenuto
   firstFocus() {

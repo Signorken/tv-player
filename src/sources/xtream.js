@@ -65,9 +65,9 @@ export class XtreamSource {
       return { cats: cc.filter(c => c.count > 0), items: items };
     });
   }
-  async shortEpg(ch) {
+  async shortEpg(ch, limit) {
     try {
-      const r = await this.api('get_short_epg', { stream_id: ch.id, limit: 5 });
+      const r = await this.api('get_short_epg', { stream_id: ch.id, limit: limit || 5 });
       return arr(r.epg_listings).map(e => [
         (+e.start_timestamp) * 1000, (+e.stop_timestamp) * 1000, b64utf8(e.title || ''), b64utf8(e.description || '').slice(0, 400)
       ]);

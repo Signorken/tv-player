@@ -67,7 +67,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   await sleep(2500);
   const rows = await page.$$eval('.chrow', r => r.length);
   ok('live M3U: righe canale renderizzate (virtualizzate)', rows > 3 && rows < 40, 'righe DOM: ' + rows);
-  ok('live M3U: categorie presenti', (await page.$$eval('.crow', r => r.length)) >= 4);
+  ok('live M3U: categorie presenti (a scomparsa, l\'elenco canali si vede subito)', await page.evaluate(() => window.__app.router.current.catList.length >= 4 && !document.querySelector('.live').classList.contains('catsopen')));
   await shot('07-live-m3u');
   const pvt = await text('.pvt'); const pvs = await text('.pvs');
   ok('live M3U: lista leggera, senza guida programmi', /Generalisti/.test(pvs || ''), pvt + ' | ' + pvs);
@@ -208,7 +208,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   await key('Escape'); await sleep(400);
 
   // --- impostazioni / telefono
-  await page.evaluate(() => { window.__app.router.current.el.querySelectorAll('.tile')[4].click(); });
+  await page.evaluate(() => { window.__app.router.current.tSet.click(); });
   await sleep(500); await shot('21-impostazioni');
   const scs = (await page.$$eval('.scat', c => c.map(x => x.textContent))).join('|'); ok('impostazioni: macrocategorie a sinistra', scs === 'Sorgenti|Riproduzione|Aspetto|Rete e telefono|Guida e dati|Informazioni', scs);
   await page.evaluate(() => { window.__app.store.settings().uiScale = 150; window.__app.applyUi(); });

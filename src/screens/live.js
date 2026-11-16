@@ -23,7 +23,9 @@ export class LiveScreen {
     this.zone = 'chs'; this.query = ''; this.catId = '__all';
     this.hd = header(this.opts.sport ? tr('Sport in diretta') : tr('TV in diretta'), src.name, [
       { icon: 'search', label: tr('Cerca'), onclick: () => this.search() },
-      { icon: 'list', label: tr('Sorgente'), onclick: () => this.switchSource() }
+      { icon: 'clock', label: tr('Guida TV'), onclick: () => this.openGuide() },
+      { icon: 'list', label: tr('Categorie'), onclick: () => this.setZone('cats') },
+      { icon: 'cloud', label: tr('Sorgente'), onclick: () => this.switchSource() }
     ]);
     const rh = () => Math.round(remPx() * 3.1);
     this.cats = new VList({
@@ -56,9 +58,11 @@ export class LiveScreen {
     this.pvBox = h('div', { class: 'pbox' }, this.pvLogo, this.pv);
     this.pvT = h('div', { class: 'pvt' }); this.pvS = h('div', { class: 'pvs' });
     this.prev = h('div', { class: 'pane prev' }, this.pvBox, this.pvT, this.pvS, h('div', { class: 'pvn', text: tr('OK: guarda · la guida programmi compare a canale aperto') }));
+    // le categorie non occupano spazio: si aprono sopra l'elenco con Sinistra (o il pulsante Categorie)
+    this.catLine = h('div', { class: 'chcat', onclick: () => this.setZone('cats') }, h('span', { class: 'chk', text: '◀' }), h('span', { class: 'chn' }), h('span', { class: 'chc' }));
     this.panes = h('div', { class: 'panes' },
-      h('div', { class: 'pane cats' }, this.cats.el),
-      h('div', { class: 'pane chs' }, this.chs.el), this.prev);
+      h('div', { class: 'pane cats' }, h('div', { class: 'cath', text: tr('Categorie') }), this.cats.el),
+      h('div', { class: 'pane chs' }, this.catLine, h('div', { class: 'chbox' }, this.chs.el)), this.prev);
     this.status = h('div', { class: 'status' });
     this.el = h('div', { class: 'screen live' }, this.hd.el, this.panes, hints([['ok', tr('Guarda')], ['menu', tr('Preferito / opzioni')], ['back', tr('Indietro')]]), this.status);
     this.updPrev = debounce(() => this.renderPreview(), 180);
@@ -116,6 +120,7 @@ export class LiveScreen {
     else if (c.id === '__q') { const q = this.query.toLowerCase(); this.list = this.all.filter(ch => ch._k.indexOf(q) >= 0); c.count = this.list.length; }
     else this.list = this.byGroup[c.id] || [];
     this.chs.setItems(this.list, false);
+    this.catLine.children[1].textContent = c.name; this.catLine.children[2].textContent = this.list.length;
     this.onChannel(this.chs.current());
   }
 
@@ -130,7 +135,10 @@ export class LiveScreen {
 
   // ---- zone / focus
   setZone(z) {
+    const was = this.el.classList.contains('catsopen');
     this.zone = z;
+    this.el.classList.toggle('catsopen', z === 'cats');
+    if (z === 'cats' && !was) { this.cats.relayout(); this.cats.render(); }
     this.cats.setActive(z === 'cats'); this.chs.setActive(z === 'chs');
     if (z === 'bar') nav.focus(this.hd.buttons[0]);
     else if (nav.getFocus() && this.hd.el.contains(nav.getFocus())) { nav.getFocus().classList.remove('focused'); }
@@ -146,12 +154,14 @@ export class LiveScreen {
       if (k === 'left' || k === 'right') { nav.move(k); return true; }
       if (k === 'ok') { nav.activate(); return true; }
     } else {
+      if (k === 'guide') { this.openGuide(); return true; }
       if (k === 'red') { this.toggleFav(); return true; }
       if (k === 'green') { this.search(); return true; }
       if (k === 'yellow') { this.switchSource(); return true; }
       const vl = this.zone === 'cats' ? this.cats : this.chs;
       if (vl.handleKey(k)) return true;
     }
+    if (k === 'back' && this.zone === 'cats') { this.setZone('chs'); return true; }
     if (k === 'back') { if (this.query) { this.query = ''; this.catId = '__all'; this.rebuildCats(); return true; } }
     return false;
   }
@@ -187,6 +197,11 @@ export class LiveScreen {
     this.catId = this.query ? '__q' : '__all';
     this.rebuildCats();
     this.setZone('chs');
+  }
+
+  async openGuide() {
+    const { GuideScreen } = await import('./guide.js');
+    router.push(new GuideScreen(this.src, this.list && this.list.length ? this.list : this.all, this.chs.sel, ix => this.chs.select(ix, true)));
   }
 
   async switchSource() {
