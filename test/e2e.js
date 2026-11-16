@@ -153,7 +153,7 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   await goHome();
   await page.evaluate(() => window.__app.router.current.openSport());
   await wait(() => window.__app.router.current && window.__app.router.current.opts && window.__app.router.current.opts.sport && window.__app.router.current.loaded, 20000); await sleep(600);
-  ok('On Demand: scheda Sport con le categorie sportive di film e serie', await page.evaluate(() => { const c = window.__app.router.current; return c.catList.some(x => x._mode === 'movie') && /Sport/.test(document.querySelector('.tab.on').textContent); }));
+  ok('On Demand: filtro Sport con le categorie sportive di film e serie', await page.evaluate(() => { const c = window.__app.router.current; return c.mix === 'sport' && c.catList.some(x => x._mode === 'movie'); }));
   await goHome();
 
   // --- Film
@@ -223,7 +223,8 @@ function ok(name, cond, extra) { results.push([name, !!cond, extra || '']); cons
   ok('home: "Continua a guardare" popolato', (await page.$$eval('.ccard', c => c.length)) >= 1);
   ok('home: "Continua a guardare" non contiene canali live', (await page.$$eval('.ccard .cknd', c => c.filter(x => x.textContent === 'LIVE').length)) === 0 && await page.evaluate(() => window.__app.store.contItems().every(r => r.kind !== 'live')));
   const before = await page.evaluate(() => ({ rec: window.__app.store.get().recents.length, prog: Object.keys(window.__app.store.get().progress).length }));
-  await key('Escape'); await sleep(300); // chiude l'eventuale conferma di uscita
+  // Indietro dalla Home: prima chiude l'eventuale finestrella, poi chiede se uscire
+  if (await page.$('.modal')) { await key('Escape'); await sleep(300); }
   await page.keyboard.press('F3'); await sleep(500); // giallo = rimuovi riga
   const after = await page.evaluate(() => ({ rec: window.__app.store.get().recents.length, prog: Object.keys(window.__app.store.get().progress).length, cards: document.querySelectorAll('.screen.home .ccard:not(.lcard)').length }));
   ok('home: tasto giallo rimuove la riga ma non recenti né progressi', after.cards === 0 && after.rec === before.rec && after.prog === before.prog, JSON.stringify({ before, after }));

@@ -11,6 +11,8 @@ cp ../packaging/android/capacitor.config.json .
 rm -rf www && cp -r ../www www
 node ../scripts/shell.js www   # guscio auto-aggiornante
 npx cap add android
+# Indietro tenuto premuto riconosciuto lato nativo (vedi MainActivity.java)
+cp ../packaging/android/MainActivity.java android/app/src/main/java/com/maxenta/app/MainActivity.java
 # icona e banner MAXENTA (banner 320x180 per il launcher TV; icone launcher dal logo 512x512)
 mkdir -p android/app/src/main/res/drawable-xhdpi
 cp ../packaging/android/banner-1280x720.png android/app/src/main/res/drawable-xhdpi/banner.png

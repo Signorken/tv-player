@@ -44,7 +44,7 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   await key('ArrowLeft'); await key('ArrowDown', 2); await key('Enter');
   ok('barra: On Demand apre la griglia dei film', await wait(() => document.querySelectorAll('.cell').length > 2, 15000) && (await cur()) === 'ondemand');
   await sleep(800);
-  ok('On Demand dalla barra: film e serie insieme (scheda Tutto)', await page.evaluate(() => { const c = window.__app.router.current; return c.mix === 'all' && /Tutto/.test(document.querySelector('.tab.on').textContent) && c.catList.some(k => k.parts && k.parts.length === 2); }));
+  ok('On Demand dalla barra: film e serie insieme (filtro Tutto)', await page.evaluate(() => { const c = window.__app.router.current; return c.mix === 'all' && /● Tutto/.test(document.querySelector('.crow.on').textContent) && c.catList.some(k => k.parts && k.parts.length === 2); }));
   ok('Tutto: nella griglia ci sono sia film sia serie', await wait(() => { const c = window.__app.router.current; return c.items && c.items.some(i => i._mode === 'series') && c.items.some(i => i._mode === 'movie'); }, 8000) || await page.evaluate(() => { const c = window.__app.router.current; const k = c.catList.find(x => x.parts && x.parts.length === 2); c.cats.select(c.catList.indexOf(k)); return false; }));
   ok('barra: sezione corrente evidenziata', await page.evaluate(() => /On Demand/.test(document.querySelector('.ri.cur').textContent)));
   // dalla prima colonna (categorie) Sinistra entra nella barra
@@ -167,10 +167,18 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   await key('ArrowRight'); await key('ArrowLeft');
   const snd1 = await page.evaluate(() => window.__snd.move);
   ok('suoni: spostarsi tra gli elementi produce il suono di navigazione', snd1 >= 2, 'suoni=' + snd1);
-  await key('ArrowUp', 3); await sleep(200);
-  ok('On Demand: in alto le schede Tutto / Film / Serie TV / Sport', /Film/.test(await page.evaluate(() => document.querySelector('.focused').textContent)) && await page.evaluate(() => document.querySelectorAll('.hd .tab').length === 4));
-  await key('ArrowRight'); await key('Enter');
-  ok('scheda Serie TV: stessa schermata, elenco delle serie', await wait(() => window.__app.router.current.mode === 'series' && window.__app.router.current.loaded, 15000) && await page.evaluate(() => /Serie/.test(document.querySelector('.tab.on').textContent) && window.__app.router.depth === 2));
+  await page.evaluate(() => { const c = window.__app.router.current; c.setZone('cats'); c.cats.select(0); }); await sleep(200);
+  ok('On Demand: filtri Tutto / Film / Serie TV / Sport e Raccolte nella colonna, niente schede in alto', await page.evaluate(() => { const c = window.__app.router.current; return c.catList.slice(0, 4).map(x => x.name).join('|') === 'Tutto|Film|Serie TV|Sport' && c.catList[4].kind === 'group' && !document.querySelector('.hd .tab'); }));
+  await key('ArrowDown', 2); await key('Enter');
+  ok('filtro Serie TV: stessa schermata, elenco delle serie', await wait(() => window.__app.router.current.mode === 'series' && window.__app.router.current.items && window.__app.router.current.items.length > 0, 15000) && await page.evaluate(() => window.__app.router.depth === 2 && /● Serie TV/.test(document.querySelector('.crow.on').textContent)));
+  const coll0 = await page.evaluate(() => window.__app.router.current.collOpen);
+  await page.evaluate(() => { const c = window.__app.router.current; c.cats.select(4); }); await key('Enter'); await sleep(300);
+  ok('Raccolte si apre e si chiude con OK', await page.evaluate(o => { const c = window.__app.router.current; return c.collOpen === !o && c.catList.some(x => x.id === '__list') === !o; }, coll0));
+  await page.evaluate(() => { const c = window.__app.router.current; if (!c.collOpen) { c.cats.select(4); c.catOk(c.catList[4]); } }); await sleep(200);
+  await page.evaluate(() => { const c = window.__app.router.current; c.cats.select(c.catList.findIndex(x => !x.kind)); c.setZone('grid'); }); await sleep(800);
+  await page.evaluate(() => { const c = window.__app.router.current; const it = c.grid.current(); const k = window.__app.store.favKey(c.src.id, 'series', it.id); window.__app.store.toggleList(k, { kind: 'series', src: c.src.id, id: it.id, name: it.name, item: it }); window.__lname = it.name; });
+  await page.evaluate(() => { const c = window.__app.router.current; c.catOk(c.catList.find(x => x.id === '__list')); }); await sleep(600);
+  ok('La mia lista: separata dai preferiti, mostra ciò che hai aggiunto', await page.evaluate(() => { const c = window.__app.router.current; return c.catId === '__list' && c.items.length === 1 && c.items[0].name === window.__lname && !window.__app.store.isFav(window.__app.store.favKey(c.src.id, 'series', c.items[0].id)); }));
   await shot('09-ondemand-serie');
   await goHome();
   await page.evaluate(() => window.__app.router.current.openLive());
@@ -193,6 +201,52 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   ok('Home: riga canali recenti con "Rimuovi riga"', await page.evaluate(() => getComputedStyle(document.querySelector('.liverow')).display !== 'none'));
   await page.evaluate(() => window.__app.router.current.liveX.click()); await sleep(300);
   ok('Rimuovi riga nasconde i canali recenti', await page.evaluate(() => getComputedStyle(document.querySelector('.liverow')).display === 'none'));
+
+  // --- 2.4: finestrella chiudibile con qualsiasi telecomando, Rimuovi riga in fondo alla riga
+  const openMini = async () => {
+    await goHome(); await page.evaluate(() => window.__app.router.current.openLive());
+    await wait(() => window.__app.router.current.all, 15000); await sleep(300);
+    await key('Enter'); await wait(() => { const v = document.querySelector('video.pv'); return v && v.currentTime > 0.2; }, 15000);
+    await key('Escape'); await sleep(500);
+    await page.evaluate(() => window.__app.router.home()); await sleep(500);
+  };
+  await openMini();
+  ok('Home: tessera "In riproduzione" con Schermo intero e Chiudi', await page.evaluate(() => { const b = document.querySelector('.nowbox'); return b && b.style.display !== 'none' && b.querySelectorAll('.btn').length === 2; }));
+  await shot('10-home-in-riproduzione');
+  await key('Escape'); await sleep(500);
+  ok('Indietro dalla Home chiude la finestrella (senza chiedere di uscire)', !(await page.$('.screen.player')) && !(await page.$('.modal')));
+  await openMini();
+  await page.evaluate(() => window.dispatchEvent(new Event('maxenta-longback'))); await sleep(400);
+  ok('Android: Indietro tenuto premuto (segnalato dall\'APK) chiude la finestrella', !(await page.$('.screen.player')));
+  await openMini();
+  await page.evaluate(() => { const M = window.__app.Mini; M.focusFrom('down'); }); await sleep(200);
+  ok('finestrella selezionata: pulsanti Schermo intero / Chiudi', await page.evaluate(() => getComputedStyle(document.querySelector('.screen.player.mini .mbtns2')).display !== 'none'));
+  await shot('11-finestrella-selezionata');
+  await key('ArrowRight'); await key('Enter'); await sleep(400);
+  ok('Destra + OK sulla finestrella la chiude', !(await page.$('.screen.player')));
+  await openMini();
+  await key('ArrowLeft'); await sleep(200); await key('ArrowUp', 3); await sleep(150);
+  ok('barra: "In riproduzione" in cima', await page.evaluate(() => document.querySelector('.ri.focused') && document.querySelector('.ri.focused').classList.contains('now')));
+  await key('Enter'); await sleep(400);
+  ok('barra: "In riproduzione" apre il menu Schermo intero / Chiudi', /Chiudi la finestrella/.test(await page.evaluate(() => (document.querySelector('.modal') || {}).textContent || '')));
+  await key('ArrowDown'); await key('Enter'); await sleep(400);
+  ok('dal menu: Chiudi', !(await page.$('.screen.player')));
+  await goHome();
+  await page.evaluate(() => { const s = window.__app.store; s.get().liveClearedAt = 0; s.get().recents.forEach(r => { delete r.hid; }); s.addRecent(s.favKey('x1', 'live', '2'), { kind: 'live', src: 'x1', id: '2', name: 'Canale 2' }); window.__app.router.current.refresh(); });
+  await sleep(300);
+  await page.evaluate(() => window.__app.nav.focus(document.querySelector('.liverow .ccard')));
+  await key('ArrowRight', 10); await sleep(200);
+  ok('"Rimuovi riga" raggiungibile andando sempre a destra', await page.evaluate(() => { const f = document.querySelector('.focused'); return f && f.classList.contains('xcard'); }));
+  await key('Enter'); await sleep(300);
+  ok('...e con OK toglie la riga', await page.evaluate(() => getComputedStyle(document.querySelector('.liverow')).display === 'none'));
+
+  // --- 2.4 prestazioni
+  ok('profilo prestazioni: voce in Aspetto e indicatore attivabile', await page.evaluate(() => { const s = window.__app.store.settings(); s.perfHud = true; s.perf = 'lite'; window.__app.applyUi(); const ok1 = !!document.getElementById('hud') && document.body.classList.contains('lite'); s.perfHud = false; s.perf = 'full'; window.__app.applyUi(); return ok1 && !document.getElementById('hud') && !document.body.classList.contains('lite'); }));
+  await sleep(1300);
+  ok('locandine TMDB ridotte alla misura che serve', await page.evaluate(() => { const i = document.createElement('img'); i.className = 'cposter'; window.__app.setImg(i, 'https://image.tmdb.org/t/p/original/abc.jpg'); const a = i.getAttribute('src'); const j = document.createElement('img'); window.__app.setImg(j, 'https://image.tmdb.org/t/p/w600_and_h900_bestv2/x.jpg'); return a === 'https://image.tmdb.org/t/p/w342/abc.jpg' && j.getAttribute('src') === 'https://image.tmdb.org/t/p/w342/x.jpg'; }));
+  await goHome(); await page.evaluate(() => window.__app.router.current.openLive()); await wait(() => window.__app.router.current.all, 15000); await sleep(300);
+  const reuse = await page.evaluate(() => { const c = window.__app.router.current; const rows = [].slice.call(c.chs.el.querySelectorAll('.vl-row')); c.chs.select(c.chs.sel + 15); const before = rows.map(r => r._ch); c.chs.select(c.chs.sel + 1); return rows.filter((r, k) => r._ch && r._ch === before[k]).length; });
+  ok('lista: scorrendo le righe già visibili non vengono ricaricate', reuse >= 5, 'righe riusate: ' + reuse);
 
   // --- 2.3: pannelli del player interi, barra con nome e versione, dimensione proporzionata
   ok('barra: nome e versione accanto al logo', await page.evaluate(() => /MAXENTA/.test(document.querySelector('.rname').textContent) && /^v\d/.test(document.querySelector('.rver').textContent)));

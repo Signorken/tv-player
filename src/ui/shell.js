@@ -65,7 +65,7 @@ export const Rail = {
       return true;
     }
     if (k === 'right' || k === 'back') { this.exit(); return true; }
-    if (k === 'ok') { const id = items[sel]._id; this.exit(); if (id === 'now') { if (this.expandMini) this.expandMini(); } else goSection(id); return true; }
+    if (k === 'ok') { const id = items[sel]._id; this.exit(); if (id === 'now') { if (this.miniMenu) this.miniMenu(); } else goSection(id); return true; }
     return true;
   },
   // evidenzia la sezione in cui ci si trova

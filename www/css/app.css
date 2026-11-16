@@ -330,7 +330,7 @@ body.desktop .kbd-desk .kb-input{font-size:1.2rem}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes popIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
 body:not(.lowpower) .modal-back{animation:fadeIn .15s ease-out}
-.lowpower *{animation:none!important}
+.lowpower *:not(.spinner){animation:none!important}
 /* Continua a guardare: locandine verticali (2:3) con immagine adattata in automatico */
 .ccard{width:8.7%;margin-right:1%}
 .cthumb{padding-top:150%}
@@ -347,7 +347,7 @@ body.playing #gclock,body.playing #ver,body.layA.playing #rail{display:none!impo
 body.layA #rail{display:flex}
 body.layA .screen:not(.player){padding-left:8rem}
 body.layA .home .brand{display:none}
-#rail.open{width:17rem;box-shadow:1rem 0 2.4rem rgba(0,0,0,.55)}
+#rail.open{width:17rem;box-shadow:.35rem 0 0 rgba(0,0,0,.35)}
 .ri{display:flex;align-items:center;height:3.3rem;padding:0 1.12rem;border-radius:.8rem;margin-bottom:.35rem;color:#cdb8d6;white-space:nowrap;cursor:pointer;flex:none;position:relative}
 .ri .ic{width:1.75rem;height:1.75rem;flex:none;color:#ff7fd0}
 .ri span{margin-left:1rem;font-size:1.15rem;opacity:0}
@@ -408,18 +408,7 @@ body.desktop.mouse .tile:hover{max-width:22rem}
 @keyframes scrIn2{from{opacity:0;transform:translateX(1.4rem)}to{opacity:1;transform:none}}
 @keyframes slideUp{from{opacity:0;transform:translate(-50%,1rem)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(.8rem)}to{opacity:1;transform:none}}
-body:not(.lowpower) .screen:not(.player){animation:scrIn2 .28s cubic-bezier(.2,.8,.2,1)}
 body:not(.lowpower) .modal{animation:popIn .22s cubic-bezier(.2,.8,.2,1)}
-body:not(.lowpower) .hero,body:not(.lowpower) .hmain .contbox{animation:fadeUp .4s cubic-bezier(.2,.8,.2,1) both}
-body:not(.lowpower) .hmain .liverow{animation-delay:.08s}
-body:not(.lowpower) .btn,body:not(.lowpower) .srow,body:not(.lowpower) .scat,body:not(.lowpower) .row,body:not(.lowpower) .ri,body:not(.lowpower) .chip,body:not(.lowpower) .key{transition:background-color .16s ease,color .16s ease,border-color .16s ease,box-shadow .16s ease}
-body:not(.lowpower) .ccard,body:not(.lowpower) .cell .cin{transition:transform .2s cubic-bezier(.2,.8,.2,1),background-color .16s}
-body:not(.lowpower) .ccard.focused{transform:scale(1.06)}
-body:not(.lowpower) .cell.focused .cin{transform:scale(1.04)}
-body:not(.lowpower) .tile{transition:max-width .26s cubic-bezier(.2,.8,.2,1),background-color .16s,border-color .16s}
-body:not(.lowpower) .tile .t1{transition:opacity .2s ease .06s}
-body:not(.lowpower) #rail{transition:width .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s}
-body:not(.lowpower) .ri span{transition:opacity .18s ease .05s}
 .pdrawer.left{transform:translateX(-2rem)}.pdrawer.right{transform:translateX(2rem)}
 body:not(.lowpower) .pdrawer{transition:opacity .2s ease,transform .24s cubic-bezier(.2,.8,.2,1)}
 body:not(.lowpower) .pinfo.show,body:not(.lowpower) .pclock.show{animation:fadeIn .25s ease-out}
@@ -436,10 +425,35 @@ body:not(.lowpower) .screen.player.mini{animation:popIn .25s cubic-bezier(.2,.8,
 .rver{font-size:.8rem;color:#b3a2b8;margin-top:.1rem}
 .rlist{margin:auto 0;display:flex;flex-direction:column}
 body.layA #ver{display:none}
-body:not(.lowpower) .rtx{transition:opacity .18s ease .05s}
 /* pannelli del player: aperti restano dentro lo schermo */
 .pdrawer.left.show,.pdrawer.right.show{transform:none}
 /* pulsanti affiancati sempre distanziati */
 .hbr>.btn+.btn,.hd-r>.btn+.btn{margin-left:.8rem}
 .btn+.btn{margin-left:.8rem}
 .ebtns .btn+.btn,.dbtns .btn+.btn,.facts .btn+.btn,.pbtns .btn+.btn{margin-left:0}
+
+/* 2.4: Rimuovi riga come ultima tessera; tessera "In riproduzione"; pulsanti della finestrella */
+.xcard .cthumb{background:#1d0c28;border:.15rem dashed #4a2f62;border-radius:.6rem}
+.xin{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#cdb8d6;font-size:.95rem;text-align:center}
+.xin .ic{width:2rem;height:2rem;margin-bottom:.5rem;color:#ff7fd0}
+.xcard.focused .cthumb{background:#c2268f;border-color:#fff}.xcard.focused .xin,.xcard.focused .xin .ic{color:#fff}
+.nowbox{display:flex;align-items:center;background:#1d0c28;border-radius:1rem;padding:1rem 1.4rem;margin:.8rem 0 .4rem;border-left:.3rem solid #ff4fb8}
+.nowt{flex:1;min-width:0;margin-right:1rem}.nown{font-size:1.4rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mbtns2{display:none;margin-top:.5rem}
+.screen.player.mini.mfocus .mbtns2{display:flex}.screen.player.mini.mfocus .mini-h{display:none}
+.mbtn{display:flex;align-items:center;padding:.35rem .8rem;border-radius:.5rem;background:rgba(255,255,255,.12);font-size:.85rem;margin-right:.5rem}
+.mbtn .ic{width:1.1rem;height:1.1rem;margin-right:.4rem}
+.mbtn.focused{background:#c2268f}
+
+/* On Demand: filtri e Raccolte nella colonna */
+.crow.k-filter .rt{font-weight:600}.crow.k-filter.on .rt{color:#ff7fd0}.crow.k-filter.focused .rt{color:#fff}
+.crow.k-group{border-top:1px solid #3a2150}.crow.k-group .rt{font-weight:700;letter-spacing:.03em}
+.crow.k-coll .rt{color:#d9c7e0}
+body:not(.desktop) .mini-x{display:none}
+
+/* ===== 2.4: animazioni "economiche" per GPU deboli (Mali-G31 della Thomson 140) =====
+   Si animano solo opacità e spostamenti di blocchi interi (composizione, nessun ridisegno a ogni fotogramma).
+   Niente transizioni di colore, ingrandimenti delle locandine o allargamenti animati. Profilo "leggero": nessuna animazione. */
+body:not(.lowpower) .screen:not(.player){animation:fadeIn .18s ease-out}
+body:not(.lowpower) .hmain{animation:fadeIn .25s ease-out}
+#hud{position:absolute;left:.6rem;top:.4rem;z-index:200;background:rgba(0,0,0,.75);color:#9effa8;font:600 .8rem/1.4 monospace;padding:.25rem .6rem;border-radius:.4rem;pointer-events:none}

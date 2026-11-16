@@ -13,7 +13,8 @@ const DEFAULTS = {
     startScreen: 'home',     // schermata all'avvio: home | live | movie | series | sport | favs | last
     miniPlayer: 'always',    // Indietro dal player = finestrella: always | live | vod | never
     sounds: true,            // suoni di navigazione
-    lowPower: false,         // niente animazioni/ombre
+    perf: 'auto',            // prestazioni: auto | full | lite (lite = niente animazioni, sfondo semplice, niente anteprime)
+    perfHud: false,          // indicatore prestazioni
     liveFormat: 'm3u8',      // m3u8 | ts  (per Xtream)
     uiScale: 100,
     bufferSec: 20,
@@ -25,6 +26,7 @@ const DEFAULTS = {
     userAgent: ''            // solo desktop: User-Agent da presentare ai server IPTV
   },
   favorites: {},  // key -> {name, logo, kind, src, id}
+  mylist: {},     // "La mia lista": film e serie da guardare (separata dai preferiti)
   recents: [],    // [{key, ...}]
   watched: {},    // key -> timestamp (film/episodi visti fino alla fine)
   contClearedAt: 0, // la riga "Continua a guardare" mostra solo ciò che è stato guardato dopo questo istante
@@ -53,6 +55,8 @@ export function load() {
   const st = data.settings;
   if (st.miniPlayer === true) st.miniPlayer = 'always'; else if (st.miniPlayer === false) st.miniPlayer = 'never';
   if (!st.mig21) { st.mig21 = 1; st.lowPower = false; }
+  // 2.4: "Risparmio risorse" diventa il profilo prestazioni (chi l'aveva attivato resta in modalità leggera)
+  if (!st.mig24) { st.mig24 = 1; st.perf = st.lowPower ? 'lite' : 'auto'; }
   window.addEventListener('pagehide', flush);
   document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
   return data;
@@ -106,6 +110,13 @@ export function setActive(id) { get().activeSource = id; save(); }
 // ---- preferiti / recenti / avanzamento
 export function favKey(srcId, kind, id) { return srcId + '|' + kind + '|' + id; }
 export function isFav(key) { return !!get().favorites[key]; }
+export function inList(key) { return !!(get().mylist || {})[key]; }
+export function toggleList(key, info) {
+  const d = get(); if (!d.mylist) d.mylist = {};
+  if (d.mylist[key]) delete d.mylist[key]; else { info.t = Date.now(); d.mylist[key] = info; }
+  save();
+  return !!d.mylist[key];
+}
 export function toggleFav(key, info) {
   const f = get().favorites;
   if (f[key]) delete f[key]; else { info.t = Date.now(); f[key] = info; }

@@ -32,7 +32,11 @@ function isTyping(t) {
 }
 
 // handler(action, event). OK viene emesso al rilascio; tenendolo premuto >600ms emette 'menu'.
+const REP = { up: 1, down: 1, left: 1, right: 1, chup: 1, chdown: 1, pgup: 1, pgdown: 1 };
+let repBusy = false;
 export function installKeys(handler) {
+  // Android: l'APK segnala Indietro tenuto premuto con un evento (la pagina non vede la durata del tasto)
+  window.addEventListener('maxenta-longback', () => handler({ a: 'longback' }));
   let okDown = false, okLong = false, okT = null, bkDown = false, bkLong = false, bkT = null;
   window.addEventListener('keydown', function (e) {
     if (isTyping(e.target)) {
@@ -62,6 +66,9 @@ export function installKeys(handler) {
       return;
     }
     if (act.a === 'back' && e.keyCode === 8) { handler({ a: 'backspace' }, e); return; }
+    // tasto tenuto premuto: al massimo un passo per fotogramma (le ripetizioni in eccesso si scartano,
+    // così sui dispositivi lenti la lista non accumula ritardo e si ferma quando lasci il tasto)
+    if (e.repeat && REP[act.a]) { if (repBusy) return; repBusy = true; requestAnimationFrame(() => { repBusy = false; }); }
     handler(act, e);
   }, true);
   window.addEventListener('keyup', function (e) {

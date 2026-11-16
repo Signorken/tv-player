@@ -92,25 +92,33 @@ export class VList {
     const cols = this.cols, n = this.items.length;
     const totalRows = Math.ceil(n / cols);
     const selRow = Math.floor(this.sel / cols);
-    // scroll "centrato"
-    let top = selRow - Math.floor((this.visRows - 1) / 2);
+    // scorrimento "ai bordi": la lista si sposta solo quando la selezione arriva vicino al bordo
+    // (la maggior parte dei tasti cambia solo l'evidenziazione di due righe: pochissimo da ridisegnare)
+    const m = this.visRows >= 6 ? 2 : this.visRows >= 3 ? 1 : 0;
+    let top = this.top || 0;
+    if (selRow < top + m) top = selRow - m;
+    if (selRow > top + this.visRows - 1 - m) top = selRow - (this.visRows - 1 - m);
     top = Math.max(0, Math.min(top, Math.max(0, totalRows - this.visRows)));
     this.top = top;
     const cw = this.W / cols;
-    for (let k = 0; k < this.pool.length; k++) {
-      const node = this.pool[k];
-      const row = top + Math.floor(k / cols), col = k % cols;
-      const idx = row * cols + col;
-      if (idx >= n || row >= totalRows) { if (!node._hid) { node._hid = true; node.style.display = 'none'; } continue; }
-      if (node._hid !== false) { node._hid = false; node.style.display = ''; }
-      const tx = 'translate(' + (col * cw) + 'px,' + ((row - top) * this.rowH) + 'px)';
-      if (node._tx !== tx) { node._tx = tx; node.style.transform = tx; }
-      this.o.fill(node, this.items[idx], idx);
-      const on = this.active && idx === this.sel;
-      if (node._on !== on) { node._on = on; node.classList.toggle('focused', on); }
-      const isSel = idx === this.sel;
-      if (node._sel !== isSel) { node._sel = isSel; node.classList.toggle('sel', isSel); }
-      node._idx = idx;
+    // ogni riga assoluta usa sempre lo stesso nodo finché resta visibile: scorrendo si riempie solo la riga nuova
+    const poolRows = Math.max(1, Math.floor(this.pool.length / cols));
+    for (let r = 0; r < poolRows; r++) {
+      const row = top + r;
+      for (let col = 0; col < cols; col++) {
+        const node = this.pool[(row % poolRows) * cols + col];
+        const idx = row * cols + col;
+        if (idx >= n || row >= totalRows) { if (!node._hid) { node._hid = true; node.style.display = 'none'; } node._idx = null; continue; }
+        if (node._hid !== false) { node._hid = false; node.style.display = ''; }
+        const tx = 'translate(' + (col * cw) + 'px,' + ((row - top) * this.rowH) + 'px)';
+        if (node._tx !== tx) { node._tx = tx; node.style.transform = tx; }
+        this.o.fill(node, this.items[idx], idx);
+        const on = this.active && idx === this.sel;
+        if (node._on !== on) { node._on = on; node.classList.toggle('focused', on); }
+        const isSel = idx === this.sel;
+        if (node._sel !== isSel) { node._sel = isSel; node.classList.toggle('sel', isSel); }
+        node._idx = idx;
+      }
     }
   }
 
