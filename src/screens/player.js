@@ -115,7 +115,7 @@ export class PlayerScreen {
       this._onFail(why);
     };
   }
-  _onFail(why) { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); this.say(this.live ? tr('Canale non raggiungibile') : tr('Impossibile riprodurre il file'), (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live). Se la playlist è in uso su un altro dispositivo, il provider potrebbe consentire una sola connessione' : tr('Dettagli: ') + (why || 'sconosciuto'))); this.showInfo(); }
+  _onFail(why) { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); this.say(this.live ? tr('Canale non raggiungibile') : tr('Impossibile riprodurre il file'), (this.live ? tr('Prova un altro canale o un altro formato (Impostazioni > Formato live). Se la playlist è in uso su un altro dispositivo, il provider potrebbe consentire una sola connessione') : tr('Dettagli: ') + (why || tr('sconosciuto')))); this.showInfo(); }
   _bindVideo(v) {
     // sottotitoli disegnati dall'app (AVPlay li passa come testo)
     v.addEventListener('subtitle', e => { this.sub.textContent = e.detail || ''; });
@@ -209,6 +209,7 @@ export class PlayerScreen {
   _nsync() { const v = this.video; if (v.isNative) requestAnimationFrame(() => v.sync(true)); }
   onHide() { }
   destroy() {
+    this._hideNext();
     clearInterval(this.clockT); clearTimeout(this.hideT); clearTimeout(this.loadT); clearTimeout(this.seekT); clearTimeout(this.numT); clearTimeout(this.spinT);
     if (this.dup) { this.engine.destroy(); return; }
     this._saveProgress(true);
@@ -226,7 +227,7 @@ export class PlayerScreen {
     this.i = ni;
     const item = list[this.i];
     const r = this.cur = this.o.resolve(item);
-    this.finished = false; this.fetching = false;
+    this.finished = false; this.fetching = false; this.nextOff = false; this._hideNext();
     if (this.o.onIndex) this.o.onIndex(this.i, item);
     this.msg.classList.remove('show');
     this.spin.classList.add('show');
@@ -261,8 +262,42 @@ export class PlayerScreen {
   _ended() {
     if (this.live) return;
     this._clearProgress();
-    if (this.o.list.length > 1 && this.i < this.o.list.length - 1) this.play(this.i + 1);
+    const go = this._hasNext() ? (this._isEpisode() ? store.settings().autoNext !== false && !this.nextOff : true) : false;
+    this._hideNext();
+    if (go) this.play(this.i + 1);
     else this._exit();
+  }
+
+  // ---- episodio successivo automatico: negli ultimi secondi compare il riquadro con il conto alla rovescia
+  _isEpisode() { return !!(this.cur && this.cur.meta && this.cur.meta.kind === 'episode'); }
+  _hasNext() { return this.o.list.length > 1 && this.i < this.o.list.length - 1; }
+  _checkNext() {
+    if (this.nextBox || this.nextOff || !this._isEpisode() || !this._hasNext() || store.settings().autoNext === false) return;
+    const d = this._d(), t = this._t();
+    if (d > 120 && d - t <= 15 && d - t > 0.5) this._showNext();
+  }
+  _showNext() {
+    const nx = this.o.resolve(this.o.list[this.i + 1]);
+    const cnt = h('span', { class: 'nxc' });
+    const B = (txt, fn) => h('div', { class: 'btn small', onclick: e => { e.stopPropagation(); fn(); } }, h('span', { text: txt }));
+    this.nextBtns = [B(tr('Guarda ora'), () => { this._hideNext(); this._clearProgress(); this.play(this.i + 1); }),
+      B(tr('Annulla'), () => this._cancelNext()),
+      B(tr('Disattiva'), () => { store.settings().autoNext = false; store.save(); this._cancelNext(); Modal.toast(tr('Episodio successivo automatico disattivato. Lo riattivi in Impostazioni › Riproduzione'), 4000); })];
+    this.nextSel = 0;
+    this.nextBox = h('div', { class: 'pnext' }, h('div', { class: 'nxt' }, h('span', { text: tr('Prossimo episodio') }), cnt), h('div', { class: 'nxn', text: nx.sub || nx.title || '' }), h('div', { class: 'nxb' }, this.nextBtns));
+    this.el.appendChild(this.nextBox);
+    const tick = () => { const left = Math.max(0, Math.ceil(this._d() - this._t())); cnt.textContent = tr(' tra ') + left + ' s'; };
+    tick(); this.nextT = setInterval(tick, 500);
+    this._nextFocus();
+  }
+  _nextFocus() { this.nextBtns.forEach((b, i) => b.classList.toggle('focused', i === this.nextSel)); }
+  _hideNext() { clearInterval(this.nextT); if (this.nextBox && this.nextBox.parentNode) this.nextBox.parentNode.removeChild(this.nextBox); this.nextBox = null; }
+  _cancelNext() { this.nextOff = true; this._hideNext(); }
+  _nextKey(k) {
+    if (k === 'left' || k === 'right') { this.nextSel = Math.max(0, Math.min(this.nextBtns.length - 1, this.nextSel + (k === 'right' ? 1 : -1))); this._nextFocus(); return true; }
+    if (k === 'ok') { this.nextBtns[this.nextSel].click(); return true; }
+    if (k === 'back' || k === 'backspace' || k === 'stop') { this._cancelNext(); return true; }
+    return false;
   }
 
   _t() { return this.engine.time() || 0; }
@@ -272,6 +307,7 @@ export class PlayerScreen {
     if (this.shown) this._tickBar();
     const now = Date.now();
     if (now - this.lastSave > 10000) { this.lastSave = now; this._saveProgress(); }
+    this._checkNext();
   }
   _saveProgress(force) {
     const t = this._t(), d = this._d();
@@ -354,6 +390,7 @@ export class PlayerScreen {
     }
     if (k === 'longback') { this._exit(); return true; }
     if (this.drawer) return this.drawer.onKey(a);
+    if (this.nextBox && this._nextKey(k)) return true;
     if (k === 'num' && this.live) { this._digit(a.d); return true; }
     if (k === 'prev' && this.live) { this._prevChannel(); return true; }
     if (k === 'chup' || (this.live && k === 'up')) { this._step(1); return true; }
@@ -476,6 +513,7 @@ export class PlayerScreen {
     items.push({ label: tr('Formato immagine'), value: this.video.style.objectFit === 'cover' ? tr('Riempi') : tr('Adatta'), go: () => { this.video.style.objectFit = this.video.style.objectFit === 'cover' ? 'contain' : 'cover'; this.optionsDrawer(); } });
     if (this.live && this.prevI !== undefined) items.push({ label: tr('Canale precedente'), go: () => { this.closeDrawer(); this._prevChannel(); } });
     if (this.cur && this.cur.alt) items.push({ label: tr('Prova il flusso alternativo'), value: 'TS/HLS', go: () => { this.closeDrawer(); this.engine.load(this.cur.alt, { live: this.live }); } });
+    if (this._isEpisode()) items.push({ label: tr('Episodio successivo automatico'), value: store.settings().autoNext !== false ? tr('Sì') : tr('No'), go: () => { store.settings().autoNext = store.settings().autoNext === false; store.save(); this.nextOff = false; this.optionsDrawer(); } });
     if (!this.live) items.push({ label: tr('Riparti dall\'inizio'), go: () => { this.closeDrawer(); if (this.cur.key) store.clearProgress(this.cur.key); this.engine.seekTo(0); } });
     if (!this.live && this.engine.ffAvailable()) items.push({ label: this.engine.ff ? tr('Usa il lettore nativo') : tr('Non va? Usa il convertitore video'), go: () => { this.closeDrawer(); this.engine.load(this.cur.url, { live: false, ff: !this.engine.ff, startAt: this._t() }); } });
     items.push({ label: tr('Riduci a finestrella'), value: tr('continua a guardare'), go: () => this.minimize() });

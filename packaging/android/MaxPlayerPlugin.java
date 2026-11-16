@@ -1,6 +1,10 @@
 package com.maxenta.app;
 
+import android.app.Activity;
 import android.graphics.Color;
+import android.os.Build;
+import android.view.Display;
+import android.view.WindowManager;
 import android.view.Gravity;
 import android.view.SurfaceView;
 import android.view.View;
@@ -47,6 +51,9 @@ public class MaxPlayerPlugin extends Plugin {
     private AspectRatioFrameLayout ratio;
     private SubtitleView subs;
     private String lastError = null;
+    private boolean matchRate = true;   // adatta la frequenza dello schermo al video (25/50 fps -> 50 Hz)
+    private int origMode = 0;           // modo dello schermo prima del cambio, da ripristinare
+    private float lastFps = 0;
 
     private void ui(Runnable r) { getActivity().runOnUiThread(r); }
 
@@ -81,13 +88,54 @@ public class MaxPlayerPlugin extends Plugin {
                 if (vs.height > 0) ratio.setAspectRatio(vs.width * vs.pixelWidthHeightRatio / vs.height);
             }
             @Override public void onCues(CueGroup cg) { subs.setCues(cg.cues); }
+            @Override public void onTracksChanged(Tracks tracks) {
+                for (Tracks.Group g : tracks.getGroups()) {
+                    if (g.getType() != C.TRACK_TYPE_VIDEO) continue;
+                    for (int i = 0; i < g.length; i++) if (g.isTrackSelected(i)) { applyRate(g.getTrackFormat(i).frameRate); return; }
+                }
+            }
         });
+    }
+
+    /** Sceglie, tra i modi dello schermo con la stessa risoluzione, quello la cui frequenza è un multiplo esatto dei fotogrammi del video. */
+    private void applyRate(float fps) {
+        if (!matchRate || fps <= 0 || Build.VERSION.SDK_INT < 23) return;
+        if (Math.abs(fps - lastFps) < 0.01f) return;
+        lastFps = fps;
+        try {
+            Activity a = getActivity();
+            Display d = a.getWindowManager().getDefaultDisplay();
+            Display.Mode cur = d.getMode(), best = null;
+            for (Display.Mode m : d.getSupportedModes()) {
+                if (m.getPhysicalWidth() != cur.getPhysicalWidth() || m.getPhysicalHeight() != cur.getPhysicalHeight()) continue;
+                float hz = m.getRefreshRate(), k = hz / fps;
+                if (hz < 47f || Math.abs(k - Math.round(k)) > 0.01f) continue;
+                if (best == null || hz < best.getRefreshRate()) best = m; // 25 fps -> 50 Hz (non 100), 24 -> 48 o 72, 30 -> 60
+            }
+            if (best == null) return;
+            if (best.getModeId() == cur.getModeId()) return;
+            if (origMode == 0) origMode = cur.getModeId();
+            WindowManager.LayoutParams lp = a.getWindow().getAttributes();
+            lp.preferredDisplayModeId = best.getModeId();
+            a.getWindow().setAttributes(lp);
+        } catch (Exception e) { }
+    }
+    private void restoreRate() {
+        lastFps = 0;
+        if (origMode == 0 || Build.VERSION.SDK_INT < 23) return;
+        try {
+            WindowManager.LayoutParams lp = getActivity().getWindow().getAttributes();
+            lp.preferredDisplayModeId = 0; // torna alla scelta del sistema
+            getActivity().getWindow().setAttributes(lp);
+        } catch (Exception e) { }
+        origMode = 0;
     }
 
     @PluginMethod
     public void load(PluginCall call) {
         final String url = call.getString("url");
         final String ua = call.getString("ua");
+        matchRate = call.getBoolean("matchRate", true);
         ui(() -> {
             try {
                 ensure(ua);
@@ -118,6 +166,7 @@ public class MaxPlayerPlugin extends Plugin {
         ui(() -> {
             if (player != null) { player.stop(); player.clearMediaItems(); subs.setCues(java.util.Collections.emptyList()); }
             if (box != null) box.setVisibility(View.GONE);
+            restoreRate();
             call.resolve();
         });
     }
@@ -223,6 +272,7 @@ public class MaxPlayerPlugin extends Plugin {
     }
 
     // app in secondo piano: pausa; chiusa: libera il decoder
-    @Override protected void handleOnPause() { if (player != null) player.pause(); }
-    @Override protected void handleOnDestroy() { if (player != null) { player.release(); player = null; } }
+    @Override protected void handleOnPause() { if (player != null) player.pause(); restoreRate(); }
+    @Override protected void handleOnResume() { if (player != null && player.getVideoFormat() != null) applyRate(player.getVideoFormat().frameRate); }
+    @Override protected void handleOnDestroy() { restoreRate(); if (player != null) { player.release(); player = null; } }
 }

@@ -29,6 +29,7 @@ export async function openSource(cfg, force) {
   } finally { hideLoading(); }
 }
 export function invalidate(id) { delete ready[id]; }
+export function isReady(id) { return !!ready[id]; }
 
 export function sourceById(id) { return store.get().sources.find(s => s.id === id) || null; }
 

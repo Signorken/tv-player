@@ -40,7 +40,12 @@ function xtream(q) {
   if (a === 'get_live_categories') return cats;
   if (a === 'get_live_streams') { const o = []; for (let i = 1; i <= 3000; i++) o.push({ num: i, name: 'Canale ' + i + (i % 7 === 0 ? ' Sport' : ''), stream_id: i, stream_icon: HOST + '/img/l' + (i % 3 + 1) + '.png', epg_channel_id: i === 1 ? 'rai1' : '', category_id: String(i % 3 + 1) }); return o; }
   if (a === 'get_short_epg') { const now = Math.floor(Date.now() / 1000); return { epg_listings: [0, 1, 2].map(i => ({ title: Buffer.from('Programma ' + (i + 1) + ' su canale ' + q.get('stream_id')).toString('base64'), description: Buffer.from('Trama del programma ' + (i + 1)).toString('base64'), start_timestamp: String(now - 600 + i * 1800), stop_timestamp: String(now + 1200 + i * 1800) })) }; }
-  if (a === 'get_vod_categories') return cats.slice(0, 2);
+  // utente "ml": il provider ha anche la categoria "La mia lista" (salvata dal suo portale)
+  const ml = q.get('username') === 'ml';
+  if (a === 'get_vod_categories') return cats.slice(0, 2).concat(ml ? [{ category_id: '9', category_name: 'La Mia Lista' }] : []);
+  if (a === 'get_vod_streams' && q.get('category_id') === '9') return [5, 7].map(i => ({ stream_id: 800 + i, name: 'Film numero ' + i, stream_icon: HOST + '/img/p' + (i % 4 + 1) + '.jpg', rating_5based: 3.5, container_extension: 'mp4', category_id: '9' }));
+  if (a === 'get_series_categories' && ml) return cats.slice(0, 1).concat([{ category_id: '9', category_name: '★ My List' }]);
+  if (a === 'get_series' && q.get('category_id') === '9') return [{ series_id: 77, name: 'La serie di prova', cover: HOST + '/img/p3.jpg', category_id: '9' }];
   if (a === 'get_vod_streams') { const o = []; for (let i = 1; i <= 60; i++) o.push({ stream_id: 800 + i, name: 'Film numero ' + i, stream_icon: HOST + '/img/p' + (i % 4 + 1) + '.jpg', rating_5based: 3.5, container_extension: 'mp4', year: '20' + (10 + i % 14), category_id: String(i % 2 + 1) }); return q.get('category_id') ? o.filter(x => x.category_id === q.get('category_id')) : o; }
   if (a === 'get_vod_info') return { info: { plot: 'Un film di prova con una trama molto avvincente: un eroe, un viaggio e un finale a sorpresa. Ideale per verificare la scheda informativa.', releasedate: '2021-05-12', rating: '7.4', genre: 'Avventura, Azione', duration_secs: 5400, cast: 'Mario Rossi, Anna Bianchi, Luca Verdi', director: 'Regista Prova' } };
   if (a === 'get_series_categories') return cats.slice(0, 1);

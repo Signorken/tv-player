@@ -21,13 +21,13 @@ function paint() {
     const A = window.__app, cur = A && A.router.current, pl = cur && cur.isPlayer ? cur : A && A.Mini && A.Mini.player;
     if (pl && pl.engine) {
       const a = pl.engine.attempts[pl.engine.ai], v = pl.video;
-      const name = v.isNative ? v.backendName : a ? ({ native: 'nativo', hls: 'hls.js', mpegts: 'mpegts.js', ts: 'mpegts.js', ff: 'convertitore' }[a.eng] || a.eng) : '-';
+      const name = v.isNative ? v.backendName : a ? ({ native: tr('nativo'), hls: 'hls.js', mpegts: 'mpegts.js', ts: 'mpegts.js', ff: tr('convertitore') }[a.eng] || a.eng) : '-';
       const q = v.getVideoPlaybackQuality ? v.getVideoPlaybackQuality() : null;
       const lost = q ? q.droppedVideoFrames : (v.webkitDroppedFrameCount || 0), tot = q ? q.totalVideoFrames : (v.webkitDecodedFrameCount || 0);
       vid = ' · video ' + name + ' ' + (v.videoHeight ? v.videoHeight + 'p' : '') + tr(' persi ') + lost + '/' + tot;
     }
   } catch (e) { /* */ }
-  el.textContent = fps + ' fps · tasti ' + med + '/' + worst + ' ms · ' + (Perf.mode(settings().perf) === 'lite' ? 'leggero' : 'qualità') +
+  el.textContent = fps + tr(' fps · tasti ') + med + '/' + worst + ' ms · ' + (Perf.mode(settings().perf) === 'lite' ? tr('leggero') : tr('qualità')) +
     ' · ' + (Perf.mem ? Perf.mem + ' GB · ' : '') + (Perf.cores ? Perf.cores + ' core · ' : '') + 'test ' + Perf.score + ' ms' + vid;
 }
 export const Hud = {

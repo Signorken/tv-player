@@ -108,10 +108,15 @@ jobs:
       - name: Android TV / Google TV / Fire OS (.apk)
         run: |
           pip install pillow
+          # firma sempre uguale (così l'APK si installa sopra la versione precedente senza perdere i dati):
+          # il secret ANDROID_DEBUG_KEYSTORE contiene il keystore in base64; senza secret Gradle ne crea uno nuovo a ogni build
+          if [ -n "$KS" ]; then mkdir -p ~/.android && echo "$KS" | base64 -d > ~/.android/debug.keystore && echo "firma: keystore fisso"; else echo "firma: keystore temporaneo (manca il secret ANDROID_DEBUG_KEYSTORE)"; fi
           sh packaging/android/setup.sh
           cd android-tv/android
           ./gradlew assembleDebug --no-daemon
           cp app/build/outputs/apk/debug/app-debug.apk "../../out/MAXENTA-$VER-android-tv.apk"
+        env:
+          KS: ${{ secrets.ANDROID_DEBUG_KEYSTORE }}
       - uses: actions/upload-artifact@v4
         with:
           name: tv-packages

@@ -30,15 +30,16 @@ Gira su **Android TV · Google TV · Fire OS · Samsung Tizen · LG webOS · His
 
 | Area | Funzioni |
 |---|---|
-| **TV in diretta** | Categorie (anche una categoria **Sport** automatica), loghi e numeri, preferiti, ricerca, zapping con ▲▼ e con i numeri. Guida programmi caricata **solo a canale aperto** (la lista resta leggera) |
+| **TV in diretta** | Si apre **direttamente sull'elenco dei canali**; le categorie (anche **Sport** automatica) si aprono sopra l'elenco con **Sinistra** o con il pulsante *Categorie*. Loghi e numeri, preferiti, ricerca, zapping con ▲▼ e con i numeri. **Guida TV a griglia** (canali × orari, OK sul programma in onda apre il canale) |
 | **On Demand** | Film e serie **insieme** (filtro *Tutto*) o separati (*Film*, *Serie TV*, *Sport*). **Raccolte**: Tutti, Preferiti, **La mia lista** (da guardare più tardi, separata dai preferiti), Continua a guardare. **Ordina** per titolo (A-Z, Z-A) o per valutazione, in tutte le categorie. Etichette colorate **FILM** / **SERIE TV** quando sono mescolati. Locandine, scheda con trama, voto, cast e durata; stagioni ed episodi; ripresa dal punto in cui eri |
-| **Home** | Barra **In riproduzione** quando c'è un video nella finestrella (OK = schermo intero), riga **La mia lista** della sorgente scelta in alto (in Aspetto A al posto dei pulsanti, in Aspetto B sotto), *Riprendi da dove eri rimasto*, **Continua a guardare** (locandine verticali), **Canali visti di recente**. Ogni riga si toglie con l'ultima tessera *Rimuovi riga* |
-| **Player** | Pensato per telecomandi **senza numeri né tasti colorati**: pannelli laterali per canali/episodi e per le opzioni (audio, sottotitoli, preferiti, formato, flusso alternativo). Lingua audio ricordata. **Finestrella** per continuare a guardare mentre navighi |
+| **Home** | Barra **In riproduzione** quando c'è un video nella finestrella (OK = schermo intero), riga **La mia lista** della sorgente scelta in alto, che unisce la lista dell'app e quella salvata sul **portale del provider** (categoria "La mia lista" / "My list") senza doppioni (in Aspetto A al posto dei pulsanti, in Aspetto B sotto), *Riprendi da dove eri rimasto*, **Continua a guardare** (locandine verticali), **Canali visti di recente**. Ogni riga si toglie con l'ultima tessera *Rimuovi riga* |
+| **Player** | Pensato per telecomandi **senza numeri né tasti colorati**: pannelli laterali per canali/episodi e per le opzioni (audio, sottotitoli, preferiti, formato, flusso alternativo). Lingua audio ricordata. **Episodio successivo automatico** con conto alla rovescia (Indietro lo annulla, *Disattiva* lo spegne). **Finestrella** per continuare a guardare mentre navighi |
+| **Ricerca unica** | Una sola ricerca su canali, film e serie della sorgente scelta, risultati in tre gruppi (voce *Cerca* nella barra laterale) |
 | **Sorgenti** | M3U/M3U8 (URL o file), Xtream Codes (live, film, serie, guida, stato account e connessioni), **NAS**: WebDAV, indice HTTP, cartelle del computer, condivisioni Windows/SMB (app per computer), DLNA (app per computer). Legge locandine e trame dei file Kodi (`.nfo`, `-poster.jpg`) |
 | **Lettore video** | Su Android/Google TV il video passa per **ExoPlayer** e su Samsung per **AVPlay**: il decoder della TV disegna il video direttamente sullo schermo, sotto l'interfaccia (meno fotogrammi persi sulle chiavette). Se il lettore nativo non riesce si passa da solo al lettore web. Si può scegliere in *Impostazioni › Riproduzione › Lettore video* |
 | **Formati** | HLS (nativo o hls.js), MPEG-TS (mpegts.js), MP4/MKV nativi; sull'app per computer anche un **convertitore ffmpeg** per HEVC, AC3/DTS e server che non permettono di scorrere |
 | **Lingua** | **Italiano e inglese**: in automatico l'inglese se il dispositivo non è in italiano; si cambia in *Impostazioni › Aspetto › Lingua* |
-| **Aspetto** | Due disposizioni (barra laterale **A** o pulsanti **B**), orologio 12/24 h, 8 sfondi astratti, dimensione automatica rispetto allo schermo + zoom manuale, suoni di navigazione, transizioni leggere, **profilo prestazioni automatico** e indicatore di prestazioni |
+| **Aspetto** | **Tema scuro** (predefinito) o **chiaro** con i suoi sfondi, scelta dello sfondo con **miniature**, due disposizioni (barra laterale **A** o pulsanti **B**), orologio 12/24 h, 12 sfondi astratti, dimensione automatica rispetto allo schermo + zoom manuale, suoni di navigazione, transizioni leggere, **profilo prestazioni automatico** e indicatore di prestazioni |
 | **Input** | Telecomando, tastiera Bluetooth/USB, tastiera a schermo (Shift e blocco maiuscole), tastiera di sistema della TV, **smartphone** come tastiera e telecomando |
 
 ---
@@ -52,6 +53,8 @@ Gira su **Android TV · Google TV · Fire OS · Samsung Tizen · LG webOS · His
 | ![Player](docs/screenshots/06-player.jpg) **Player** con guida programmi | ![Canali](docs/screenshots/07-player-canali.jpg) **Sinistra** nel player: elenco canali |
 | ![Opzioni](docs/screenshots/08-player-opzioni.jpg) **Destra** nel player: opzioni | ![Finestrella](docs/screenshots/09-finestrella.jpg) **Finestrella** e tessera *In riproduzione* |
 | ![Aspetto B](docs/screenshots/10-home-aspetto-b.jpg) **Aspetto B**: pulsanti a icone, il selezionato mostra il nome | ![Impostazioni](docs/screenshots/11-impostazioni.jpg) **Impostazioni** a categorie |
+| ![Guida TV](docs/screenshots/12-guida-tv.jpg) **Guida TV** a griglia | ![Ricerca](docs/screenshots/13-ricerca.jpg) **Ricerca unica** su canali, film e serie |
+| ![Tema chiaro](docs/screenshots/14-tema-chiaro.jpg) **Tema chiaro** con i suoi sfondi | |
 
 ---
 
@@ -78,6 +81,10 @@ Tutti i pacchetti si scaricano dalla pagina **[Releases](https://github.com/Sign
    - copiandolo su una chiavetta USB e aprendolo con un file manager.
 3. MAXENTA compare tra le app del launcher.
 
+> **Dalla 2.6 l'APK è firmato sempre con la stessa chiave**: le versioni successive si installano sopra senza disinstallare (e senza perdere sorgenti e preferiti). Il passaggio alla 2.6 richiede un'ultima disinstallazione.
+>
+> Con ExoPlayer l'app **adatta la frequenza dello schermo al video** (canali a 25/50 fotogrammi → 50 Hz), disattivabile in *Impostazioni › Riproduzione*.
+>
 > **Dalla 2.5 l'APK contiene il lettore ExoPlayer** (codice nativo): l'aggiornamento automatico dell'interfaccia non basta, va installato una volta l'APK 2.5 (sopra quello vecchio, i dati restano).
 >
 > **Dalla 2.4 il pacchetto si chiama `com.maxenta.app`** (prima `com.example.tvplayer`): per Android è un'app nuova. Disinstalla la vecchia versione e installa la nuova; sorgenti e preferiti vanno reinseriti una volta.
@@ -162,8 +169,8 @@ Sul computer: frecce, Invio, Esc, F1–F4 = colori, PagSu/PagGiù = CH±, **Ctrl
 | Categoria | Voci |
 |---|---|
 | **Sorgenti** | aggiungi, modifica, aggiorna elenco, elimina, sorgente attiva |
-| **Riproduzione** | **lettore video** (nativo ExoPlayer/AVPlay o web), formato dirette Xtream (HLS/TS), lingua audio preferita, **finestrella**, anteprima video scorrendo i canali, buffer, convertitore (computer) |
-| **Aspetto** | **lingua** (automatica, italiano, inglese), **disposizione A/B**, orologio 12/24 h, **schermata all'avvio** (Home, TV, On Demand, Sport, Preferiti, ultimo canale), sfondo, **dimensione interfaccia** (automatica 100%, 70–150%), **suoni di navigazione**, **prestazioni** (automatiche / massima qualità / leggere), **indicatore prestazioni** |
+| **Riproduzione** | **lettore video** (nativo ExoPlayer/AVPlay o web), **frequenza dello schermo 50 Hz** (Android), **episodio successivo automatico**, formato dirette Xtream (HLS/TS), lingua audio preferita, **finestrella**, anteprima video scorrendo i canali, buffer, convertitore (computer) |
+| **Aspetto** | **lingua** (automatica, italiano, inglese), **tema** (scuro/chiaro), **disposizione A/B**, orologio 12/24 h, **schermata all'avvio** (Home, TV, On Demand, Sport, Preferiti, ultimo canale), sfondo, **dimensione interfaccia** (automatica 100%, 70–150%), **suoni di navigazione**, **prestazioni** (automatiche / massima qualità / leggere), **indicatore prestazioni** |
 | **Rete e telefono** | telefono come tastiera/telecomando (QR), server companion, identità del lettore (computer) |
 | **Guida e dati** | finestra della guida programmi (6–48 h), svuota cache e guida |
 | **Informazioni** | versione, verifica aggiornamenti, piattaforma e comandi, crediti |

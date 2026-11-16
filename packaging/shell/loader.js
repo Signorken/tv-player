@@ -23,6 +23,8 @@
     } catch (e) { fin(null); }
     setTimeout(function () { fin(null); }, ms + 500);
   }
+  // lingua (come l'app): impostazione salvata, altrimenti quella del dispositivo
+  var EN = (function () { try { var d = JSON.parse(get('tvapp.v1') || 'null'), l = d && d.settings && d.settings.lang; if (l) return l === 'en'; } catch (e) { } return !/^it/i.test(navigator.language || 'it'); })();
   function msg(t) { var l = document.getElementById('loading'); if (!l) return; l.querySelector('.l1').textContent = t; l.className = 'show'; }
   function cached() {
     var v = get('mx.ver');
@@ -46,13 +48,13 @@
       var j = document.createElement('script'); j.src = 'app.js'; document.body.appendChild(j);
     }
   }
-  var t0 = setTimeout(function () { msg('Controllo aggiornamenti…'); }, 700);
+  var t0 = setTimeout(function () { msg(EN ? 'Checking for updates…' : 'Controllo aggiornamenti…'); }, 700);
   load(BASE + 'version.json', 3000, function (txt) {
     clearTimeout(t0);
     var r = null; try { r = txt ? JSON.parse(txt) : null; } catch (e) { r = null; }
     var have = cached() || BUNDLED;
     if (!r || !r.version || cmp(r.version, have) <= 0 || r.version === get('mx.bad') || (r.minShell || 1) > SHELL) { start(); return; }
-    msg('Aggiorno MAXENTA alla versione ' + r.version + '…');
+    msg((EN ? 'Updating MAXENTA to version ' : 'Aggiorno MAXENTA alla versione ') + r.version + '…');
     load(BASE + 'app.js', 20000, function (js) {
       load(BASE + 'app.css', 15000, function (css) {
         if (js && css && js.length > 50000) {

@@ -6,6 +6,7 @@ const DEFAULTS = {
   sources: [], activeSource: null,
   settings: {
     previewVideo: false,     // anteprima video mentre si scorrono i canali (consuma risorse)
+    theme: 'dark',           // tema: dark (predefinito) | light
     wallpaper: '01-aurora',   // sfondo (vedi www/wallpapers) oppure 'none'
     audioLang: '',           // lingua audio preferita (it, en…): ricordata quando la scegli nel player
     layout: 'A',             // A = barra laterale, B = pulsanti in alto
@@ -15,6 +16,8 @@ const DEFAULTS = {
     sounds: true,            // suoni di navigazione
     lang: '',                // lingua: '' = automatica (come il dispositivo) | it | en
     odSort: '',              // ordine della griglia On Demand: '' | az | za | rd | ra
+    matchRate: true,         // Android: adatta la frequenza dello schermo al video (25/50 fps -> 50 Hz)
+    autoNext: true,          // episodio successivo automatico (con conto alla rovescia)
     videoEngine: 'auto',     // auto = lettore nativo (ExoPlayer/AVPlay) se c'è, web = lettore HTML5
     perf: 'auto',            // prestazioni: auto | full | lite (lite = niente animazioni, sfondo semplice, niente anteprime)
     perfHud: false,          // indicatore prestazioni

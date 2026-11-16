@@ -1,5 +1,6 @@
 // Parser M3U e XMLTV (a blocchi, per non bloccare la UI su playlist da decine di MB)
 import { tick, decodeEntities, extOf } from './util.js';
+import { tr } from './i18n.js';
 
 const ATTR = /([\w-]+)=(?:"([^"]*)"|'([^']*)'|([^\s,]+))/g;
 
@@ -75,7 +76,7 @@ export function classify(e) {
 function buildCats(items) {
   const map = {}, cats = [];
   for (let i = 0; i < items.length; i++) {
-    const g = items[i].group || 'Senza gruppo';
+    const g = items[i].group || tr('Senza gruppo');
     if (!map[g]) { map[g] = { id: g, name: g, count: 0 }; cats.push(map[g]); }
     map[g].count++;
   }
@@ -89,7 +90,7 @@ export function buildCatalogFromM3U(entries) {
     const e = entries[i];
     const k = classify(e);
     if (k === 'live') {
-      live.push({ id: 'l' + i, name: e.name, logo: e.logo, group: e.group || 'Senza gruppo', num: e.num || String(++n), url: e.url, epgId: e.epgId });
+      live.push({ id: 'l' + i, name: e.name, logo: e.logo, group: e.group || tr('Senza gruppo'), num: e.num || String(++n), url: e.url, epgId: e.epgId });
     } else if (k === 'movie') {
       movies.push({ id: 'm' + i, name: e.name, poster: e.logo, group: e.group || 'Film', url: e.url, ext: extOf(e.url) });
     } else {

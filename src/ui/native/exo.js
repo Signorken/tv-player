@@ -1,3 +1,4 @@
+import { settings } from '../../core/store.js';
 // Android: lettore ExoPlayer (plugin nativo MaxPlayer incluso nell'APK, vedi packaging/android/MaxPlayerPlugin.java)
 const P = () => window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MaxPlayer;
 export function exoAvailable() { return !!P(); }
@@ -5,7 +6,7 @@ export function exoBackend() {
   const p = P(), dpr = () => window.devicePixelRatio || 1;
   return {
     name: 'ExoPlayer',
-    open(url) { return p.load({ url: url, ua: navigator.userAgent }); },
+    open(url) { return p.load({ url: url, ua: navigator.userAgent, matchRate: settings().matchRate !== false }); },
     play() { return p.play(); },
     pause() { return p.pause(); },
     seek(ms) { return p.seek({ ms: ms }); },

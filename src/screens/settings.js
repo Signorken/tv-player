@@ -35,6 +35,8 @@ export function applyUi() {
   const lite = Perf.mode(s.perf) === 'lite';
   document.body.classList.toggle('lowpower', lite);
   document.body.classList.toggle('lite', lite);
+  const light = s.theme === 'light';
+  document.body.classList.toggle('light', light); document.documentElement.classList.toggle('light', light);
   Hud.show(!!s.perfHud);
   applyShell();
   relayoutAll();
@@ -42,6 +44,26 @@ export function applyUi() {
 }
 
 export const WALLPAPERS = [['01-aurora', 'Aurora'], ['02-orbita', tr('Orbita')], ['03-dune', 'Dune'], ['04-nebula', tr('Nebulosa')], ['05-griglia', tr('Griglia neon')], ['06-prisma', tr('Prisma')], ['07-onde', tr('Onde')], ['08-notte', tr('Notte')], ['none', tr('Nessuno (sfondo scuro)')]];
+export const WALLPAPERS_LIGHT = [['l1-alba', tr('Alba')], ['l2-petali', tr('Cerchi')], ['l3-onde', tr('Onde chiare')], ['l4-geometrie', tr('Cristalli')], ['none', tr('Nessuno (sfondo chiaro)')]];
+const wpList = () => store.settings().theme === 'light' ? WALLPAPERS_LIGHT : WALLPAPERS;
+const wpName = () => { const w = store.settings().wallpaper, f = wpList().concat(WALLPAPERS, WALLPAPERS_LIGHT).find(x => x[0] === w); return f ? f[1] : w; };
+// tema: ogni tema ha i suoi sfondi; cambiando tema si passa al primo sfondo di quel tema
+function setTheme(t) {
+  const s = store.settings(); if ((s.theme || 'dark') === t) return;
+  s.theme = t;
+  const list = t === 'light' ? WALLPAPERS_LIGHT : WALLPAPERS;
+  if (!list.some(x => x[0] === s.wallpaper)) s.wallpaper = list[0][0];
+  store.save(); applyUi();
+}
+// scelta dello sfondo con le miniature
+function pickWallpaper(done) {
+  const cur = store.settings().wallpaper;
+  let m;
+  const cells = wpList().map(w => h('div', { class: 'wpc' + (w[0] === cur ? ' cur' : ''), 'data-f': 1, onclick: () => m.close(w[0]) },
+    h('div', { class: 'wpt' + (w[0] === 'none' ? ' none' : ''), style: w[0] === 'none' ? '' : 'background-image:url(wallpapers/thumbs/' + w[0] + '.jpg)' }), h('div', { class: 'wpn', text: w[1] + (w[0] === cur ? '  ✓' : '') })));
+  m = Modal.open([h('div', { class: 'mtitle', text: tr('Sfondo') }), h('div', { class: 'wpgrid' }, cells)], { cls: 'wpick', focus: cells[Math.max(0, wpList().findIndex(w => w[0] === cur))] });
+  m.onClose = v => { if (v != null) { store.settings().wallpaper = v; store.save(); applyUi(); } if (done) done(); };
+}
 // 4K solo su schermi 4K (un'immagine 4K occupa ~33 MB di RAM: sulle TV economiche si resta a 1080p)
 export function applyWallpaper() {
   const w = store.settings().wallpaper, bg = document.getElementById('bg'); if (!bg) return;
@@ -227,6 +249,8 @@ export class SettingsScreen {
       { id: 'play', label: tr('Riproduzione'), icon: 'play', items: list(
         choice(tr('Formato canali live Xtream'), 'liveFormat', [['m3u8', tr('HLS (.m3u8) — consigliato')], ['ts', 'MPEG-TS (.ts)']]),
         choice(tr('Lingua audio preferita'), 'audioLang', langs, null, null),
+        nativeName() === 'ExoPlayer' ? toggle(tr('Adatta la frequenza dello schermo al video (50 Hz)'), 'matchRate') : null,
+        toggle(tr('Episodio successivo automatico'), 'autoNext'),
         platform.isDesktop || !nativeName() ? null : choice(tr('Lettore video'), 'videoEngine', [['auto', tr('Nativo ') + nativeName() + tr(' (consigliato)')], ['web', tr('Lettore web (HTML5)')]]),
         choice(tr('Finestrella (Indietro dal player)'), 'miniPlayer', [['always', tr('Sempre')], ['live', tr('Solo con i canali TV')], ['vod', tr('Solo con film e serie')], ['never', tr('Mai (Indietro chiude il player)')]]),
         toggle(tr('Anteprima video scorrendo i canali (usa più risorse)'), 'previewVideo'),
@@ -240,7 +264,8 @@ export class SettingsScreen {
         choice(tr('Disposizione'), 'layout', [['A', tr('Aspetto A: barra laterale (consigliato)')], ['B', tr('Aspetto B: pulsanti in alto')]], null, () => { applyUi(); const hm = router.current; }),
         choice(tr('Orologio'), 'clock', [['24', tr('24 ore (21:45)')], ['12', tr('12 ore (9:45 PM)')]], null, applyUi),
         choice(tr('Schermata all\'avvio'), 'startScreen', [['home', 'Home'], ['live', tr('TV in diretta')], ['movie', tr('On Demand: Film')], ['series', tr('On Demand: Serie TV')], ['sport', tr('On Demand: Sport')], ['favs', tr('Preferiti')], ['last', tr('Ultimo canale visto')]]),
-        choice(tr('Sfondo'), 'wallpaper', WALLPAPERS, null, applyUi),
+        { label: tr('Tema'), value: () => store.settings().theme === 'light' ? tr('Chiaro') : tr('Scuro (predefinito)'), act: async () => { const v = await Modal.menu(tr('Tema'), [{ label: tr('Scuro (predefinito)'), value: 'dark' }, { label: tr('Chiaro'), value: 'light' }]); if (v) { setTheme(v); self.sync(); } } },
+        { label: tr('Sfondo'), value: () => wpName(), act: () => pickWallpaper(() => self.sync()) },
         choice(tr('Dimensione interfaccia'), 'uiScale', [[70, '70%'], [80, tr('Piccola (80%)')], [90, '90%'], [100, tr('Automatica (100%)')], [110, '110%'], [115, '115%'], [120, '120%'], [130, tr('Grande (130%)')], [150, tr('Molto grande (150%)')]], null, applyUi),
         toggle(tr('Suoni di navigazione'), 'sounds'),
         choice(tr('Prestazioni'), 'perf', [['auto', tr('Automatiche (leggere sui dispositivi deboli)')], ['full', tr('Massima qualità (animazioni)')], ['lite', tr('Leggere (niente animazioni)')]], null, applyUi),
