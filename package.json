@@ -1,6 +1,6 @@
 {
   "name": "tv-player",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "description": "MAXENTA: IPTV/media player per TV (Android TV, Tizen, webOS, VIDAA) e computer (Windows, macOS, Linux)",
   "main": "desktop/main.js",
   "scripts": {

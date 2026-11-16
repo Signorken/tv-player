@@ -58,8 +58,16 @@ open(p,'w').write(s)
 print('build.gradle: media3 aggiunto, versione '+v)
 PYG
 # icona e banner MAXENTA (banner 320x180 per il launcher TV; icone launcher dal logo 512x512)
-mkdir -p android/app/src/main/res/drawable-xhdpi
-cp ../packaging/android/banner-1280x720.png android/app/src/main/res/drawable-xhdpi/banner.png
+# il banner 16:9 (Android TV, Google TV, Projectivy…) per ogni densità, ricavato da banner-1280x720.png
+python3 - <<'PYB'
+import os
+from PIL import Image
+B=Image.open('../packaging/android/banner-1280x720.png').convert('RGB')
+for d,(w,h) in {'mdpi':(160,90),'hdpi':(240,135),'xhdpi':(320,180),'xxhdpi':(480,270),'xxxhdpi':(640,360)}.items():
+    q='android/app/src/main/res/drawable-'+d; os.makedirs(q,exist_ok=True)
+    B.resize((w,h),Image.LANCZOS).save(q+'/banner.png',optimize=True)
+print('banner: 5 densità')
+PYB
 python3 - <<'PY2'
 import os
 try:
