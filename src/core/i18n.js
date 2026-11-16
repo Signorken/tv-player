@@ -170,6 +170,7 @@ const EN = {
   "Memoria dell'app piena: alcune modifiche potrebbero non essere salvate.": "The app storage is full: some changes may not be saved.",
   'ORA': 'NOW', 'DOPO': 'NEXT',
   'Regia: ': 'Director: ',
+  'Versione APK installato': 'Installed APK version', 'precedente alla 2.7 (da reinstallare)': 'older than 2.7 (reinstall it)',
   // aggiunte 2.5
   'Lingua': 'Language', 'Automatica (come il dispositivo)': 'Automatic (same as the device)', 'Italiano': 'Italiano', 'English': 'English', 'Lingua: riavvio…': 'Language: restarting…',
   'FILM': 'MOVIE', 'SERIE TV': 'TV SERIES', 'Film': 'Movies', 'RIPRENDI DA DOVE ERI RIMASTO': 'PICK UP WHERE YOU LEFT OFF', 'Riga “La mia lista”': '“My list” row',

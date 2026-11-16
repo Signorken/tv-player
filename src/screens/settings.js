@@ -281,9 +281,15 @@ export class SettingsScreen {
         { label: tr('Svuota cache e guida programmi'), value: () => '', act: async () => { await store.idbClear(); Epg.reset(); Modal.toast(tr('Cache svuotata')); } }] },
       { id: 'info', label: tr('Informazioni'), icon: 'info', items: list(
         platform.isDesktop ? { label: tr('Versione'), value: () => 'v' + VERSION, button: { label: tr('Verifica aggiornamenti'), act: () => window.desktop.updateCheck() } } : window.__shell ? { label: tr('Versione'), value: () => 'v' + VERSION + tr(' · aggiornamento automatico attivo'), button: { label: tr('Verifica aggiornamenti'), act: async () => { if (Android.available && await Android.check(true)) return; Modal.toast(tr('Riavvio e controllo gli aggiornamenti…'), 1500); setTimeout(() => location.reload(), 600); } } } : { label: tr('Versione'), value: () => 'v' + VERSION },
+        // Android: versione dell'APK installato (il banner e il codice nativo cambiano solo installando l'APK)
+        (platform.name === 'android' || platform.name === 'firetv') && window.Capacitor ? { label: tr('Versione APK installato'), value: () => self.apkVer || '…', act: async () => { if (!(await Android.check(true))) Modal.toast(tr('L\'app è aggiornata')); } } : null,
         { label: tr('Crediti'), value: () => tr('Icone Solar (480 Design, CC BY 4.0) · Font Plus Jakarta Sans (OFL)') },
         { label: tr('Piattaforma e comandi'), value: () => platform.name, act: () => Modal.confirm('MAXENTA', tr('Piattaforma rilevata: ') + platform.name + (platform.isDesktop ? '\nMouse: clic per aprire, tasto destro = opzioni, rotella = scorri.\nTastiera: Ctrl+V incolla un link/playlist, Spazio pausa, F schermo intero, M muto, ← → ±10 s, Esc indietro.' : '\nTasti: frecce + OK; OK lungo = menu; Rosso = preferito; Verde = cerca; Blu = audio/sottotitoli/finestrella; Giallo = rimuovi riga; numeri = canale.'), 'OK', '') }) }
     ];
+    if ((platform.name === 'android' || platform.name === 'firetv') && window.Capacitor) {
+      if (Android.available) Android.info().then(i => { self.apkVer = i && i.version ? i.version : '?'; self.sync(); }).catch(() => { });
+      else self.apkVer = tr('precedente alla 2.7 (da reinstallare)');
+    }
     this.catEls = this.cats.map((c, i) => {
       const e = h('div', { class: 'scat', 'data-f': 1, onclick: () => { this.show(i); this.toPanel(); } }, icon(c.icon), h('span', { text: c.label }));
       e.onfocusnav = () => this.show(i);
