@@ -40,7 +40,7 @@ if 'media3-exoplayer' not in s:
 import json,re
 v=json.load(open('../package.json'))['version']
 a=[int(x) for x in (v.split('.')+['0','0'])[:3]]
-s=re.sub(r'versionCode\s+\d+','versionCode '+str(a[0]*10000+a[1]*100+a[2]),s,1)
+s=re.sub(r'versionCode\s+\d+','versionCode '+str(max(1,a[0]*10000+a[1]*100+a[2])),s,1)
 s=re.sub(r'versionName\s+"[^"]*"','versionName "'+v+'"',s,1)
 open(p,'w').write(s)
 print('build.gradle: media3 aggiunto, versione '+v)
