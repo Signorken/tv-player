@@ -19,6 +19,7 @@ import { Epg } from '../core/epg.js';
 
 import { applyShell, VERSION, Rail } from '../ui/shell.js';
 import { Perf } from '../core/perf.js';
+import { nativeName } from '../ui/native/index.js';
 import { Hud } from '../ui/hud.js';
 export function applyUi() {
   const s = store.settings();
@@ -225,6 +226,7 @@ export class SettingsScreen {
       { id: 'play', label: 'Riproduzione', icon: 'play', items: list(
         choice('Formato canali live Xtream', 'liveFormat', [['m3u8', 'HLS (.m3u8) — consigliato'], ['ts', 'MPEG-TS (.ts)']]),
         choice('Lingua audio preferita', 'audioLang', langs, null, null),
+        platform.isDesktop || !nativeName() ? null : choice('Lettore video', 'videoEngine', [['auto', 'Nativo ' + nativeName() + ' (consigliato)'], ['web', 'Lettore web (HTML5)']]),
         choice('Finestrella (Indietro dal player)', 'miniPlayer', [['always', 'Sempre'], ['live', 'Solo con i canali TV'], ['vod', 'Solo con film e serie'], ['never', 'Mai (Indietro chiude il player)']]),
         toggle('Anteprima video scorrendo i canali (usa più risorse)', 'previewVideo'),
         choice('Buffer di riproduzione', 'bufferSec', [[10, '10 secondi (poca RAM)'], [20, '20 secondi'], [40, '40 secondi (connessione instabile)']]),

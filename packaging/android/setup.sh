@@ -13,6 +13,22 @@ node ../scripts/shell.js www   # guscio auto-aggiornante
 npx cap add android
 # Indietro tenuto premuto riconosciuto lato nativo (vedi MainActivity.java)
 cp ../packaging/android/MainActivity.java android/app/src/main/java/com/maxenta/app/MainActivity.java
+# lettore ExoPlayer (Media3) per il video nativo sotto la WebView
+cp ../packaging/android/MaxPlayerPlugin.java android/app/src/main/java/com/maxenta/app/MaxPlayerPlugin.java
+python3 - <<'PYG'
+p='android/app/build.gradle'
+s=open(p).read()
+dep='''    def media3 = "1.4.1"
+    implementation "androidx.media3:media3-exoplayer:$media3"
+    implementation "androidx.media3:media3-exoplayer-hls:$media3"
+    implementation "androidx.media3:media3-ui:$media3"
+'''
+if 'media3-exoplayer' not in s:
+    i=s.index('dependencies {')+len('dependencies {')
+    s=s[:i]+'\n'+dep+s[i:]
+    open(p,'w').write(s)
+print('build.gradle: media3 aggiunto')
+PYG
 # icona e banner MAXENTA (banner 320x180 per il launcher TV; icone launcher dal logo 512x512)
 mkdir -p android/app/src/main/res/drawable-xhdpi
 cp ../packaging/android/banner-1280x720.png android/app/src/main/res/drawable-xhdpi/banner.png

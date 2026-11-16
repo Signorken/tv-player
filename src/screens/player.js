@@ -3,6 +3,8 @@ import { h, fmtClock, fmtDur } from '../core/util.js';
 import * as store from '../core/store.js';
 import { Epg } from '../core/epg.js';
 import { Engine } from '../ui/engine.js';
+import { NativeVideo } from '../ui/nativevideo.js';
+import { nativeBackend } from '../ui/native/index.js';
 import * as Modal from '../ui/modal.js';
 import { icon } from '../ui/icons.js';
 import { platform, toggleFullscreen } from '../core/platform.js';
@@ -71,7 +73,11 @@ export class PlayerScreen {
   constructor(opts) {
     this.isPlayer = true;
     this.o = opts; this.i = opts.index || 0; this.live = opts.kind === 'live';
-    this.video = h('video', { class: 'pv', playsinline: true, autoplay: true });
+    this.el0 = h('video', { class: 'pv', playsinline: true, autoplay: true });
+    // lettore nativo (ExoPlayer su Android, AVPlay su Samsung) se disponibile: il video è disegnato dall'hardware sotto l'interfaccia
+    const nb = platform.isDesktop ? null : nativeBackend();
+    this.video = nb ? new NativeVideo(this.el0, nb) : this.el0;
+    this.sub = h('div', { class: 'psub' });
     this.info = h('div', { class: 'pinfo' });
     this.spin = h('div', { class: 'pspin' }, h('div', { class: 'spinner' }), h('div', { class: 'ptxt', text: 'Caricamento…' }));
     this.msg = h('div', { class: 'pmsg' });
@@ -84,14 +90,34 @@ export class PlayerScreen {
     this.miniUi = h('div', { class: 'miniui' }, h('div', { class: 'mini-t' }), h('div', { class: 'mini-h', text: platform.isDesktop ? 'Clic: schermo intero' : 'Giù per selezionarla · Indietro dalla Home: chiudi' }),
       h('div', { class: 'mbtns2' }, this.miniBtns[0], this.miniBtns[1]),
       h('div', { class: 'mini-x', title: 'Chiudi', text: '✕', onclick: e => { e.stopPropagation(); Mini.close(); } }));
-    this.el = h('div', { class: 'screen player' }, this.video, this.clock, this.numBox, this.seekBox, this.msg, this.spin, this.info, this.miniUi);
+    this.el = h('div', { class: 'screen player' }, this.el0, this.sub, this.clock, this.numBox, this.seekBox, this.msg, this.spin, this.info, this.miniUi);
     this.el.addEventListener('click', e => { if (this.mini && !(e.target.closest && e.target.closest('.mini-x,.mbtn'))) { e.stopPropagation(); this.expand(); } }, true);
-    this.engine = new Engine(this.video);
-    this.engine.onPlaying = () => { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); clearTimeout(this.spinT); this.msg.classList.remove('show'); };
-    this.engine.onFail = why => { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); this.say(this.live ? 'Canale non raggiungibile' : 'Impossibile riprodurre il file', (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live). Se la playlist è in uso su un altro dispositivo, il provider potrebbe consentire una sola connessione' : 'Dettagli: ' + (why || 'sconosciuto')) + (why ? '' : '')); this.showInfo(); };
+    this._wireEngine();
     this.hideT = null; this.loadT = null; this.numT = null; this.seekT = null; this.pend = 0; this.lastSave = 0;
     this.cur = null; this.finished = false;
-    const v = this.video;
+    this._bindVideo(this.video);
+    this.clockT = setInterval(() => { this.clock.textContent = fmtClock(Date.now()); if (this.shown) this._tickBar(); }, 1000);
+    if (platform.isDesktop) this._buildDesk();
+  }
+
+  _wireEngine() {
+    this.engine = new Engine(this.video);
+    this.engine.onPlaying = () => { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); clearTimeout(this.spinT); this.msg.classList.remove('show'); };
+    this.engine.onFail = why => {
+      // il lettore nativo non ce la fa: si riprova una volta col lettore web
+      if (this.video.isNative && !this.webFallback) {
+        this.webFallback = true; this.engine.destroy();
+        this.video = this.el0; this._wireEngine(); this._bindVideo(this.video);
+        Modal.toast('Lettore nativo non riuscito (' + why + '): provo il lettore web', 4000);
+        this.play(this.i); return;
+      }
+      this._onFail(why);
+    };
+  }
+  _onFail(why) { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); this.say(this.live ? 'Canale non raggiungibile' : 'Impossibile riprodurre il file', (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live). Se la playlist è in uso su un altro dispositivo, il provider potrebbe consentire una sola connessione' : 'Dettagli: ' + (why || 'sconosciuto'))); this.showInfo(); }
+  _bindVideo(v) {
+    // sottotitoli disegnati dall'app (AVPlay li passa come testo)
+    v.addEventListener('subtitle', e => { this.sub.textContent = e.detail || ''; });
     v.addEventListener('waiting', () => { clearTimeout(this.spinT); this.spinT = setTimeout(() => this.spin.classList.add('show'), 600); });
     v.addEventListener('playing', () => { clearTimeout(this.spinT); this.spin.classList.remove('show'); this._tickBar(); });
     v.addEventListener('timeupdate', () => this._onTime());
@@ -100,8 +126,6 @@ export class PlayerScreen {
     this._awakeOff = () => awake(false);
     v.addEventListener('pause', () => { if (!this.live) { this.showInfo(true); } });
     v.addEventListener('ended', () => this._ended());
-    this.clockT = setInterval(() => { this.clock.textContent = fmtClock(Date.now()); if (this.shown) this._tickBar(); }, 1000);
-    if (platform.isDesktop) this._buildDesk();
   }
 
   // ---- controlli per mouse (solo desktop)
@@ -170,6 +194,7 @@ export class PlayerScreen {
     this.mini = true; Mini.player = this; Rail.sync();
     this.el.classList.add('mini'); this.miniUi.firstChild.textContent = this.cur ? this.cur.title : '';
     this.hideInfo(); this.msg.classList.remove('show'); this.seekBox.classList.remove('show');
+    this._nsync();
     return true;
   }
   expand() {
@@ -178,7 +203,9 @@ export class PlayerScreen {
     this.el.classList.remove('mini', 'mfocus');
     router.push(this);
     this.showInfo();
+    this._nsync();
   }
+  _nsync() { const v = this.video; if (v.isNative) requestAnimationFrame(() => v.sync(true)); }
   onHide() { }
   destroy() {
     clearInterval(this.clockT); clearTimeout(this.hideT); clearTimeout(this.loadT); clearTimeout(this.seekT); clearTimeout(this.numT); clearTimeout(this.spinT);

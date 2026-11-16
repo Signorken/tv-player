@@ -126,6 +126,8 @@ export class Engine {
 
   plan(url, live, alt) {
     const out = [];
+    // lettore nativo (ExoPlayer / AVPlay): legge da solo HLS, TS, MP4, MKV
+    if (this.v.isNative) { out.push({ u: url, eng: 'native' }); if (alt) out.push({ u: alt, eng: 'native' }); return out; }
     const mk = (u) => {
       const e = extOf(u), isHls = e === 'm3u8' || /m3u8/i.test(u), isTs = e === 'ts' || (live && !e && !isHls);
       if (isHls) { if (nativeHls(this.v)) { out.push({ u: u, eng: 'native' }); out.push({ u: u, eng: 'hls' }); } else { out.push({ u: u, eng: 'hls' }); out.push({ u: u, eng: 'native' }); } }

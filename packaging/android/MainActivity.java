@@ -1,5 +1,6 @@
 package com.maxenta.app;
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.KeyEvent;
@@ -9,6 +10,12 @@ import com.getcapacitor.BridgeActivity;
 // Android non passa alla pagina la durata della pressione: la si misura qui e si avvisa l'app con un evento.
 // Una pressione breve resta il normale tasto Indietro.
 public class MainActivity extends BridgeActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(MaxPlayerPlugin.class); // lettore ExoPlayer (video sotto la pagina)
+        super.onCreate(savedInstanceState);
+    }
+
     private final Handler h = new Handler(Looper.getMainLooper());
     private KeyEvent down = null;
     private boolean longDone = false;

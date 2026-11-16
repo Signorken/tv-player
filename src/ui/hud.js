@@ -20,7 +20,7 @@ function paint() {
     const A = window.__app, cur = A && A.router.current, pl = cur && cur.isPlayer ? cur : A && A.Mini && A.Mini.player;
     if (pl && pl.engine) {
       const a = pl.engine.attempts[pl.engine.ai], v = pl.video;
-      const name = a ? ({ native: 'nativo', hls: 'hls.js', mpegts: 'mpegts.js', ts: 'mpegts.js', ff: 'convertitore' }[a.eng] || a.eng) : '-';
+      const name = v.isNative ? v.backendName : a ? ({ native: 'nativo', hls: 'hls.js', mpegts: 'mpegts.js', ts: 'mpegts.js', ff: 'convertitore' }[a.eng] || a.eng) : '-';
       const q = v.getVideoPlaybackQuality ? v.getVideoPlaybackQuality() : null;
       const lost = q ? q.droppedVideoFrames : (v.webkitDroppedFrameCount || 0), tot = q ? q.totalVideoFrames : (v.webkitDecodedFrameCount || 0);
       vid = ' · video ' + name + ' ' + (v.videoHeight ? v.videoHeight + 'p' : '') + ' persi ' + lost + '/' + tot;

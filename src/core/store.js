@@ -13,6 +13,7 @@ const DEFAULTS = {
     startScreen: 'home',     // schermata all'avvio: home | live | movie | series | sport | favs | last
     miniPlayer: 'always',    // Indietro dal player = finestrella: always | live | vod | never
     sounds: true,            // suoni di navigazione
+    videoEngine: 'auto',     // auto = lettore nativo (ExoPlayer/AVPlay) se c'è, web = lettore HTML5
     perf: 'auto',            // prestazioni: auto | full | lite (lite = niente animazioni, sfondo semplice, niente anteprime)
     perfHud: false,          // indicatore prestazioni
     liveFormat: 'm3u8',      // m3u8 | ts  (per Xtream)
