@@ -3,6 +3,7 @@ import { XtreamSource } from './xtream.js';
 import { DavSource } from './dav.js';
 import { LocalSource } from './local.js';
 import { DlnaSource } from './dlna.js';
+import { tr } from '../core/i18n.js';
 
 const live = {};
 export function createSource(cfg) {
@@ -14,7 +15,7 @@ export function createSource(cfg) {
     case 'webdav': case 'http': s = new DavSource(cfg); break;
     case 'local': s = new LocalSource(cfg); break;
     case 'dlna': s = new DlnaSource(cfg); break;
-    default: throw new Error('Tipo sorgente sconosciuto: ' + cfg.type);
+    default: throw new Error(tr('Tipo sorgente sconosciuto: ') + cfg.type);
   }
   live[cfg.id] = s;
   return s;
@@ -22,4 +23,4 @@ export function createSource(cfg) {
 export function forget(id) { delete live[id]; }
 export const FILE_TYPES = { webdav: 1, http: 1, local: 1, dlna: 1 };
 export function isFileType(t) { return !!FILE_TYPES[t]; }
-export const TYPE_LABEL = { m3u: 'Playlist M3U (URL)', m3ufile: 'Playlist M3U (file)', xtream: 'Xtream API', webdav: 'NAS - WebDAV', http: 'NAS - Indice HTTP', local: 'Cartella del computer / NAS montato', dlna: 'Server DLNA/UPnP' };
+export const TYPE_LABEL = { m3u: tr('Playlist M3U (URL)'), m3ufile: tr('Playlist M3U (file)'), xtream: 'Xtream API', webdav: 'NAS - WebDAV', http: tr('NAS - Indice HTTP'), local: tr('Cartella del computer / NAS montato'), dlna: 'Server DLNA/UPnP' };

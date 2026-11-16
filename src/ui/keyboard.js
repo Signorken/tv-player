@@ -4,6 +4,7 @@ import * as nav from '../core/nav.js';
 import * as Modal from './modal.js';
 import { Remote } from '../core/remote.js';
 import { platform } from '../core/platform.js';
+import { tr } from '../core/i18n.js';
 
 const L1 = ['1234567890', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 const L2 = ['!@#$%^&*()', '-_=+/\\|:;', '"\'?,.<>~`', '[]{}()@#_'];
@@ -62,11 +63,11 @@ export function promptText(o) {
     const D = platform.isDesktop;
     const pasteBtn = async () => { let t = ''; try { t = window.desktop && window.desktop.readClipboard ? await window.desktop.readClipboard() : await navigator.clipboard.readText(); } catch (e) { /* */ } if (t) { input.value = t.trim(); input.focus(); } };
     const acts = h('div', { class: 'kb-acts' },
-      h('div', { class: 'btn', 'data-f': 1, text: 'Annulla', onclick: () => finish(null) }),
-      D ? h('div', { class: 'btn', 'data-f': 1, text: 'Incolla', onclick: pasteBtn }) : null,
-      D ? null : h('div', { class: 'btn', 'data-f': 1, text: 'Cancella tutto', onclick: () => setVal('') }),
-      D ? null : h('div', { class: 'btn', 'data-f': 1, text: 'Tastiera di sistema', onclick: () => sysKeyboard() }),
-      o.password ? h('div', { class: 'btn', 'data-f': 1, text: 'Mostra/nascondi', onclick: () => { shown = !shown; input.type = shown ? 'text' : 'password'; } }) : null,
+      h('div', { class: 'btn', 'data-f': 1, text: tr('Annulla'), onclick: () => finish(null) }),
+      D ? h('div', { class: 'btn', 'data-f': 1, text: tr('Incolla'), onclick: pasteBtn }) : null,
+      D ? null : h('div', { class: 'btn', 'data-f': 1, text: tr('Cancella tutto'), onclick: () => setVal('') }),
+      D ? null : h('div', { class: 'btn', 'data-f': 1, text: tr('Tastiera di sistema'), onclick: () => sysKeyboard() }),
+      o.password ? h('div', { class: 'btn', 'data-f': 1, text: tr('Mostra/nascondi'), onclick: () => { shown = !shown; input.type = shown ? 'text' : 'password'; } }) : null,
       h('div', { class: 'btn primary', 'data-f': 1, text: 'OK', onclick: () => finish(input.value) }));
 
     function sysKeyboard() {
@@ -77,7 +78,7 @@ export function promptText(o) {
     }
 
     m = Modal.open([
-      h('div', { class: 'mtitle', text: o.title || 'Inserisci testo' }),
+      h('div', { class: 'mtitle', text: o.title || tr('Inserisci testo') }),
       input, hint, D ? null : keysBox, acts,
       D ? null : h('div', { class: 'kb-tip', text: 'Puoi anche scrivere con una tastiera Bluetooth/USB o dal telefono (Impostazioni > Telefono remoto).' })
     ], { cls: 'kb' + (D ? ' kbd-desk' : ''), focus: null });

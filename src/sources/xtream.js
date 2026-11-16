@@ -2,6 +2,7 @@
 import { fetchJSON } from '../core/net.js';
 import { cached, settings } from '../core/store.js';
 import { b64utf8 } from '../core/util.js';
+import { tr } from '../core/i18n.js';
 
 function arr(x) { return Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.keys(x).map(k => x[k]) : []); }
 
@@ -30,12 +31,12 @@ export class XtreamSource {
 
   async init() {
     const info = await this.api();
-    if (!info || !info.user_info) throw new Error('Risposta Xtream non valida');
-    if (info.user_info.auth === 0) throw new Error('Credenziali non valide');
+    if (!info || !info.user_info) throw new Error(tr('Risposta Xtream non valida'));
+    if (info.user_info.auth === 0) throw new Error(tr('Credenziali non valide'));
     this.info = info;
     const u = info.user_info;
-    if (u.status && /disabled|banned|expired/i.test(u.status)) throw new Error('Account ' + u.status.toLowerCase() + ': contatta il provider');
-    if (u.exp_date && u.exp_date !== 'null' && u.exp_date * 1000 < Date.now()) throw new Error('Abbonamento scaduto il ' + new Date(u.exp_date * 1000).toLocaleDateString());
+    if (u.status && /disabled|banned|expired/i.test(u.status)) throw new Error(tr('Account ') + u.status.toLowerCase() + tr(': contatta il provider'));
+    if (u.exp_date && u.exp_date !== 'null' && u.exp_date * 1000 < Date.now()) throw new Error(tr('Abbonamento scaduto il ') + new Date(u.exp_date * 1000).toLocaleDateString());
     const max = +u.max_connections || 0, act = +u.active_cons || 0;
     this.limit = max && act >= max ? { active: act, max: max } : null; // connessioni esaurite: il provider potrebbe rifiutare nuovi flussi
     return this;
@@ -43,11 +44,11 @@ export class XtreamSource {
 
   async test() {
     const i = await this.api();
-    if (!i || !i.user_info) throw new Error('Server non Xtream');
+    if (!i || !i.user_info) throw new Error(tr('Server non Xtream'));
     const u = i.user_info;
-    if (u.auth === 0) throw new Error('Credenziali non valide');
+    if (u.auth === 0) throw new Error(tr('Credenziali non valide'));
     const exp = u.exp_date && u.exp_date !== 'null' ? new Date(u.exp_date * 1000).toLocaleDateString() : 'illimitata';
-    return 'Account ' + (u.status || 'ok') + ', scade: ' + exp + ', connessioni: ' + (u.active_cons || 0) + '/' + (u.max_connections || '?');
+    return tr('Account ') + (u.status || 'ok') + tr(', scade: ') + exp + tr(', connessioni: ') + (u.active_cons || 0) + '/' + (u.max_connections || '?');
   }
 
   // ---- live
@@ -57,7 +58,7 @@ export class XtreamSource {
       const cm = {}; const cc = arr(cats).map(c => { cm[c.category_id] = c.category_name; return { id: c.category_name, name: c.category_name, count: 0 }; });
       const cnt = {};
       const items = arr(streams).map((s, i) => {
-        const g = cm[s.category_id] || 'Altro'; cnt[g] = (cnt[g] || 0) + 1;
+        const g = cm[s.category_id] || tr('Altro'); cnt[g] = (cnt[g] || 0) + 1;
         return { id: String(s.stream_id), name: s.name || '', logo: s.stream_icon || '', group: g, num: String(s.num || i + 1), epgId: s.epg_channel_id || '', arch: s.tv_archive ? 1 : 0 };
       });
       cc.forEach(c => c.count = cnt[c.name] || 0);
@@ -113,7 +114,7 @@ export class XtreamSource {
     for (const sn in eps) {
       seasons.push({
         n: +sn, episodes: arr(eps[sn]).map(e => ({
-          id: String(e.id), num: +e.episode_num, title: e.title || ('Episodio ' + e.episode_num), ext: e.container_extension || 'mp4',
+          id: String(e.id), num: +e.episode_num, title: e.title || (tr('Episodio ') + e.episode_num), ext: e.container_extension || 'mp4',
           plot: (e.info && e.info.plot) || '', duration: (e.info && e.info.duration_secs) || 0, img: (e.info && e.info.movie_image) || ''
         }))
       });

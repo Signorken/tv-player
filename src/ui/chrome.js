@@ -1,6 +1,7 @@
 import { h } from '../core/util.js';
 import { icon } from './icons.js';
 import { router } from '../core/router.js';
+import { tr } from '../core/i18n.js';
 
 // Barra superiore: titolo a sinistra, pulsanti a destra. buttons: [{label, icon, onclick}]
 export function header(title, sub, buttons) {
@@ -10,14 +11,14 @@ export function header(title, sub, buttons) {
     right.appendChild(e); return e;
   });
   const t = h('div', { class: 'hd-t', text: title }), s = h('div', { class: 'hd-s', text: sub || '' });
-  const bk = h('div', { class: 'backbtn', title: 'Indietro', onclick: () => router.back() }, icon('back'));
+  const bk = h('div', { class: 'backbtn', title: tr('Indietro'), onclick: () => router.back() }, icon('back'));
   const el = h('div', { class: 'hd' }, h('div', { class: 'hd-l' }, bk, h('div', { class: 'hd-lt' }, t, s)), right);
   return { el: el, buttons: btns, setTitle: x => { t.textContent = x; }, setSub: x => { s.textContent = x || ''; } };
 }
 
 export function hints(list) {
   // list: [['red','Preferito'], ['green','Cerca'], ['ok','Guarda']]
-  return h('div', { class: 'hints' }, list.map(x => h('div', { class: 'hint' }, h('span', { class: 'hk ' + x[0], text: ({ red: '', green: '', yellow: '', blue: '', ok: 'OK', menu: 'OK lungo', back: '↩' })[x[0]] }), h('span', { text: x[1] }))));
+  return h('div', { class: 'hints' }, list.map(x => h('div', { class: 'hint' }, h('span', { class: 'hk ' + x[0], text: ({ red: '', green: '', yellow: '', blue: '', ok: 'OK', menu: tr('OK lungo'), back: '↩' })[x[0]] }), h('span', { text: x[1] }))));
 }
 
 export function remPx() { return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16; }

@@ -27,8 +27,9 @@ export const router = {
     const p = this.current;
     p.el.style.display = '';
     nav.setScope(p.el);
-    if (p.onShow) p.onShow(false);
-    if (p._lf && document.body.contains(p._lf)) nav.focus(p._lf, true);
+    // onShow può restituire true se ha già scelto lui dove mettere il cursore
+    const own = p.onShow ? p.onShow(false) === true : false;
+    if (!own && p._lf && document.body.contains(p._lf)) nav.focus(p._lf, true);
     this._chg();
     return true;
   },
@@ -42,8 +43,9 @@ export const router = {
     const p = this.current;
     p.el.style.display = '';
     nav.setScope(p.el);
-    if (p.onShow) p.onShow(false);
-    if (p._lf && document.body.contains(p._lf)) nav.focus(p._lf, true);
+    // onShow può restituire true se ha già scelto lui dove mettere il cursore
+    const own = p.onShow ? p.onShow(false) === true : false;
+    if (!own && p._lf && document.body.contains(p._lf)) nav.focus(p._lf, true);
     this._chg();
     return true;
   },

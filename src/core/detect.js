@@ -1,7 +1,8 @@
 // Riconoscimento intelligente di ciò che l'utente incolla/trascina: niente più campi da compilare a mano.
 import { request } from './net.js';
+import { tr } from './i18n.js';
 
-export function hostName(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return 'Sorgente'; } }
+export function hostName(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return tr('Sorgente'); } }
 
 // Estrae le credenziali Xtream da get.php?username=..&password=.. / player_api.php / URL /live|movie|series/u/p/id
 export function parseXtream(u) {
@@ -39,7 +40,7 @@ export async function probeM3U(url) {
 export async function detect(text) {
   text = String(text || '').trim().replace(/^﻿/, '');
   if (!text) return null;
-  if (/^#EXTM3U/i.test(text)) return { type: 'm3ufile', text: text, name: 'Playlist incollata' };
+  if (/^#EXTM3U/i.test(text)) return { type: 'm3ufile', text: text, name: tr('Playlist incollata') };
   const m = /(webdavs?|davs?|https?):\/\/[^\s"'<>]+/i.exec(text);
   if (!m) return null;
   let url = m[0].replace(/[),.;]+$/, '');

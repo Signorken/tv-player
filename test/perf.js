@@ -5,7 +5,7 @@ const puppeteer = require('puppeteer-core');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const RATE = +process.argv[2] || 12, ANIM = process.argv[3] !== 'noanim';
 (async () => {
-  const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'], defaultViewport: { width: 1920, height: 1080 } });
+  const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', env: Object.assign({}, process.env, { LANG: 'it_IT.UTF-8', LANGUAGE: 'it' }), args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'], defaultViewport: { width: 1920, height: 1080 } });
   const p = await b.newPage(); const c = await p.target().createCDPSession();
   await p.goto('http://localhost:8787/app/'); await sleep(300);
   await p.evaluate(a => { localStorage.clear(); }, ANIM);

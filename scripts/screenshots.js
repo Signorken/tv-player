@@ -4,7 +4,7 @@ const path = require('path'), fs = require('fs');
 const OUT = path.join(__dirname, '..', 'docs', 'screenshots'); fs.mkdirSync(OUT, { recursive: true });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
-  const b = await puppeteer.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'], defaultViewport: { width: 1920, height: 1080 } });
+  const b = await puppeteer.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', headless: 'new', env: Object.assign({}, process.env, { LANG: 'it_IT.UTF-8', LANGUAGE: 'it' }), args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'], defaultViewport: { width: 1920, height: 1080 } });
   const p = await b.newPage();
   const key = async (k, n) => { for (let i = 0; i < (n || 1); i++) { await p.keyboard.press(k); await sleep(160); } };
   const wait = (fn, ms) => p.waitForFunction(fn, { timeout: ms || 15000, polling: 150 }).catch(() => null);

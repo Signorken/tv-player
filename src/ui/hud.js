@@ -2,6 +2,7 @@
 // Attivo solo se richiesto: quando è spento non gira nulla.
 import { Perf } from '../core/perf.js';
 import { settings } from '../core/store.js';
+import { tr } from '../core/i18n.js';
 
 let el = null, on = false, frames = 0, last = 0, fps = 0, keys = [], raf = 0, tmr = 0;
 function loop(t) { frames++; raf = requestAnimationFrame(loop); }
@@ -23,7 +24,7 @@ function paint() {
       const name = v.isNative ? v.backendName : a ? ({ native: 'nativo', hls: 'hls.js', mpegts: 'mpegts.js', ts: 'mpegts.js', ff: 'convertitore' }[a.eng] || a.eng) : '-';
       const q = v.getVideoPlaybackQuality ? v.getVideoPlaybackQuality() : null;
       const lost = q ? q.droppedVideoFrames : (v.webkitDroppedFrameCount || 0), tot = q ? q.totalVideoFrames : (v.webkitDecodedFrameCount || 0);
-      vid = ' · video ' + name + ' ' + (v.videoHeight ? v.videoHeight + 'p' : '') + ' persi ' + lost + '/' + tot;
+      vid = ' · video ' + name + ' ' + (v.videoHeight ? v.videoHeight + 'p' : '') + tr(' persi ') + lost + '/' + tot;
     }
   } catch (e) { /* */ }
   el.textContent = fps + ' fps · tasti ' + med + '/' + worst + ' ms · ' + (Perf.mode(settings().perf) === 'lite' ? 'leggero' : 'qualità') +

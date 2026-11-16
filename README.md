@@ -31,11 +31,13 @@ Gira su **Android TV · Google TV · Fire OS · Samsung Tizen · LG webOS · His
 | Area | Funzioni |
 |---|---|
 | **TV in diretta** | Categorie (anche una categoria **Sport** automatica), loghi e numeri, preferiti, ricerca, zapping con ▲▼ e con i numeri. Guida programmi caricata **solo a canale aperto** (la lista resta leggera) |
-| **On Demand** | Film e serie **insieme** (filtro *Tutto*) o separati (*Film*, *Serie TV*, *Sport*). **Raccolte**: Tutti, Preferiti, **La mia lista** (da guardare più tardi, separata dai preferiti), Continua a guardare. Locandine, scheda con trama, voto, cast e durata; stagioni ed episodi; ripresa dal punto in cui eri |
-| **Home** | *Riprendi da dove eri rimasto*, **Continua a guardare** (locandine verticali), **Canali visti di recente**, tessera **In riproduzione** quando c'è un video nella finestrella. Ogni riga si toglie con l'ultima tessera *Rimuovi riga* |
+| **On Demand** | Film e serie **insieme** (filtro *Tutto*) o separati (*Film*, *Serie TV*, *Sport*). **Raccolte**: Tutti, Preferiti, **La mia lista** (da guardare più tardi, separata dai preferiti), Continua a guardare. **Ordina** per titolo (A-Z, Z-A) o per valutazione, in tutte le categorie. Etichette colorate **FILM** / **SERIE TV** quando sono mescolati. Locandine, scheda con trama, voto, cast e durata; stagioni ed episodi; ripresa dal punto in cui eri |
+| **Home** | Barra **In riproduzione** quando c'è un video nella finestrella (OK = schermo intero), riga **La mia lista** della sorgente scelta in alto (in Aspetto A al posto dei pulsanti, in Aspetto B sotto), *Riprendi da dove eri rimasto*, **Continua a guardare** (locandine verticali), **Canali visti di recente**. Ogni riga si toglie con l'ultima tessera *Rimuovi riga* |
 | **Player** | Pensato per telecomandi **senza numeri né tasti colorati**: pannelli laterali per canali/episodi e per le opzioni (audio, sottotitoli, preferiti, formato, flusso alternativo). Lingua audio ricordata. **Finestrella** per continuare a guardare mentre navighi |
 | **Sorgenti** | M3U/M3U8 (URL o file), Xtream Codes (live, film, serie, guida, stato account e connessioni), **NAS**: WebDAV, indice HTTP, cartelle del computer, condivisioni Windows/SMB (app per computer), DLNA (app per computer). Legge locandine e trame dei file Kodi (`.nfo`, `-poster.jpg`) |
+| **Lettore video** | Su Android/Google TV il video passa per **ExoPlayer** e su Samsung per **AVPlay**: il decoder della TV disegna il video direttamente sullo schermo, sotto l'interfaccia (meno fotogrammi persi sulle chiavette). Se il lettore nativo non riesce si passa da solo al lettore web. Si può scegliere in *Impostazioni › Riproduzione › Lettore video* |
 | **Formati** | HLS (nativo o hls.js), MPEG-TS (mpegts.js), MP4/MKV nativi; sull'app per computer anche un **convertitore ffmpeg** per HEVC, AC3/DTS e server che non permettono di scorrere |
+| **Lingua** | **Italiano e inglese**: in automatico l'inglese se il dispositivo non è in italiano; si cambia in *Impostazioni › Aspetto › Lingua* |
 | **Aspetto** | Due disposizioni (barra laterale **A** o pulsanti **B**), orologio 12/24 h, 8 sfondi astratti, dimensione automatica rispetto allo schermo + zoom manuale, suoni di navigazione, transizioni leggere, **profilo prestazioni automatico** e indicatore di prestazioni |
 | **Input** | Telecomando, tastiera Bluetooth/USB, tastiera a schermo (Shift e blocco maiuscole), tastiera di sistema della TV, **smartphone** come tastiera e telecomando |
 
@@ -76,6 +78,8 @@ Tutti i pacchetti si scaricano dalla pagina **[Releases](https://github.com/Sign
    - copiandolo su una chiavetta USB e aprendolo con un file manager.
 3. MAXENTA compare tra le app del launcher.
 
+> **Dalla 2.5 l'APK contiene il lettore ExoPlayer** (codice nativo): l'aggiornamento automatico dell'interfaccia non basta, va installato una volta l'APK 2.5 (sopra quello vecchio, i dati restano).
+>
 > **Dalla 2.4 il pacchetto si chiama `com.maxenta.app`** (prima `com.example.tvplayer`): per Android è un'app nuova. Disinstalla la vecchia versione e installa la nuova; sorgenti e preferiti vanno reinseriti una volta.
 >
 > Fire TV con **Vega OS** (Fire TV Stick 4K Select, Stick HD 2026) non esegue APK. I Fire TV più vecchi (Fire OS 5) non sono supportati.
@@ -143,7 +147,7 @@ Il telecomando di riferimento è quello **moderno senza tasti numerici né color
 | **▶‖** | pausa / riprendi; con la finestrella: schermo intero | idem |
 
 ### Finestrella
-- Si raggiunge dalla voce **In riproduzione** della barra laterale, dalla tessera in cima alla Home, oppure andando Giù dal fondo della pagina.
+- Si raggiunge dalla voce **In riproduzione** della barra laterale, dalla barra in cima alla Home (tornando alla Home il cursore è già lì), oppure andando Giù dal fondo della pagina.
 - Selezionata mostra due pulsanti: **Schermo intero** e **Chiudi** (Sinistra/Destra per scegliere).
 - *Impostazioni › Riproduzione › Finestrella*: sempre, solo canali TV, solo film e serie, mai.
 
@@ -158,11 +162,13 @@ Sul computer: frecce, Invio, Esc, F1–F4 = colori, PagSu/PagGiù = CH±, **Ctrl
 | Categoria | Voci |
 |---|---|
 | **Sorgenti** | aggiungi, modifica, aggiorna elenco, elimina, sorgente attiva |
-| **Riproduzione** | formato dirette Xtream (HLS/TS), lingua audio preferita, **finestrella**, anteprima video scorrendo i canali, buffer, convertitore (computer) |
-| **Aspetto** | **disposizione A/B**, orologio 12/24 h, **schermata all'avvio** (Home, TV, On Demand, Sport, Preferiti, ultimo canale), sfondo, **dimensione interfaccia** (automatica 100%, 70–150%), **suoni di navigazione**, **prestazioni** (automatiche / massima qualità / leggere), **indicatore prestazioni** |
+| **Riproduzione** | **lettore video** (nativo ExoPlayer/AVPlay o web), formato dirette Xtream (HLS/TS), lingua audio preferita, **finestrella**, anteprima video scorrendo i canali, buffer, convertitore (computer) |
+| **Aspetto** | **lingua** (automatica, italiano, inglese), **disposizione A/B**, orologio 12/24 h, **schermata all'avvio** (Home, TV, On Demand, Sport, Preferiti, ultimo canale), sfondo, **dimensione interfaccia** (automatica 100%, 70–150%), **suoni di navigazione**, **prestazioni** (automatiche / massima qualità / leggere), **indicatore prestazioni** |
 | **Rete e telefono** | telefono come tastiera/telecomando (QR), server companion, identità del lettore (computer) |
 | **Guida e dati** | finestra della guida programmi (6–48 h), svuota cache e guida |
 | **Informazioni** | versione, verifica aggiornamenti, piattaforma e comandi, crediti |
+
+In ogni categoria le voci sono in ordine alfabetico.
 
 ---
 
@@ -227,7 +233,7 @@ Compatibilità: il bundle è compilato per **Chromium 53+** (webOS 4, Tizen 4): 
 
 ## Cosa è verificato
 
-- **Prove automatiche** (`npm test`, oltre 120 controlli) in Chrome guidando l'app **solo con i tasti**, contro server finti: sorgenti M3U e Xtream (3.000 canali), guida, film, serie, ricerca, preferiti, La mia lista, ripresa, finestrella e sua chiusura, barra laterale, Aspetto B, tastiera, OK e Indietro lunghi, pannelli del player, NAS WebDAV, telefono come telecomando, dimensione automatica.
+- **Prove automatiche** (`npm test`, oltre 120 controlli) in Chrome guidando l'app **solo con i tasti**, contro server finti: sorgenti M3U e Xtream (3.000 canali), guida, film, serie, ricerca, preferiti, La mia lista, ripresa, finestrella e sua chiusura, barra laterale, Aspetto B, tastiera, OK e Indietro lunghi, pannelli del player, NAS WebDAV, telefono come telecomando, dimensione automatica, lettore nativo (con un lettore finto), ordinamento On Demand, La mia lista in Home, lingua inglese.
 - **App per computer** provata con Electron reale (`test/desktop*.js`): incolla link, cartelle, NAS, convertitore, tracce audio multiple.
 - **Guscio delle TV** (`test/shell-test.js`): aggiornamento, funzionamento senza rete, scarto di una versione difettosa.
 - **Provato dall'autore** su Samsung QN90C (Tizen), Thomson Streaming Stick 140 (Google TV), portatile Linux e Mac.
@@ -239,6 +245,7 @@ Compatibilità: il bundle è compilato per **Chromium 53+** (webOS 4, Tizen 4): 
 
 Dispositivo di riferimento **minimo**: **Thomson Streaming Stick 140** (Amlogic S905Y4, 4× Cortex-A35 a 2 GHz, GPU Mali-G31 MP2, 2 GB di RAM).
 
+- **Video nativo**: su Android/Google TV (ExoPlayer) e Samsung (AVPlay) il video non passa dalla pagina web ma va direttamente al decoder e allo schermo; sulla Thomson era la causa principale dei fotogrammi persi in 1080p. L'indicatore prestazioni mostra quale lettore è in uso e i fotogrammi persi.
 - **Profilo automatico**: all'avvio un breve test misura la CPU; sui televisori e sulle chiavette con ≤2 GB di RAM o CPU lenta si usa il profilo **leggero** (nessuna animazione, niente anteprime video in lista). Si può forzare in *Impostazioni › Aspetto › Prestazioni*.
 - **Animazioni solo "economiche"**: si animano opacità e spostamento di blocchi interi, mai colori, ingrandimenti o larghezze (che costringono la GPU a ridisegnare a ogni fotogramma).
 - **Liste virtualizzate** con scorrimento ai bordi e riuso delle righe: scorrendo si riempie solo la riga nuova e si ridisegnano poche righe.
@@ -251,7 +258,7 @@ Dispositivo di riferimento **minimo**: **Thomson Streaming Stick 140** (Amlogic 
 
 - **Codec**: sulle TV conta il decoder del televisore (HEVC, AC3/E-AC3, MKV dipendono dal modello). Il convertitore esiste solo sull'app per computer.
 - **SMB e DLNA** sulle TV non sono raggiungibili da un'app web: usa WebDAV/HTTP sul NAS, oppure l'app per computer.
-- Niente DRM, registrazioni, catch-up; interfaccia solo in italiano.
+- Niente DRM, registrazioni, catch-up. Interfaccia in italiano e inglese.
 - macOS e Samsung richiedono certificati a pagamento o legati all'account per installazione e aggiornamento senza passaggi manuali.
 
 ---

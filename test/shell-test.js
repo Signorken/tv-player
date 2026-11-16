@@ -32,7 +32,7 @@ const state = { online: true };
     cp.execSync('node scripts/shell.js ' + TMP + '/tv', { cwd: ROOT, env: Object.assign({}, process.env, { UPDATE_BASE: 'http://localhost:9201/' }) });
   } finally { setVer(orig); }
   const s1 = serve(TMP + '/tv', 9200, false), s2 = serve(TMP + '/upd', 9201, true);
-  const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox'], defaultViewport: { width: 1280, height: 720 } });
+  const b = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', env: Object.assign({}, process.env, { LANG: 'it_IT.UTF-8', LANGUAGE: 'it' }), args: ['--no-sandbox'], defaultViewport: { width: 1280, height: 720 } });
   const p = await b.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   const info = () => p.evaluate(() => ({ shell: window.__shell, app: !!window.__app, ver: (document.getElementById('ver') || {}).textContent }));

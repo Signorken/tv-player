@@ -3,13 +3,14 @@ import { createSource } from '../sources/index.js';
 import * as store from './store.js';
 import { Epg } from './epg.js';
 import * as Modal from '../ui/modal.js';
+import { tr } from './i18n.js';
 
 const ready = {};
 let ld = null;
 
 export function showLoading(txt, sub) {
   ld = ld || document.getElementById('loading');
-  ld.querySelector('.l1').textContent = txt || 'Caricamento…';
+  ld.querySelector('.l1').textContent = txt || tr('Caricamento…');
   ld.querySelector('.l2').textContent = sub || '';
   ld.classList.add('show');
 }
@@ -19,11 +20,11 @@ export function hideLoading() { ld = ld || document.getElementById('loading'); l
 export async function openSource(cfg, force) {
   const s = createSource(cfg);
   if (ready[cfg.id] && !force) return s;
-  showLoading('Caricamento “' + cfg.name + '”…', 'La prima volta può richiedere qualche secondo');
+  showLoading(tr('Caricamento “') + cfg.name + '”…', tr('La prima volta può richiedere qualche secondo'));
   try {
     if (s.init) await s.init(p => setLoading(Math.round(p * 100) + '%'), force);
     ready[cfg.id] = true;
-    if (s.limit) setTimeout(() => Modal.toast('Connessioni in uso ' + s.limit.active + '/' + s.limit.max + ': se la playlist è attiva su un altro dispositivo il provider potrebbe rifiutare i flussi', 9000), 300);
+    if (s.limit) setTimeout(() => Modal.toast(tr('Connessioni in uso ') + s.limit.active + '/' + s.limit.max + tr(': se la playlist è attiva su un altro dispositivo il provider potrebbe rifiutare i flussi'), 9000), 300);
     return s;
   } finally { hideLoading(); }
 }
@@ -77,7 +78,7 @@ export function fileOpts(src, files, index) {
   return {
     kind: 'vod', list: files, index: index,
     resolve: f => ({
-      url: src.fileUrl(f), title: f.name.replace(/\.[^.]+$/, ''), logo: f.poster || '', sub: 'Dalla rete locale',
+      url: src.fileUrl(f), title: f.name.replace(/\.[^.]+$/, ''), logo: f.poster || '', sub: tr('Dalla rete locale'),
       key: store.favKey(src.id, 'file', f.path), meta: { kind: 'file', src: src.id, id: f.path, url: f.url || '' }
     })
   };

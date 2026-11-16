@@ -14,6 +14,9 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(MaxPlayerPlugin.class); // lettore ExoPlayer (video sotto la pagina)
         super.onCreate(savedInstanceState);
+        // la dimensione del testo la decide l'app (Aspetto > Dimensione testo): ignora lo zoom dei caratteri di sistema,
+        // che ingrandiva le scritte senza ingrandire i riquadri (testi dei tasti fuori dai tondi)
+        try { getBridge().getWebView().getSettings().setTextZoom(100); } catch (Exception e) { }
     }
 
     private final Handler h = new Handler(Looper.getMainLooper());

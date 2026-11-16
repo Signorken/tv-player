@@ -5,7 +5,7 @@ const fs = require('fs'); const OUT = process.env.OUT3 || '/tmp/shots3'; fs.mkdi
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS ' : 'FAIL ') + n + (x ? '  — ' + x : '')); };
 (async () => {
-  const browser = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'], defaultViewport: { width: 1920, height: 1080 } });
+  const browser = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome', headless: 'new', env: Object.assign({}, process.env, { LANG: 'it_IT.UTF-8', LANGUAGE: 'it' }), args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'], defaultViewport: { width: 1920, height: 1080 } });
   const page = await browser.newPage();
   const errs = []; page.on('pageerror', e => errs.push(e.message));
   const key = async (k, n) => { for (let i = 0; i < (n || 1); i++) { await page.keyboard.press(k); await sleep(140); } };
@@ -168,13 +168,13 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
   const snd1 = await page.evaluate(() => window.__snd.move);
   ok('suoni: spostarsi tra gli elementi produce il suono di navigazione', snd1 >= 2, 'suoni=' + snd1);
   await page.evaluate(() => { const c = window.__app.router.current; c.setZone('cats'); c.cats.select(0); }); await sleep(200);
-  ok('On Demand: filtri Tutto / Film / Serie TV / Sport e Raccolte nella colonna, niente schede in alto', await page.evaluate(() => { const c = window.__app.router.current; return c.catList.slice(0, 4).map(x => x.name).join('|') === 'Tutto|Film|Serie TV|Sport' && c.catList[4].kind === 'group' && !document.querySelector('.hd .tab'); }));
+  ok('On Demand: filtri Tutto / Film / Serie TV / Sport e Raccolte nella colonna, niente schede in alto', await page.evaluate(() => { const c = window.__app.router.current; return c.catList.slice(0, 4).map(x => x.name).join('|') === 'Tutto|Film|Serie TV|Sport' && c.catList[4].kind === 'sort' && c.catList[5].kind === 'group' && !document.querySelector('.hd .tab'); }));
   await key('ArrowDown', 2); await key('Enter');
   ok('filtro Serie TV: stessa schermata, elenco delle serie', await wait(() => window.__app.router.current.mode === 'series' && window.__app.router.current.items && window.__app.router.current.items.length > 0, 15000) && await page.evaluate(() => window.__app.router.depth === 2 && /● Serie TV/.test(document.querySelector('.crow.on').textContent)));
   const coll0 = await page.evaluate(() => window.__app.router.current.collOpen);
-  await page.evaluate(() => { const c = window.__app.router.current; c.cats.select(4); }); await key('Enter'); await sleep(300);
+  await page.evaluate(() => { const c = window.__app.router.current; c.cats.select(5); }); await key('Enter'); await sleep(300);
   ok('Raccolte si apre e si chiude con OK', await page.evaluate(o => { const c = window.__app.router.current; return c.collOpen === !o && c.catList.some(x => x.id === '__list') === !o; }, coll0));
-  await page.evaluate(() => { const c = window.__app.router.current; if (!c.collOpen) { c.cats.select(4); c.catOk(c.catList[4]); } }); await sleep(200);
+  await page.evaluate(() => { const c = window.__app.router.current; if (!c.collOpen) { c.cats.select(5); c.catOk(c.catList[5]); } }); await sleep(200);
   await page.evaluate(() => { const c = window.__app.router.current; c.cats.select(c.catList.findIndex(x => !x.kind)); c.setZone('grid'); }); await sleep(800);
   await page.evaluate(() => { const c = window.__app.router.current; const it = c.grid.current(); const k = window.__app.store.favKey(c.src.id, 'series', it.id); window.__app.store.toggleList(k, { kind: 'series', src: c.src.id, id: it.id, name: it.name, item: it }); window.__lname = it.name; });
   await page.evaluate(() => { const c = window.__app.router.current; c.catOk(c.catList.find(x => x.id === '__list')); }); await sleep(600);
@@ -211,8 +211,9 @@ const res = []; const ok = (n, c, x) => { res.push(!!c); console.log((c ? 'PASS 
     await page.evaluate(() => window.__app.router.home()); await sleep(500);
   };
   await openMini();
-  ok('Home: tessera "In riproduzione" con Schermo intero e Chiudi', await page.evaluate(() => { const b = document.querySelector('.nowbox'); return b && b.style.display !== 'none' && b.querySelectorAll('.btn').length === 2; }));
+  ok('Home: barra "In riproduzione" selezionabile (OK = schermo intero) e Chiudi', await page.evaluate(() => { const b = document.querySelector('.nowbox'); return b && b.style.display !== 'none' && b.querySelectorAll('.nowmain[data-f]').length === 1 && b.querySelectorAll('.btn').length === 1; }));
   await shot('10-home-in-riproduzione');
+  ok('Home: il cursore va sulla barra "In riproduzione" e Su/Giù la raggiungono', await page.evaluate(() => document.querySelector('.nowmain.focused') !== null) && await (async () => { await key('ArrowDown'); await key('ArrowUp'); return page.evaluate(() => document.querySelector('.nowmain.focused') !== null); })());
   await key('Escape'); await sleep(500);
   ok('Indietro dalla Home chiude la finestrella (senza chiedere di uscire)', !(await page.$('.screen.player')) && !(await page.$('.modal')));
   await openMini();

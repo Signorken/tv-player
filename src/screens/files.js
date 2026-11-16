@@ -10,12 +10,13 @@ import { showLoading, hideLoading, fileOpts } from '../core/session.js';
 import { PlayerScreen, Mini } from './player.js';
 import { Rail } from '../ui/shell.js';
 import { uid } from '../core/util.js';
+import { tr } from '../core/i18n.js';
 
 export class FilesScreen {
   constructor(src) {
     this.railId = 'files';
     this.src = src; this.path = src.rootPath; this.entries = []; this.trail = []; this.names = [];
-    this.hd = header(src.name, '', [{ icon: 'refresh', label: 'Aggiorna', onclick: () => this.load() }]);
+    this.hd = header(src.name, '', [{ icon: 'refresh', label: tr('Aggiorna'), onclick: () => this.load() }]);
     this.list = new VList({
       rowH: () => Math.round(remPx() * 3.0),
       build: () => { const ic = h('span', { class: 'fic' }); const r = h('div', { class: 'row frow' }, ic, h('span', { class: 'fn' }), h('span', { class: 'fs' })); r._ic = ic; r._n = r.querySelector('.fn'); r._s = r.querySelector('.fs'); r._k = null; return r; },
@@ -32,24 +33,24 @@ export class FilesScreen {
     this.iPoster = img('ipost'); this.iT = h('div', { class: 'it' }); this.iM = h('div', { class: 'im' }); this.iP = h('div', { class: 'ip' });
     this.info = h('div', { class: 'pane info' }, h('div', { class: 'ipbox' }, this.iPoster), this.iT, this.iM, this.iP);
     this.crumb = h('div', { class: 'crumb' });
-    this.el = h('div', { class: 'screen files' }, this.hd.el, this.crumb, h('div', { class: 'panes' }, h('div', { class: 'pane flist' }, this.list.el), this.info), hints([['ok', 'Apri / Riproduci'], ['menu', 'Opzioni'], ['back', 'Su di una cartella']]));
+    this.el = h('div', { class: 'screen files' }, this.hd.el, this.crumb, h('div', { class: 'panes' }, h('div', { class: 'pane flist' }, this.list.el), this.info), hints([['ok', tr('Apri / Riproduci')], ['menu', tr('Opzioni')], ['back', tr('Su di una cartella')]]));
     this.upd = debounce(e => this.fetchNfo(e), 400);
   }
   onShow(first) { this.list.setActive(true); this.list.relayout(); if (first) this.load(); }
   destroy() { this.upd.cancel(); }
 
   async load(keepSel) {
-    showLoading('Leggo la cartella…', this.names.join(' › '));
+    showLoading(tr('Leggo la cartella…'), this.names.join(' › '));
     try {
       this.entries = await this.src.list(this.path);
       hideLoading();
     } catch (e) {
       hideLoading();
-      Modal.toast('Errore: ' + e.message + ' — se è un problema CORS imposta il server companion nelle Impostazioni', 7000);
+      Modal.toast(tr('Errore: ') + e.message + tr(' — se è un problema CORS imposta il server companion nelle Impostazioni'), 7000);
       this.entries = [];
     }
     const nv = this.entries.filter(x => x.kind === 'video').length, nd = this.entries.filter(x => x.dir).length;
-    this.crumb.textContent = [this.src.name].concat(this.names).join('  ›  ') + '   —   ' + (nv ? nv + (nv === 1 ? ' video' : ' video') : 'nessun video') + (nd ? ', ' + nd + (nd === 1 ? ' cartella' : ' cartelle') : '');
+    this.crumb.textContent = [this.src.name].concat(this.names).join('  ›  ') + '   —   ' + (nv ? nv + (nv === 1 ? ' video' : ' video') : tr('nessun video')) + (nd ? ', ' + nd + (nd === 1 ? tr(' cartella') : tr(' cartelle')) : '');
     this.list.setItems(this.entries, !!keepSel);
     this.onEntry(this.list.current());
   }
@@ -58,7 +59,7 @@ export class FilesScreen {
     if (!e) { this.iT.textContent = ''; this.iM.textContent = ''; this.iP.textContent = ''; setImg(this.iPoster, ''); return; }
     setImg(this.iPoster, e.poster || '');
     this.iT.textContent = e.name.replace(/\.[^.]+$/, e.dir ? '$&' : '');
-    this.iM.textContent = e.dir ? 'Cartella' : [fmtSize(e.size), e.date].filter(Boolean).join('  •  ');
+    this.iM.textContent = e.dir ? tr('Cartella') : [fmtSize(e.size), e.date].filter(Boolean).join('  •  ');
     this.iP.textContent = e.plot || '';
     if (e.nfo) this.upd(e);
   }
@@ -82,24 +83,24 @@ export class FilesScreen {
   async menu(e) {
     if (!e) return;
     const items = [];
-    if (e.dir && this.src.cfg && this.src.cfg.type === 'local') items.push({ label: 'Salva come accesso rapido', sub: 'Compare in “File di rete”', value: 'save', icon: 'star' });
-    if (e.kind === 'video' || e.kind === 'audio') items.push({ label: 'Riproduci', value: 'play', icon: 'play' });
-    if (e.kind === 'playlist') items.push({ label: 'Aggiungi come sorgente M3U', value: 'import', icon: 'plus' });
+    if (e.dir && this.src.cfg && this.src.cfg.type === 'local') items.push({ label: tr('Salva come accesso rapido'), sub: tr('Compare in “File di rete”'), value: 'save', icon: 'star' });
+    if (e.kind === 'video' || e.kind === 'audio') items.push({ label: tr('Riproduci'), value: 'play', icon: 'play' });
+    if (e.kind === 'playlist') items.push({ label: tr('Aggiungi come sorgente M3U'), value: 'import', icon: 'plus' });
     if (!items.length) return;
     const r = await Modal.menu(e.name, items);
     if (r === 'save') {
       store.addSource({ id: uid(), type: 'local', name: e.name, path: e.path });
-      Modal.toast('Cartella salvata: ' + e.name + ' — la trovi in “File di rete”', 4000);
+      Modal.toast(tr('Cartella salvata: ') + e.name + tr(' — la trovi in “File di rete”'), 4000);
     } else if (r === 'play') this.open(e);
     else if (r === 'import') {
-      showLoading('Importo la playlist…');
+      showLoading(tr('Importo la playlist…'));
       try {
         const text = await this.src.playlistText(e);
         const id = uid();
         await store.idbSet('file:' + id, text);
         store.addSource({ id: id, type: 'm3ufile', name: e.name.replace(/\.[^.]+$/, '') });
-        hideLoading(); Modal.toast('Playlist aggiunta alle sorgenti');
-      } catch (err) { hideLoading(); Modal.toast('Errore: ' + err.message, 5000); }
+        hideLoading(); Modal.toast(tr('Playlist aggiunta alle sorgenti'));
+      } catch (err) { hideLoading(); Modal.toast(tr('Errore: ') + err.message, 5000); }
     }
   }
 

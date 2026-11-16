@@ -14,6 +14,7 @@ import { VList } from '../ui/vlist.js';
 import { remPx } from '../ui/chrome.js';
 import { Rail } from '../ui/shell.js';
 import { startEpg } from '../core/session.js';
+import { tr } from '../core/i18n.js';
 
 // Finestrella: un solo player alla volta può restare attivo in un angolo mentre si naviga
 Rail.mini = () => Mini.player && Mini.player.cur ? Mini.player.cur.title : '';
@@ -51,7 +52,7 @@ export const Mini = { player: null, focused: false, _prev: null,
     return k === 'down';
   },
   async menu() {
-    const r = await Modal.menu(this.player.cur ? this.player.cur.title : 'In riproduzione', [{ label: 'Torna a schermo intero', value: 'x', icon: 'full' }, { label: 'Chiudi la finestrella', value: 'c', icon: 'x' }]);
+    const r = await Modal.menu(this.player.cur ? this.player.cur.title : tr('In riproduzione'), [{ label: tr('Torna a schermo intero'), value: 'x', icon: 'full' }, { label: tr('Chiudi la finestrella'), value: 'c', icon: 'x' }]);
     if (r === 'x') { this.unfocus(); this.player.expand(); } else if (r === 'c') this.close();
   },
   onKey(a) {
@@ -79,17 +80,17 @@ export class PlayerScreen {
     this.video = nb ? new NativeVideo(this.el0, nb) : this.el0;
     this.sub = h('div', { class: 'psub' });
     this.info = h('div', { class: 'pinfo' });
-    this.spin = h('div', { class: 'pspin' }, h('div', { class: 'spinner' }), h('div', { class: 'ptxt', text: 'Caricamento…' }));
+    this.spin = h('div', { class: 'pspin' }, h('div', { class: 'spinner' }), h('div', { class: 'ptxt', text: tr('Caricamento…') }));
     this.msg = h('div', { class: 'pmsg' });
     this.seekBox = h('div', { class: 'pseek' });
     this.numBox = h('div', { class: 'pnum' });
     this.clock = h('div', { class: 'pclock' });
     // finestrella: titolo + due pulsanti (Schermo intero / Chiudi) raggiungibili col telecomando
-    this.miniBtns = [h('div', { class: 'mbtn', onclick: e => { e.stopPropagation(); this.expand(); } }, icon('full'), h('span', { text: 'Schermo intero' })),
-      h('div', { class: 'mbtn', onclick: e => { e.stopPropagation(); Mini.close(); } }, icon('x'), h('span', { text: 'Chiudi' }))];
-    this.miniUi = h('div', { class: 'miniui' }, h('div', { class: 'mini-t' }), h('div', { class: 'mini-h', text: platform.isDesktop ? 'Clic: schermo intero' : 'Giù per selezionarla · Indietro dalla Home: chiudi' }),
+    this.miniBtns = [h('div', { class: 'mbtn', onclick: e => { e.stopPropagation(); this.expand(); } }, icon('full'), h('span', { text: tr('Schermo intero') })),
+      h('div', { class: 'mbtn', onclick: e => { e.stopPropagation(); Mini.close(); } }, icon('x'), h('span', { text: tr('Chiudi') }))];
+    this.miniUi = h('div', { class: 'miniui' }, h('div', { class: 'mini-t' }), h('div', { class: 'mini-h', text: platform.isDesktop ? tr('Clic: schermo intero') : tr('Giù per selezionarla · Indietro dalla Home: chiudi') }),
       h('div', { class: 'mbtns2' }, this.miniBtns[0], this.miniBtns[1]),
-      h('div', { class: 'mini-x', title: 'Chiudi', text: '✕', onclick: e => { e.stopPropagation(); Mini.close(); } }));
+      h('div', { class: 'mini-x', title: tr('Chiudi'), text: '✕', onclick: e => { e.stopPropagation(); Mini.close(); } }));
     this.el = h('div', { class: 'screen player' }, this.el0, this.sub, this.clock, this.numBox, this.seekBox, this.msg, this.spin, this.info, this.miniUi);
     this.el.addEventListener('click', e => { if (this.mini && !(e.target.closest && e.target.closest('.mini-x,.mbtn'))) { e.stopPropagation(); this.expand(); } }, true);
     this._wireEngine();
@@ -108,13 +109,13 @@ export class PlayerScreen {
       if (this.video.isNative && !this.webFallback) {
         this.webFallback = true; this.engine.destroy();
         this.video = this.el0; this._wireEngine(); this._bindVideo(this.video);
-        Modal.toast('Lettore nativo non riuscito (' + why + '): provo il lettore web', 4000);
+        Modal.toast(tr('Lettore nativo non riuscito (') + why + tr('): provo il lettore web'), 4000);
         this.play(this.i); return;
       }
       this._onFail(why);
     };
   }
-  _onFail(why) { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); this.say(this.live ? 'Canale non raggiungibile' : 'Impossibile riprodurre il file', (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live). Se la playlist è in uso su un altro dispositivo, il provider potrebbe consentire una sola connessione' : 'Dettagli: ' + (why || 'sconosciuto'))); this.showInfo(); }
+  _onFail(why) { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); this.say(this.live ? tr('Canale non raggiungibile') : tr('Impossibile riprodurre il file'), (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live). Se la playlist è in uso su un altro dispositivo, il provider potrebbe consentire una sola connessione' : tr('Dettagli: ') + (why || 'sconosciuto'))); this.showInfo(); }
   _bindVideo(v) {
     // sottotitoli disegnati dall'app (AVPlay li passa come testo)
     v.addEventListener('subtitle', e => { this.sub.textContent = e.detail || ''; });
@@ -131,21 +132,21 @@ export class PlayerScreen {
   // ---- controlli per mouse (solo desktop)
   _buildDesk() {
     const v = this.video, B = (ic, tip, fn, cls) => h('div', { class: 'cbtn ' + (cls || ''), title: tip, onclick: e => { e.stopPropagation(); fn(); this.showInfo(); } }, icon(ic));
-    this.bPlay = B('pause', 'Pausa / Riproduci (Spazio)', () => this._toggle(), 'big');
-    this.bVol = B('vol', 'Muto (M)', () => { v.muted = !v.muted; this._syncDesk(); });
+    this.bPlay = B('pause', tr('Pausa / Riproduci (Spazio)'), () => this._toggle(), 'big');
+    this.bVol = B('vol', tr('Muto (M)'), () => { v.muted = !v.muted; this._syncDesk(); });
     this.vol = h('input', { class: 'vslide', type: 'range', min: 0, max: 100, value: Math.round((v.volume || 1) * 100), title: 'Volume' });
     this.vol.oninput = () => { v.volume = this.vol.value / 100; v.muted = false; this._syncDesk(); };
     this.vol.onclick = e => e.stopPropagation();
     const left = [];
-    if (!this.live) left.push(B('rw', 'Indietro di 10 s (←)', () => this._seek(-10)));
+    if (!this.live) left.push(B('rw', tr('Indietro di 10 s (←)'), () => this._seek(-10)));
     left.push(this.bPlay);
-    if (!this.live) left.push(B('ff', 'Avanti di 10 s (→)', () => this._seek(10)));
-    left.push(B('prev', this.live ? 'Canale precedente (▼)' : 'Precedente', () => this._step(-1)), B('next', this.live ? 'Canale successivo (▲)' : 'Successivo', () => this._step(1)));
+    if (!this.live) left.push(B('ff', tr('Avanti di 10 s (→)'), () => this._seek(10)));
+    left.push(B('prev', this.live ? tr('Canale precedente (▼)') : tr('Precedente'), () => this._step(-1)), B('next', this.live ? tr('Canale successivo (▲)') : tr('Successivo'), () => this._step(1)));
     this.dbar = h('div', { class: 'dbar' }, h('div', { class: 'pdl' }, left), h('div', { class: 'pdr' }, this.bVol, this.vol,
-      B('list', 'Audio e sottotitoli', () => this.trackMenu()), B('gear', 'Opzioni', () => this.mainMenu()), B('full', 'Schermo intero (F)', () => toggleFullscreen())));
-    this.dback = h('div', { class: 'cbtn pclose', title: 'Riduci a finestrella (Esc) — Stop chiude', onclick: e => { e.stopPropagation(); if (!(this.miniAllowed() && this.minimize())) this._exit(); } }, icon('back'));
+      B('list', tr('Audio e sottotitoli'), () => this.trackMenu()), B('gear', tr('Opzioni'), () => this.mainMenu()), B('full', tr('Schermo intero (F)'), () => toggleFullscreen())));
+    this.dback = h('div', { class: 'cbtn pclose', title: tr('Riduci a finestrella (Esc) — Stop chiude'), onclick: e => { e.stopPropagation(); if (!(this.miniAllowed() && this.minimize())) this._exit(); } }, icon('back'));
     if (!this.live) {
-      this.seekBar = h('div', { class: 'pseekbar', title: 'Vai a…' }, h('div', { class: 'pseekfill' }));
+      this.seekBar = h('div', { class: 'pseekbar', title: tr('Vai a…') }, h('div', { class: 'pseekfill' }));
       this.seekBar.onclick = e => { e.stopPropagation(); const d = this._d(); if (!d || !this.engine.canSeek()) return; const r = this.seekBar.getBoundingClientRect(); this.engine.seekTo(Math.max(0, Math.min(d - 1, (e.clientX - r.left) / r.width * d))); this.showInfo(); };
       this.dbar.insertBefore(this.seekBar, this.dbar.firstChild);
     }
@@ -167,7 +168,7 @@ export class PlayerScreen {
   _play() { const p = this.video.play(); if (p && p.catch) p.catch(() => { }); }
   _toggle() { const v = this.video; if (v.paused) this._play(); else v.pause(); this.showInfo(); }
   _vol(d) { const v = this.video; v.muted = false; v.volume = Math.max(0, Math.min(1, v.volume + d / 100)); this.say('Volume ' + Math.round(v.volume * 100) + '%', '', 900); }
-  _prevChannel() { if (this.prevI === undefined) { this.say('Nessun canale precedente', '', 1500); return; } this.play(this.prevI); }
+  _prevChannel() { if (this.prevI === undefined) { this.say(tr('Nessun canale precedente'), '', 1500); return; } this.play(this.prevI); }
   _step(d) { const n = this.i + d; if (this.live) this.play(n); else if (n >= 0 && n < this.o.list.length) this.play(n); }
 
   _sameAs(m) {
@@ -229,11 +230,11 @@ export class PlayerScreen {
     if (this.o.onIndex) this.o.onIndex(this.i, item);
     this.msg.classList.remove('show');
     this.spin.classList.add('show');
-    this.ptxt = this.ptxt || this.spin.querySelector('.ptxt'); this.ptxt.textContent = 'Caricamento…';
+    this.ptxt = this.ptxt || this.spin.querySelector('.ptxt'); this.ptxt.textContent = tr('Caricamento…');
     clearTimeout(this.slowT1); clearTimeout(this.slowT2);
     if (!this.live) {
-      this.slowT1 = setTimeout(() => { this.ptxt.textContent = 'Il server risponde lentamente…'; }, 8000);
-      this.slowT2 = setTimeout(() => { this.ptxt.textContent = 'Ancora in attesa. Se la playlist è in uso su un altro dispositivo il provider può bloccare il flusso (Indietro per annullare)'; }, 20000);
+      this.slowT1 = setTimeout(() => { this.ptxt.textContent = tr('Il server risponde lentamente…'); }, 8000);
+      this.slowT2 = setTimeout(() => { this.ptxt.textContent = tr('Ancora in attesa. Se la playlist è in uso su un altro dispositivo il provider può bloccare il flusso (Indietro per annullare)'); }, 20000);
     }
     this._renderInfo();
     this.showInfo();
@@ -243,7 +244,7 @@ export class PlayerScreen {
     this.loadT = setTimeout(() => {
       let startAt = 0;
       if (!this.live && r.key) { const p = store.getProgress(r.key); if (p && p.pos > 30 && p.dur && p.pos < p.dur - 60) startAt = p.pos; }
-      if (startAt) this.say('Ripresa da ' + fmtDur(startAt), '', 2500);
+      if (startAt) this.say(tr('Ripresa da ') + fmtDur(startAt), '', 2500);
       this.engine.load(r.url, { live: this.live, alt: r.alt, startAt: startAt });
     }, this.live ? 250 : 0);
     if (this.live && r.ch) this._loadEpg(r);
@@ -300,7 +301,7 @@ export class PlayerScreen {
         if (nn.now[3]) body.push(h('div', { class: 'pdesc', text: nn.now[3] }));
         if (nn.next) body.push(h('div', { class: 'pnext' }, h('span', { class: 'pbadge dim', text: 'DOPO' }), h('span', { text: ' ' + fmtClock(nn.next[0]) + '  ' + nn.next[2] })));
       } else if (r.sub) body.push(h('div', { class: 'psub', text: r.sub }));
-      else body.push(h('div', { class: 'psub', text: 'Guida programmi non disponibile' }));
+      else body.push(h('div', { class: 'psub', text: tr('Guida programmi non disponibile') }));
     } else {
       if (r.sub) body.push(h('div', { class: 'psub', text: r.sub }));
       this.tbar = h('div', { class: 'pbar big' }, h('div', { class: 'pfill' }));
@@ -310,7 +311,7 @@ export class PlayerScreen {
     }
     this.info.appendChild(logo);
     this.info.appendChild(h('div', { class: 'pbody' }, body));
-    this.info.appendChild(h('div', { class: 'phints', text: platform.isDesktop ? (this.live ? 'Clic: mostra/nascondi  •  Doppio clic: schermo intero  •  Rotella: volume  •  ▲▼ canale  •  Spazio: pausa  •  Esc: chiudi' : 'Clic: pausa  •  Doppio clic: schermo intero  •  Rotella: volume  •  ←→ ±10 s  •  Spazio: pausa  •  Esc: chiudi') : this.live ? '▲▼ Cambia canale   ◀ Canali   ▶ Opzioni   OK Pausa' : '◀▶ ±10 s   OK Pausa/Riprendi   Indietro: finestrella' }));
+    this.info.appendChild(h('div', { class: 'phints', text: platform.isDesktop ? (this.live ? tr('Clic: mostra/nascondi  •  Doppio clic: schermo intero  •  Rotella: volume  •  ▲▼ canale  •  Spazio: pausa  •  Esc: chiudi') : tr('Clic: pausa  •  Doppio clic: schermo intero  •  Rotella: volume  •  ←→ ±10 s  •  Spazio: pausa  •  Esc: chiudi')) : this.live ? tr('▲▼ Cambia canale   ◀ Canali   ▶ Opzioni   OK Pausa') : tr('◀▶ ±10 s   OK Pausa/Riprendi   Indietro: finestrella') }));
   }
   _tickBar() {
     if (this.live || !this.tbar) return;
@@ -319,7 +320,7 @@ export class PlayerScreen {
       const t = this.pend ? Math.max(0, Math.min(d, this._t() + this.pend)) : this._t();
       this.tbar.firstChild.style.width = (t / d * 100) + '%';
       if (this.seekBar) this.seekBar.firstChild.style.width = (t / d * 100) + '%';
-      this.ttime.textContent = fmtDur(t) + ' / ' + fmtDur(d) + (v.paused ? '   ‖ in pausa' : '');
+      this.ttime.textContent = fmtDur(t) + ' / ' + fmtDur(d) + (v.paused ? tr('   ‖ in pausa') : '');
     }
   }
   showInfo(keep) {
@@ -344,7 +345,7 @@ export class PlayerScreen {
       const c = a.c.toLowerCase();
       if (c === ' ') { this._toggle(); return true; }
       if (c === 'f') { toggleFullscreen(); return true; }
-      if (c === 'm') { v.muted = !v.muted; this.say(v.muted ? 'Muto' : 'Audio attivo', '', 900); return true; }
+      if (c === 'm') { v.muted = !v.muted; this.say(v.muted ? tr('Muto') : tr('Audio attivo'), '', 900); return true; }
       if (c === '+' || c === '=') { this._vol(5); return true; }
       if (c === '-') { this._vol(-5); return true; }
       if (c === 'i') { if (this.shown) this.hideInfo(); else this.showInfo(); return true; }
@@ -396,13 +397,13 @@ export class PlayerScreen {
     const go = () => {
       const n = this.numBuf; this.numBuf = ''; this.numBox.classList.remove('show');
       const idx = this.o.list.findIndex(c => String(c.num) === n);
-      if (idx >= 0) this.play(idx); else this.say('Canale ' + n + ' non trovato', '', 1500);
+      if (idx >= 0) this.play(idx); else this.say(tr('Canale ') + n + tr(' non trovato'), '', 1500);
     };
     if (this.numBuf.length >= 4) go(); else this.numT = setTimeout(go, 1800);
   }
 
   _seek(sec) {
-    const v = this.video; if (!this._d() || !this.engine.canSeek()) { this.say('Questo contenuto non permette di scorrere', '', 1500); return; }
+    const v = this.video; if (!this._d() || !this.engine.canSeek()) { this.say(tr('Questo contenuto non permette di scorrere'), '', 1500); return; }
     // pressioni ripetute accelerano
     const now = Date.now();
     const accel = (this._lastSeek && now - this._lastSeek < 450) ? Math.min(6, (this._seekN = (this._seekN || 1) + 1)) : (this._seekN = 1);
@@ -429,7 +430,7 @@ export class PlayerScreen {
       fill: (n, it) => { if (n._it === it) return; n._it = it; const d = opt.fmt ? opt.fmt(it) : it; n.children[0].textContent = d.num || ''; n.children[1].textContent = d.label || ''; n.children[2].textContent = d.value || ''; n.classList.toggle('on', !!d.on); },
       onSelect: (it, i) => opt.pick(it, i)
     });
-    const el = h('div', { class: 'pdrawer ' + side }, h('div', { class: 'pdt', text: title }), list.el, h('div', { class: 'pdh', text: side === 'left' ? 'OK: apri · ▶ o Indietro: chiudi' : 'OK: scegli · ◀ o Indietro: chiudi' }));
+    const el = h('div', { class: 'pdrawer ' + side }, h('div', { class: 'pdt', text: title }), list.el, h('div', { class: 'pdh', text: side === 'left' ? tr('OK: apri · ▶ o Indietro: chiudi') : tr('OK: scegli · ◀ o Indietro: chiudi') }));
     this.el.appendChild(el);
     this.hideInfo();
     const d = this.drawer = { el: el, list: list, side: side, back: opt.back,
@@ -449,8 +450,8 @@ export class PlayerScreen {
 
   listDrawer() {
     const list = this.o.list;
-    if (list.length < 2) { this.say(this.live ? 'Nessun altro canale' : 'Nessun altro episodio', '', 1500); return; }
-    this._drawer('left', this.live ? 'Canali' : 'Episodi', list, {
+    if (list.length < 2) { this.say(this.live ? tr('Nessun altro canale') : tr('Nessun altro episodio'), '', 1500); return; }
+    this._drawer('left', this.live ? tr('Canali') : tr('Episodi'), list, {
       sel: this.i, tall: true,
       fmt: it => { const r = this.o.resolve(it); return { num: this.live ? r.num : (it.season != null ? it.season + '×' + it.num : ''), label: this.live ? r.title : (it.title || r.sub || r.title), on: it === list[this.i] }; },
       pick: (it, i) => { this.closeDrawer(); if (i !== this.i) this.play(i); else this.showInfo(); }
@@ -462,28 +463,28 @@ export class PlayerScreen {
     if (sub === 'audio' || sub === 'subs' || sub === 'tracks') {
       const items = [];
       if (sub !== 'subs') t.audio.forEach(a => items.push({ label: 'Audio: ' + a.label, on: a.on, act: () => this._setAudio(a, t) }));
-      if (sub !== 'audio') { if (t.text.length) items.push({ label: 'Sottotitoli: nessuno', on: !t.text.some(x => x.on), act: () => this.engine.setText(-1) }); t.text.forEach(x => items.push({ label: 'Sottotitoli: ' + x.label, on: x.on, act: () => this.engine.setText(x.i) })); }
-      if (!items.length) { this.say('Nessuna traccia alternativa', 'Questo contenuto ha una sola lingua', 2200); return; }
-      this._drawer('right', sub === 'subs' ? 'Sottotitoli' : 'Audio', items, { fmt: x => ({ label: x.label, value: x.on ? '✓' : '', on: x.on }), pick: x => { x.act(); this.closeDrawer(); }, back: sub === 'tracks' ? null : () => this.optionsDrawer() });
+      if (sub !== 'audio') { if (t.text.length) items.push({ label: tr('Sottotitoli: nessuno'), on: !t.text.some(x => x.on), act: () => this.engine.setText(-1) }); t.text.forEach(x => items.push({ label: tr('Sottotitoli: ') + x.label, on: x.on, act: () => this.engine.setText(x.i) })); }
+      if (!items.length) { this.say(tr('Nessuna traccia alternativa'), tr('Questo contenuto ha una sola lingua'), 2200); return; }
+      this._drawer('right', sub === 'subs' ? tr('Sottotitoli') : 'Audio', items, { fmt: x => ({ label: x.label, value: x.on ? '✓' : '', on: x.on }), pick: x => { x.act(); this.closeDrawer(); }, back: sub === 'tracks' ? null : () => this.optionsDrawer() });
       return;
     }
     const aOn = t.audio.find(a => a.on), sOn = t.text.find(x => x.on);
     const items = [];
     if (t.audio.length > 1) items.push({ label: 'Audio', value: aOn ? aOn.label.split('  (')[0] : '', go: () => this.optionsDrawer('audio') });
-    if (t.text.length) items.push({ label: 'Sottotitoli', value: sOn ? sOn.label : 'nessuno', go: () => this.optionsDrawer('subs') });
-    items.push({ label: fav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti', value: fav ? '★' : '', go: () => { this.toggleFav(); this.closeDrawer(); } });
-    items.push({ label: 'Formato immagine', value: this.video.style.objectFit === 'cover' ? 'Riempi' : 'Adatta', go: () => { this.video.style.objectFit = this.video.style.objectFit === 'cover' ? 'contain' : 'cover'; this.optionsDrawer(); } });
-    if (this.live && this.prevI !== undefined) items.push({ label: 'Canale precedente', go: () => { this.closeDrawer(); this._prevChannel(); } });
-    if (this.cur && this.cur.alt) items.push({ label: 'Prova il flusso alternativo', value: 'TS/HLS', go: () => { this.closeDrawer(); this.engine.load(this.cur.alt, { live: this.live }); } });
-    if (!this.live) items.push({ label: 'Riparti dall\'inizio', go: () => { this.closeDrawer(); if (this.cur.key) store.clearProgress(this.cur.key); this.engine.seekTo(0); } });
-    if (!this.live && this.engine.ffAvailable()) items.push({ label: this.engine.ff ? 'Usa il lettore nativo' : 'Non va? Usa il convertitore video', go: () => { this.closeDrawer(); this.engine.load(this.cur.url, { live: false, ff: !this.engine.ff, startAt: this._t() }); } });
-    items.push({ label: 'Riduci a finestrella', value: 'continua a guardare', go: () => this.minimize() });
-    items.push({ label: 'Chiudi il player', go: () => { this.closeDrawer(); this._exit(); } });
-    this._drawer('right', 'Opzioni', items, { fmt: x => x, pick: x => x.go() });
+    if (t.text.length) items.push({ label: tr('Sottotitoli'), value: sOn ? sOn.label : tr('nessuno'), go: () => this.optionsDrawer('subs') });
+    items.push({ label: fav ? tr('Rimuovi dai preferiti') : tr('Aggiungi ai preferiti'), value: fav ? '★' : '', go: () => { this.toggleFav(); this.closeDrawer(); } });
+    items.push({ label: tr('Formato immagine'), value: this.video.style.objectFit === 'cover' ? tr('Riempi') : tr('Adatta'), go: () => { this.video.style.objectFit = this.video.style.objectFit === 'cover' ? 'contain' : 'cover'; this.optionsDrawer(); } });
+    if (this.live && this.prevI !== undefined) items.push({ label: tr('Canale precedente'), go: () => { this.closeDrawer(); this._prevChannel(); } });
+    if (this.cur && this.cur.alt) items.push({ label: tr('Prova il flusso alternativo'), value: 'TS/HLS', go: () => { this.closeDrawer(); this.engine.load(this.cur.alt, { live: this.live }); } });
+    if (!this.live) items.push({ label: tr('Riparti dall\'inizio'), go: () => { this.closeDrawer(); if (this.cur.key) store.clearProgress(this.cur.key); this.engine.seekTo(0); } });
+    if (!this.live && this.engine.ffAvailable()) items.push({ label: this.engine.ff ? tr('Usa il lettore nativo') : tr('Non va? Usa il convertitore video'), go: () => { this.closeDrawer(); this.engine.load(this.cur.url, { live: false, ff: !this.engine.ff, startAt: this._t() }); } });
+    items.push({ label: tr('Riduci a finestrella'), value: tr('continua a guardare'), go: () => this.minimize() });
+    items.push({ label: tr('Chiudi il player'), go: () => { this.closeDrawer(); this._exit(); } });
+    this._drawer('right', tr('Opzioni'), items, { fmt: x => x, pick: x => x.go() });
   }
   _setAudio(a) {
     this.engine.setAudio(a.i);
-    if (a.lang) { store.settings().audioLang = a.lang; store.save(); this.say('Audio: ' + a.label.split('  (')[0], 'Lo ricordo per i prossimi contenuti', 2500); }
+    if (a.lang) { store.settings().audioLang = a.lang; store.save(); this.say('Audio: ' + a.label.split('  (')[0], tr('Lo ricordo per i prossimi contenuti'), 2500); }
   }
   trackMenu() { this.optionsDrawer('tracks'); }
   mainMenu() { this.optionsDrawer(); }
@@ -491,7 +492,7 @@ export class PlayerScreen {
   toggleFav() {
     const r = this.cur; if (!r || !r.key) return;
     const on = store.toggleFav(r.key, Object.assign({ name: r.title, logo: r.logo || '', sub: r.sub || '' }, r.meta || {}));
-    this.say(on ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti', '', 1500);
+    this.say(on ? tr('Aggiunto ai preferiti') : tr('Rimosso dai preferiti'), '', 1500);
   }
 
 

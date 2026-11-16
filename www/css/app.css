@@ -1,3 +1,4 @@
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 @font-face{font-family:"Plus Jakarta Sans";font-weight:400;font-style:normal;font-display:swap;src:url(../fonts/plus-jakarta-sans-latin-400-normal.woff2) format("woff2")}
 @font-face{font-family:"Plus Jakarta Sans";font-weight:600;font-style:normal;font-display:swap;src:url(../fonts/plus-jakarta-sans-latin-600-normal.woff2) format("woff2")}
 @font-face{font-family:"Plus Jakarta Sans";font-weight:700;font-style:normal;font-display:swap;src:url(../fonts/plus-jakarta-sans-latin-700-normal.woff2) format("woff2")}
@@ -152,10 +153,13 @@ body{color:#f8f2f6;font-family:"Plus Jakarta Sans","Segoe UI",Roboto,"Helvetica 
 .empty .e2{margin-bottom:1.2rem}
 
 /* barra suggerimenti */
-.hints{display:flex;flex:none;height:2.2rem;align-items:center;color:#b3a2b8;font-size:.9rem;margin-top:.5rem}
+.hints{display:flex;flex:none;min-height:2.2rem;align-items:center;overflow:hidden;color:#b3a2b8;font-size:.9rem;margin-top:.5rem}
 .hint{display:flex;align-items:center;margin-right:1.6rem}
-.hk{display:inline-block;min-width:1rem;height:1rem;border-radius:.5rem;margin-right:.45rem;font-size:.7rem;text-align:center;line-height:1rem;padding:0 .3rem;background:#2a3550;color:#ffe3f4}
-.hk.red{background:#e53935;width:1rem;padding:0}.hk.green{background:#43a047;width:1rem;padding:0}.hk.yellow{background:#fdd835;width:1rem;padding:0}.hk.blue{background:#1e88e5;width:1rem;padding:0}
+/* tondi dei tasti: misure relative al testo del suggerimento, così crescono e calano insieme e il testo non esce mai */
+.hint{white-space:nowrap;line-height:1.25}
+.hk{display:inline-block;box-sizing:content-box;min-width:1.1em;height:1.4em;line-height:1.4em;border-radius:.7em;margin-right:.5em;font-size:.8em;font-weight:600;text-align:center;padding:0 .45em;background:#2a3550;color:#ffe3f4;white-space:nowrap;flex:none}
+.hk.red,.hk.green,.hk.yellow,.hk.blue{width:1.1em;min-width:0;height:1.1em;padding:0;border-radius:50%}
+.hk.red{background:#e53935}.hk.green{background:#43a047}.hk.yellow{background:#fdd835}.hk.blue{background:#1e88e5}
 .crumb{font-size:.95rem;color:#b3a2b8;margin-bottom:.6rem;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fic{width:2rem;flex:none;color:#ff7fd0}.row.focused .fic{color:#fff}
 .fn{flex:1;overflow:hidden;text-overflow:ellipsis;font-size:1.1rem}
@@ -465,3 +469,18 @@ body.nv.playing #bg{display:none}
 .psub{position:absolute;left:10%;right:10%;bottom:9%;text-align:center;font-size:2rem;font-weight:600;color:#fff;text-shadow:0 0 .3rem #000,0 0 .3rem #000;white-space:pre-line;pointer-events:none;z-index:3}
 .psub:empty{display:none}
 .screen.player.mini .psub{display:none}
+/* ===== 2.5: barra "In riproduzione" selezionabile, La mia lista in Home, FILM/SERIE in On Demand ===== */
+.nowbox{padding:.5rem .6rem .5rem .5rem}
+.nowmain{flex:1;min-width:0;display:flex;align-items:center;padding:.5rem .9rem;border-radius:.7rem;margin-right:.8rem}
+.nowmain>.ic{width:1.8rem;height:1.8rem;margin-right:1rem;color:#ff7fd0;flex:none}
+.nowok{display:flex;align-items:center;flex:none;font-size:.95rem;color:#cdb8d6;padding:.35rem .8rem;border-radius:.5rem;background:rgba(255,255,255,.08)}
+.nowok .ic{width:1.1rem;height:1.1rem;margin-right:.45rem}
+.nowmain.focused{background:#c2268f;box-shadow:0 0 0 .14rem #fff}.nowmain.focused>.ic,.nowmain.focused .hg{color:#fff}.nowmain.focused .nowok{background:rgba(0,0,0,.25);color:#fff}
+.nowx{flex:none}
+.contnote{margin-left:1rem;font-size:.95rem;color:#9c86a8}
+body.layA .home.haslist .tiles{display:none}
+.kbadge{position:absolute;left:.3rem;top:.3rem;font-size:.68rem;font-weight:800;letter-spacing:.06em;padding:.12rem .42rem;border-radius:.3rem;color:#fff}
+.kbadge:empty{display:none}
+.kbadge.k-m{background:#2f6fd6}.kbadge.k-s{background:#c2268f}
+.cpbox .kbadge{z-index:1}
+.crow.k-sort .rt{font-weight:600;color:#ffc83d}.crow.k-sort.focused .rt{color:#fff}
