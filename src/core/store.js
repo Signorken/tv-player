@@ -25,6 +25,7 @@ const DEFAULTS = {
     userAgent: ''            // solo desktop: User-Agent da presentare ai server IPTV
   },
   favorites: {},  // key -> {name, logo, kind, src, id}
+  mylist: {},     // "La mia lista": film e serie da guardare (separata dai preferiti)
   recents: [],    // [{key, ...}]
   watched: {},    // key -> timestamp (film/episodi visti fino alla fine)
   contClearedAt: 0, // la riga "Continua a guardare" mostra solo ciò che è stato guardato dopo questo istante
@@ -106,6 +107,13 @@ export function setActive(id) { get().activeSource = id; save(); }
 // ---- preferiti / recenti / avanzamento
 export function favKey(srcId, kind, id) { return srcId + '|' + kind + '|' + id; }
 export function isFav(key) { return !!get().favorites[key]; }
+export function inList(key) { return !!(get().mylist || {})[key]; }
+export function toggleList(key, info) {
+  const d = get(); if (!d.mylist) d.mylist = {};
+  if (d.mylist[key]) delete d.mylist[key]; else { info.t = Date.now(); d.mylist[key] = info; }
+  save();
+  return !!d.mylist[key];
+}
 export function toggleFav(key, info) {
   const f = get().favorites;
   if (f[key]) delete f[key]; else { info.t = Date.now(); f[key] = info; }

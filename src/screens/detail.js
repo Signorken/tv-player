@@ -68,6 +68,8 @@ export class DetailScreen {
     }
     this.favBtn = this.btn('star', store.isFav(this.key) ? 'Nei preferiti' : 'Preferiti', () => this.toggleFav());
     this.btns.appendChild(this.favBtn);
+    this.listBtn = this.btn('plus', store.inList(this.key) ? 'Nella mia lista' : 'La mia lista', () => this.toggleList());
+    this.btns.appendChild(this.listBtn);
   }
   btn(ic, label, fn, primary) { return h('div', { class: 'btn' + (primary ? ' primary' : ''), 'data-f': 1, onclick: fn }, icon(ic), h('span', { text: label })); }
 
@@ -146,6 +148,12 @@ export class DetailScreen {
     return false;
   }
 
+  toggleList() {
+    const it = this.item, kind = this.mode === 'movie' ? 'movie' : 'series';
+    const on = store.toggleList(store.favKey(this.src.id, kind, it.id), { kind: kind, src: this.src.id, id: it.id, name: it.name, poster: it.poster, ext: it.ext, item: it });
+    Modal.toast(on ? 'Aggiunto alla tua lista' : 'Tolto dalla tua lista', 1500);
+    this.refreshButtons(); if (this.zone === 'btns') this.setZone('btns');
+  }
   toggleFav() {
     const kind = this.mode === 'movie' ? 'movie' : 'series';
     const it = this.item;

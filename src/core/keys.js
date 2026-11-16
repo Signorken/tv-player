@@ -33,6 +33,8 @@ function isTyping(t) {
 
 // handler(action, event). OK viene emesso al rilascio; tenendolo premuto >600ms emette 'menu'.
 export function installKeys(handler) {
+  // Android: l'APK segnala Indietro tenuto premuto con un evento (la pagina non vede la durata del tasto)
+  window.addEventListener('maxenta-longback', () => handler({ a: 'longback' }));
   let okDown = false, okLong = false, okT = null, bkDown = false, bkLong = false, bkT = null;
   window.addEventListener('keydown', function (e) {
     if (isTyping(e.target)) {

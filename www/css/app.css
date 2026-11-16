@@ -443,3 +443,22 @@ body:not(.lowpower) .rtx{transition:opacity .18s ease .05s}
 .hbr>.btn+.btn,.hd-r>.btn+.btn{margin-left:.8rem}
 .btn+.btn{margin-left:.8rem}
 .ebtns .btn+.btn,.dbtns .btn+.btn,.facts .btn+.btn,.pbtns .btn+.btn{margin-left:0}
+
+/* 2.4: Rimuovi riga come ultima tessera; tessera "In riproduzione"; pulsanti della finestrella */
+.xcard .cthumb{background:#1d0c28;border:.15rem dashed #4a2f62;border-radius:.6rem}
+.xin{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#cdb8d6;font-size:.95rem;text-align:center}
+.xin .ic{width:2rem;height:2rem;margin-bottom:.5rem;color:#ff7fd0}
+.xcard.focused .cthumb{background:#c2268f;border-color:#fff}.xcard.focused .xin,.xcard.focused .xin .ic{color:#fff}
+.nowbox{display:flex;align-items:center;background:#1d0c28;border-radius:1rem;padding:1rem 1.4rem;margin:.8rem 0 .4rem;border-left:.3rem solid #ff4fb8}
+.nowt{flex:1;min-width:0;margin-right:1rem}.nown{font-size:1.4rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mbtns2{display:none;margin-top:.5rem}
+.screen.player.mini.mfocus .mbtns2{display:flex}.screen.player.mini.mfocus .mini-h{display:none}
+.mbtn{display:flex;align-items:center;padding:.35rem .8rem;border-radius:.5rem;background:rgba(255,255,255,.12);font-size:.85rem;margin-right:.5rem}
+.mbtn .ic{width:1.1rem;height:1.1rem;margin-right:.4rem}
+.mbtn.focused{background:#c2268f}
+
+/* On Demand: filtri e Raccolte nella colonna */
+.crow.k-filter .rt{font-weight:600}.crow.k-filter.on .rt{color:#ff7fd0}.crow.k-filter.focused .rt{color:#fff}
+.crow.k-group{border-top:1px solid #3a2150}.crow.k-group .rt{font-weight:700;letter-spacing:.03em}
+.crow.k-coll .rt{color:#d9c7e0}
+body:not(.desktop) .mini-x{display:none}

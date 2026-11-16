@@ -15,7 +15,7 @@ import { FavsScreen } from './favs.js';
 import { SettingsScreen, SourcesScreen } from './settings.js';
 import { addNetworkFolderFlow, addSourceFlow, addFromClipboard, pickPlaylistFile, discoverFlow, addFolderFlow } from './addflow.js';
 import { DetailScreen } from './detail.js';
-import { PlayerScreen } from './player.js';
+import { PlayerScreen, Mini } from './player.js';
 import { MENU } from '../ui/shell.js';
 import { TYPE_LABEL } from '../sources/index.js';
 
@@ -97,22 +97,26 @@ export class HomeScreen {
 
     this.cont = h('div', { class: 'contbox' });
     this.contT = h('div', { class: 'contt', text: 'Continua a guardare' });
-    this.contX = h('div', { class: 'btn small', 'data-f': 1, title: 'Rimuovi la riga dalla Home (i progressi restano salvati)', onclick: () => this.clearRow() }, icon('x'), h('span', { text: 'Rimuovi riga' }));
+    // "Rimuovi riga" è l'ultima tessera di ogni riga: si raggiunge andando sempre a destra
+    const xcard = (cls, fn) => h('div', { class: 'ccard xcard ' + cls, 'data-f': 1, onclick: fn }, h('div', { class: 'cthumb' }, h('div', { class: 'xin' }, icon('x'), h('span', { text: 'Rimuovi riga' }))));
+    this.contX = xcard('', () => this.clearRow());
+    this.nowBox = h('div', { class: 'nowbox' });
     this.hero = h('div', { class: 'hero' });
-    this.contHd = h('div', { class: 'conthd' }, this.contT, h('span', { class: 'contnote', text: 'Solo film e serie' }), h('div', { class: 'flex1' }), this.contX);
+    this.contHd = h('div', { class: 'conthd' }, this.contT, h('span', { class: 'contnote', text: 'Solo film e serie' }));
     this.empty = h('div', { class: 'empty' });
-    this.liveX = h('div', { class: 'btn small', 'data-f': 1, onclick: () => this.clearLive() }, icon('x'), h('span', { text: 'Rimuovi riga' }));
-    this.liveHd = h('div', { class: 'conthd' }, h('div', { class: 'contt', text: 'Canali visti di recente' }), h('div', { class: 'flex1' }), this.liveX);
+    this.liveX = xcard('lcard', () => this.clearLive());
+    this.liveHd = h('div', { class: 'conthd' }, h('div', { class: 'contt', text: 'Canali visti di recente' }));
     this.liveRow = h('div', { class: 'contbox liverow' });
     this.el = h('div', { class: 'screen home' },
       h('div', { class: 'hbar' }, h('div', { class: 'brand' }, h('img', { class: 'blogo', src: 'icon.png', alt: '' }), h('span', { text: 'MAXENTA' })), h('div', { class: 'hbr' }, platform.isDesktop ? h('div', { class: 'btn small', 'data-f': 1, title: 'Aggiungi sorgente (Ctrl+V per incollare un link)', onclick: () => addSourceFlow() }, icon('plus'), h('span', { text: 'Aggiungi' })) : null, this.srcBtn)),
-      this.tiles, h('div', { class: 'hmain', 'data-scroll': 1 }, this.hero, this.empty, this.contHd, this.cont, this.liveHd, this.liveRow),
+      this.tiles, h('div', { class: 'hmain', 'data-scroll': 1 }, this.nowBox, this.hero, this.empty, this.contHd, this.cont, this.liveHd, this.liveRow),
       hints([['ok', 'Apri'], ['menu', 'Opzioni'], ['back', 'Esci']]));
   }
   onShow(first) {
     const act = store.activeSource();
     this.srcBtn.lastChild.textContent = act ? act.name : 'Nessuna sorgente';
     this.renderCont();
+    this.renderNow();
     if (!store.get().sources.length) {
       this.empty.innerHTML = '';
       this.empty.appendChild(h('div', { class: 'e1', text: 'Benvenuto! Inizia aggiungendo una sorgente.' }));
@@ -156,6 +160,7 @@ export class HomeScreen {
       card._meta = r;
       this.cont.appendChild(card);
     });
+    if (rec.length) this.cont.appendChild(this.contX);
     // canali live visti di recente: accesso rapido alla TV
     this.liveRow.innerHTML = '';
     const live = store.liveItems(8);
@@ -165,8 +170,21 @@ export class HomeScreen {
       const c = h('div', { class: 'ccard lcard', 'data-f': 1, onclick: () => playMeta(r) }, h('div', { class: 'cthumb' }, im), h('div', { class: 'cname', text: r.name }));
       c._meta = r; this.liveRow.appendChild(c);
     });
+    if (live.length) this.liveRow.appendChild(this.liveX);
     // niente da riprendere: in Aspetto A mostra comunque i pulsanti delle sezioni
     this.el.classList.toggle('nocont', !rec.length && !live.length);
+  }
+  // video nella finestrella: tessera in cima alla Home per tornarci o chiuderlo
+  renderNow() {
+    const m = Mini.player;
+    this.nowBox.innerHTML = '';
+    this.nowBox.style.display = m ? '' : 'none';
+    if (!m) return;
+    this.nowBox.appendChild(h('div', { class: 'nowt' }, h('div', { class: 'hg', text: 'IN RIPRODUZIONE' }), h('div', { class: 'nown', text: m.cur ? m.cur.title : '' })));
+    const b1 = h('div', { class: 'btn small', 'data-f': 1, onclick: () => { if (Mini.player) Mini.player.expand(); } }, icon('full'), h('span', { text: 'Schermo intero' }));
+    b1.onfocusnav = () => { this.nowBox.parentNode.scrollTop = 0; };
+    this.nowBox.appendChild(b1);
+    this.nowBox.appendChild(h('div', { class: 'btn small', 'data-f': 1, onclick: () => { Mini.close(); } }, icon('x'), h('span', { text: 'Chiudi' })));
   }
   renderHero(r) {
     this.hero.innerHTML = '';
@@ -216,7 +234,8 @@ export class HomeScreen {
   }
 
   onKey(a) {
-    if (a.a === 'back') { this.confirmExit(); return true; }
+    // con la finestrella aperta, Indietro dalla Home la chiude (prima di chiedere se uscire)
+    if (a.a === 'back') { if (Mini.player) { Mini.close(); Modal.toast('Riproduzione chiusa', 1500); return true; } this.confirmExit(); return true; }
     if (a.a === 'green' || a.a === 'guide') { this.openLive(); return true; }
     if (a.a === 'yellow' || a.a === 'del') { const f = nav.getFocus(); if (a.a === 'yellow' || (f && this.cont.contains(f))) { this.clearRow(); return true; } }
     if (a.a === 'menu') { const f = nav.getFocus(); if (f && f._meta) { this.cardMenu(f._meta); return true; } }

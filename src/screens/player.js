@@ -16,15 +16,20 @@ import { startEpg } from '../core/session.js';
 // Finestrella: un solo player alla volta può restare attivo in un angolo mentre si naviga
 Rail.mini = () => Mini.player && Mini.player.cur ? Mini.player.cur.title : '';
 Rail.onRoute = () => { if (Mini.focused) { Mini.focused = false; if (Mini.player) Mini.player.el.classList.remove('mfocus'); } };
+Rail.miniMenu = () => { if (Mini.player) Mini.menu(); };
 Rail.expandMini = () => { if (Mini.player) { Mini.unfocus(); Mini.player.expand(); } };
 export const Mini = { player: null, focused: false, _prev: null,
-  close() { const p = this.player; this.unfocus(); this.player = null; if (p) { p.destroy(); if (p.el.parentNode) p.el.parentNode.removeChild(p.el); } Rail.sync(); },
+  close() {
+    const p = this.player; this.unfocus(); this.player = null; if (p) { p.destroy(); if (p.el.parentNode) p.el.parentNode.removeChild(p.el); } Rail.sync();
+    // la Home mostra la tessera "In riproduzione": aggiornala e rimetti il cursore su un elemento visibile
+    const c = router.current; if (c && c.renderNow) { const f = nav.getFocus(); c.renderNow(); if (!f || !document.body.contains(f) || !f.offsetParent) nav.focus(c.firstFocus()); }
+  },
   // la finestrella si raggiunge col cursore (Giù/Destra dal bordo dello schermo)
   focusFrom(dir) {
     const p = this.player; if (!p || this.focused || (dir !== 'down' && dir !== 'right')) return false;
     this._prev = nav.getFocus(); if (this._prev) this._prev.classList.remove('focused');
     const s = router.current; if (s && s.onRailEnter) s.onRailEnter();
-    this.focused = true; p.el.classList.add('mfocus'); return true;
+    this.focused = true; this.btn = 0; p.el.classList.add('mfocus'); this._paint(); return true;
   },
   unfocus() {
     if (!this.focused) return;
@@ -33,12 +38,15 @@ export const Mini = { player: null, focused: false, _prev: null,
     if (s && s.onRailExit) s.onRailExit();
     else if (this._prev && document.body.contains(this._prev)) nav.focus(this._prev, true);
   },
+  _paint() { const p = this.player; if (p) p.miniBtns.forEach((b, i) => b.classList.toggle('focused', this.focused && i === this.btn)); },
   onFocusKey(a) {
     const k = a.a;
-    if (k === 'ok') { this.unfocus(); this.player.expand(); return true; }
+    if (k === 'left' || k === 'right') { this.btn = k === 'right' ? 1 : 0; this._paint(); return true; }
+    if (k === 'ok') { const b = this.btn; this.unfocus(); if (b === 1) this.close(); else this.player.expand(); return true; }
     if (k === 'menu') { this.menu(); return true; }
-    if (k === 'up' || k === 'left' || k === 'back') { this.unfocus(); return true; }
-    return k === 'down' || k === 'right';
+    if (k === 'up' || k === 'back') { this.unfocus(); return true; }
+    if (k === 'longback') { this.close(); return true; }
+    return k === 'down';
   },
   async menu() {
     const r = await Modal.menu(this.player.cur ? this.player.cur.title : 'In riproduzione', [{ label: 'Torna a schermo intero', value: 'x', icon: 'full' }, { label: 'Chiudi la finestrella', value: 'c', icon: 'x' }]);
@@ -70,10 +78,14 @@ export class PlayerScreen {
     this.seekBox = h('div', { class: 'pseek' });
     this.numBox = h('div', { class: 'pnum' });
     this.clock = h('div', { class: 'pclock' });
-    this.miniUi = h('div', { class: 'miniui' }, h('div', { class: 'mini-t' }), h('div', { class: 'mini-h', text: platform.isDesktop ? 'Clic: espandi' : '▶‖: schermo intero · Tieni premuto Indietro: chiudi' }),
+    // finestrella: titolo + due pulsanti (Schermo intero / Chiudi) raggiungibili col telecomando
+    this.miniBtns = [h('div', { class: 'mbtn', onclick: e => { e.stopPropagation(); this.expand(); } }, icon('full'), h('span', { text: 'Schermo intero' })),
+      h('div', { class: 'mbtn', onclick: e => { e.stopPropagation(); Mini.close(); } }, icon('x'), h('span', { text: 'Chiudi' }))];
+    this.miniUi = h('div', { class: 'miniui' }, h('div', { class: 'mini-t' }), h('div', { class: 'mini-h', text: platform.isDesktop ? 'Clic: schermo intero' : 'Giù per selezionarla · Indietro dalla Home: chiudi' }),
+      h('div', { class: 'mbtns2' }, this.miniBtns[0], this.miniBtns[1]),
       h('div', { class: 'mini-x', title: 'Chiudi', text: '✕', onclick: e => { e.stopPropagation(); Mini.close(); } }));
     this.el = h('div', { class: 'screen player' }, this.video, this.clock, this.numBox, this.seekBox, this.msg, this.spin, this.info, this.miniUi);
-    this.el.addEventListener('click', e => { if (this.mini && !(e.target.classList && e.target.classList.contains('mini-x'))) { e.stopPropagation(); this.expand(); } }, true);
+    this.el.addEventListener('click', e => { if (this.mini && !(e.target.closest && e.target.closest('.mini-x,.mbtn'))) { e.stopPropagation(); this.expand(); } }, true);
     this.engine = new Engine(this.video);
     this.engine.onPlaying = () => { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); clearTimeout(this.spinT); this.msg.classList.remove('show'); };
     this.engine.onFail = why => { clearTimeout(this.slowT1); clearTimeout(this.slowT2); this.spin.classList.remove('show'); this.say(this.live ? 'Canale non raggiungibile' : 'Impossibile riprodurre il file', (this.live ? 'Prova un altro canale o un altro formato (Impostazioni > Formato live). Se la playlist è in uso su un altro dispositivo, il provider potrebbe consentire una sola connessione' : 'Dettagli: ' + (why || 'sconosciuto')) + (why ? '' : '')); this.showInfo(); };
