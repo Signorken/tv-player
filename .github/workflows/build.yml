@@ -110,11 +110,17 @@ jobs:
           pip install pillow
           # firma sempre uguale (così l'APK si installa sopra la versione precedente senza perdere i dati):
           # il secret ANDROID_DEBUG_KEYSTORE contiene il keystore in base64; senza secret Gradle ne crea uno nuovo a ogni build
-          if [ -n "$KS" ]; then mkdir -p ~/.android && echo "$KS" | base64 -d > ~/.android/debug.keystore && echo "firma: keystore fisso"; else echo "firma: keystore temporaneo (manca il secret ANDROID_DEBUG_KEYSTORE)"; fi
           sh packaging/android/setup.sh
+          # il keystore va nel progetto (app/maxenta.keystore): build.gradle lo usa per la firma "debug" se c'è
+          if [ -n "$KS" ]; then echo "$KS" | base64 -d > android-tv/android/app/maxenta.keystore && echo "firma: keystore fisso"; else echo "firma: keystore temporaneo (manca il secret ANDROID_DEBUG_KEYSTORE)"; fi
           cd android-tv/android
           ./gradlew assembleDebug --no-daemon
           cp app/build/outputs/apk/debug/app-debug.apk "../../out/MAXENTA-$VER-android-tv.apk"
+          # controllo: l'APK deve essere firmato con il certificato del keystore fisso
+          if [ -n "$KS" ]; then
+            keytool -exportcert -alias androiddebugkey -keystore app/maxenta.keystore -storepass android > /tmp/cert.der
+            python3 -c "import sys;d=open('../../out/MAXENTA-$VER-android-tv.apk','rb').read();c=open('/tmp/cert.der','rb').read();print('firma verificata' if c in d else 'FIRMA SBAGLIATA');sys.exit(0 if c in d else 1)"
+          fi
         env:
           KS: ${{ secrets.ANDROID_DEBUG_KEYSTORE }}
       - uses: actions/upload-artifact@v4
