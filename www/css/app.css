@@ -562,6 +562,13 @@ body.light .wpt.none{background:linear-gradient(135deg,#fff8fc,#f6dcec)}
 #rail.open .rver{font-size:.8rem}
 body.lowpower #rail .rname{transition:none}
 
+/* Home: tessere degli archivi (NAS, cartelle, USB) */
+.fcard2{width:11%}
+.fcard2 .cthumb{padding-top:62%;background:#1d0c28}
+.fin{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;color:#ff7fd0}
+.fin .ic{width:2.6rem;height:2.6rem}
+.fcard2.focused .fin{color:#fff}.fcard2.focused .cthumb{background:#a01f78}
+
 /* ==== TEMA CHIARO (generato da scripts/gen-light-css.py) ==== */
 body.light,body.light{background:#fbeef6}
 body.light{color:#2a0f2e}
@@ -687,6 +694,8 @@ body.light .gprog.empty{color:#8a7294}
 body.light .wpt{background:#fbeef6 center/cover no-repeat}
 body.light .wpt.none{background:linear-gradient(135deg,#fbeef6,rgba(255,255,255,.85))}
 body.light .rname{color:#b3127f}
+body.light .fcard2 .cthumb{background:rgba(255,255,255,.85)}
+body.light .fin{color:#b3127f}
 body.light .btn.focused,body.light .key.focused,body.light .chip.focused,body.light .frow2.focused,body.light .mrow.focused{background:#c2268f;color:#fff;border-color:#fff}
 body.light .row.focused{background:#c2268f;color:#fff}
 body.light .row.focused .rc,body.light .row.focused .cnow,body.light .row.focused .e2,body.light .row.focused .fs{color:#ffe3f4}
@@ -724,6 +733,8 @@ body.light .crow.k-sort.focused .rt{color:#fff}
 body.light .gprog.focused{background:#c2268f;color:#fff;border-color:#fff}
 body.light .wpc.focused{background:#c2268f;border-color:#fff}
 body.light .wpc.focused .wpn{color:#fff}
+body.light .fcard2.focused .fin{color:#fff}
+body.light .fcard2.focused .cthumb{background:#a01f78}
 html.light{background:#fbeef6}
 body.light .hk{background:#ead4e5;color:#5a1050}
 body.light .cbadge{color:#9a6400}

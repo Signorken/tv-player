@@ -122,19 +122,21 @@ jobs:
           name: tv-packages
           path: out/*
           if-no-files-found: error
+      - name: Allega alla Release
+        if: env.VER != '0.0.0'
+        run: gh release upload "v$VER" out/* --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Pubblica l'aggiornamento per i gusci delle TV (ramo "updates")
         if: env.VER != '0.0.0'
         run: |
           mkdir -p /tmp/upd && cp www/app.js /tmp/upd/app.js && cp www/css/app.css /tmp/upd/app.css
-          echo "{\"version\":\"$VER\",\"minShell\":1}" > /tmp/upd/version.json
+          # apk = ultima versione con codice nativo nuovo (packaging/android/NATIVE_VERSION): gli APK più vecchi propongono l'aggiornamento
+          APK=$(cat packaging/android/NATIVE_VERSION)
+          echo "{\"version\":\"$VER\",\"minShell\":1,\"apk\":\"$APK\",\"apkUrl\":\"https://github.com/${{ github.repository }}/releases/download/v$VER/MAXENTA-$VER-android-tv.apk\"}" > /tmp/upd/version.json
           cd /tmp/upd && git init -q && git checkout -q -b updates
           git config user.name "github-actions" && git config user.email "github-actions@users.noreply.github.com"
           git add . && git commit -qm "MAXENTA $VER"
           git push -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" updates
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Allega alla Release
-        if: env.VER != '0.0.0'
-        run: gh release upload "v$VER" out/* --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

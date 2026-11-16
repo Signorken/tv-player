@@ -15,6 +15,16 @@ npx cap add android
 cp ../packaging/android/MainActivity.java android/app/src/main/java/com/maxenta/app/MainActivity.java
 # lettore ExoPlayer (Media3) per il video nativo sotto la WebView
 cp ../packaging/android/MaxPlayerPlugin.java android/app/src/main/java/com/maxenta/app/MaxPlayerPlugin.java
+# aggiornamento dell'APK dall'app e chiavette USB
+cp ../packaging/android/MaxSystemPlugin.java android/app/src/main/java/com/maxenta/app/MaxSystemPlugin.java
+mkdir -p android/app/src/main/res/xml
+cat > android/app/src/main/res/xml/file_paths.xml <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-path name="my_images" path="." />
+    <cache-path name="my_cache_images" path="." />
+</paths>
+XML
 python3 - <<'PYG'
 p='android/app/build.gradle'
 s=open(p).read()
@@ -26,8 +36,14 @@ dep='''    def media3 = "1.4.1"
 if 'media3-exoplayer' not in s:
     i=s.index('dependencies {')+len('dependencies {')
     s=s[:i]+'\n'+dep+s[i:]
-    open(p,'w').write(s)
-print('build.gradle: media3 aggiunto')
+# versione dell'APK = versione di MAXENTA (serve all'app per sapere se c'è un APK più nuovo)
+import json,re
+v=json.load(open('../package.json'))['version']
+a=[int(x) for x in (v.split('.')+['0','0'])[:3]]
+s=re.sub(r'versionCode\s+\d+','versionCode '+str(a[0]*10000+a[1]*100+a[2]),s,1)
+s=re.sub(r'versionName\s+"[^"]*"','versionName "'+v+'"',s,1)
+open(p,'w').write(s)
+print('build.gradle: media3 aggiunto, versione '+v)
 PYG
 # icona e banner MAXENTA (banner 320x180 per il launcher TV; icone launcher dal logo 512x512)
 mkdir -p android/app/src/main/res/drawable-xhdpi
@@ -54,6 +70,9 @@ if 'android.software.leanback' not in s:
 # 2) icona nel launcher dei dispositivi TV
 s=s.replace('<category android:name="android.intent.category.LAUNCHER" />','<category android:name="android.intent.category.LAUNCHER" />\n                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />',1)
 # 3) HTTP in chiaro (server IPTV/NAS locali)
+# 4) aggiornamento dell'APK dall'app
+if 'REQUEST_INSTALL_PACKAGES' not in s:
+    s=s.replace('<application','<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n    <application',1)
 if 'usesCleartextTraffic' not in s:
     s=s.replace('<application','<application android:usesCleartextTraffic="true" android:banner="@drawable/banner"',1)
 open(p,'w',encoding='utf-8').write(s)

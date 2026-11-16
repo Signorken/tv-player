@@ -29,6 +29,7 @@ export function viaProxy(url, opts) {
 
 // URL per elementi media (video): usa il proxy solo se richiesto nelle impostazioni
 export function mediaUrl(url, auth) {
+  if (!/^https?:/i.test(url)) return url; // file locali e chiavette USB: mai dal proxy
   if (settings().proxyMedia && proxyBase()) return viaProxy(url, { auth: auth });
   return url;
 }
