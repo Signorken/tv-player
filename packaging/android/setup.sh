@@ -42,6 +42,18 @@ v=json.load(open('../package.json'))['version']
 a=[int(x) for x in (v.split('.')+['0','0'])[:3]]
 s=re.sub(r'versionCode\s+\d+','versionCode '+str(max(1,a[0]*10000+a[1]*100+a[2])),s,1)
 s=re.sub(r'versionName\s+"[^"]*"','versionName "'+v+'"',s,1)
+# firma: se c'è app/maxenta.keystore (messo dalla CI dal secret ANDROID_DEBUG_KEYSTORE) la build "debug" usa quello,
+# così ogni APK ha la stessa firma e si installa sopra il precedente senza perdere i dati
+if 'maxenta.keystore' not in s:
+    i=s.index('android {')+len('android {')
+    s=s[:i]+'''
+    signingConfigs {
+        debug {
+            if (file('maxenta.keystore').exists()) {
+                storeFile file('maxenta.keystore'); storePassword 'android'; keyAlias 'androiddebugkey'; keyPassword 'android'
+            }
+        }
+    }'''+s[i:]
 open(p,'w').write(s)
 print('build.gradle: media3 aggiunto, versione '+v)
 PYG
