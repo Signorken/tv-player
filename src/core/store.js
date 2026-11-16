@@ -63,6 +63,8 @@ export function load() {
   if (!st.mig21) { st.mig21 = 1; st.lowPower = false; }
   // 2.4: "Risparmio risorse" diventa il profilo prestazioni (chi l'aveva attivato resta in modalità leggera)
   if (!st.mig24) { st.mig24 = 1; st.perf = st.lowPower ? 'lite' : 'auto'; }
+  // la cronologia dei visti e i progressi non crescono all'infinito
+  trimMap(data.watched, 3000); trimMap(data.progress, 800);
   window.addEventListener('pagehide', flush);
   document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
   return data;
@@ -83,8 +85,19 @@ export function save(now) {
   clearTimeout(saveT);
   saveT = setTimeout(flush, 400);
 }
+// tiene solo i più recenti (oggetti {chiave: valore} con data, numero o {t})
+function trimMap(m, max) {
+  const k = Object.keys(m || {}); if (k.length <= max) return;
+  const t = x => typeof m[x] === 'number' ? m[x] : (m[x] && m[x].t) || 0;
+  k.sort((a, b) => t(b) - t(a)).slice(max).forEach(x => { delete m[x]; });
+}
 function flush() {
-  try { localStorage.setItem(LS, JSON.stringify(data)); } catch (e) { /* quota */ }
+  try { localStorage.setItem(LS, JSON.stringify(data)); return; } catch (e) { /* spazio esaurito */ }
+  // memoria piena: si sfoltiscono cronologia e progressi vecchi e si riprova; se non basta si avvisa (i dati restano in memoria fino all'uscita)
+  trimMap(data.watched, 500); trimMap(data.progress, 200); data.recents = (data.recents || []).slice(0, 20);
+  try { localStorage.setItem(LS, JSON.stringify(data)); } catch (e) {
+    try { window.dispatchEvent(new Event('mx-storage-full')); } catch (e2) { /* */ }
+  }
 }
 
 // ---- sorgenti
@@ -140,8 +153,15 @@ export function addRecent(key, info) {
 // "Continua a guardare": solo contenuti VOD (film, episodi, file), mai canali live.
 // Rimuovere la riga non cancella né recenti né progressi.
 export function contItems(max) {
-  const c = get().contClearedAt || 0;
-  return get().recents.filter(r => r.kind !== 'live' && r.t > c && !r.hid).slice(0, max || 12);
+  const d = get(), c = d.contClearedAt || 0, shows = {};
+  return d.recents.filter(r => {
+    if (r.kind === 'live' || r.t <= c || r.hid) return false;
+    // finito (visto fino in fondo, nessun punto da riprendere): non è più "da continuare"
+    if (d.watched[r.key] && !d.progress[r.key] && !r.upnext) return false;
+    // serie: una sola tessera, la più recente (episodio a metà oppure il prossimo da guardare)
+    if (r.kind === 'episode' && r.show) { const k = r.src + '|' + (r.series || r.show); if (shows[k]) return false; shows[k] = 1; }
+    return true;
+  }).slice(0, max || 12);
 }
 // toglie un solo elemento dalla riga (riappare se lo si riguarda)
 export function hideRecent(key) { const r = get().recents.find(x => x.key === key); if (r) { r.hid = 1; save(); } }

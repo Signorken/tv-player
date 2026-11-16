@@ -284,7 +284,7 @@ export class PlayerScreen {
       B(tr('Annulla'), () => this._cancelNext()),
       B(tr('Disattiva'), () => { store.settings().autoNext = false; store.save(); this._cancelNext(); Modal.toast(tr('Episodio successivo automatico disattivato. Lo riattivi in Impostazioni › Riproduzione'), 4000); })];
     this.nextSel = 0;
-    this.nextBox = h('div', { class: 'pnext' }, h('div', { class: 'nxt' }, h('span', { text: tr('Prossimo episodio') }), cnt), h('div', { class: 'nxn', text: nx.sub || nx.title || '' }), h('div', { class: 'nxb' }, this.nextBtns));
+    this.nextBox = h('div', { class: 'pnextep' }, h('div', { class: 'nxt' }, h('span', { text: tr('Prossimo episodio') }), cnt), h('div', { class: 'nxn', text: nx.sub || nx.title || '' }), h('div', { class: 'nxb' }, this.nextBtns));
     this.el.appendChild(this.nextBox);
     const tick = () => { const left = Math.max(0, Math.ceil(this._d() - this._t())); cnt.textContent = tr(' tra ') + left + ' s'; };
     tick(); this.nextT = setInterval(tick, 500);
@@ -313,10 +313,21 @@ export class PlayerScreen {
     const t = this._t(), d = this._d();
     if (this.live || !this.cur || !this.cur.key || !d || this.finished) return;
     if (t > 20) {
-      if (t > d - 45) { store.clearProgress(this.cur.key); store.markWatched(this.cur.key); } else store.setProgress(this.cur.key, t, d);
+      if (t > d - 45) { store.clearProgress(this.cur.key); store.markWatched(this.cur.key); this._upNext(); } else store.setProgress(this.cur.key, t, d);
     }
   }
-  _clearProgress() { this.finished = true; if (this.cur && this.cur.key) { store.clearProgress(this.cur.key); store.markWatched(this.cur.key); } }
+  _clearProgress() {
+    this.finished = true;
+    if (this.cur && this.cur.key) { store.clearProgress(this.cur.key); store.markWatched(this.cur.key); }
+    this._upNext();
+  }
+  // serie: il prossimo episodio diventa la tessera "da guardare" in Home
+  _upNext() {
+    if (this._isEpisode() && this._hasNext()) {
+      const nx = this.o.resolve(this.o.list[this.i + 1]);
+      if (nx.key && !store.isWatched(nx.key)) store.addRecent(nx.key, Object.assign({ name: nx.title, logo: nx.logo || '', sub: nx.sub || '', upnext: 1 }, nx.meta || {}));
+    }
+  }
 
   // ---- overlay informativo
   _renderInfo() {
@@ -332,10 +343,10 @@ export class PlayerScreen {
       const nn = r.ch ? Epg.nowNext(r.ch) : null;
       if (nn && nn.now) {
         const p = (Date.now() - nn.now[0]) / (nn.now[1] - nn.now[0]);
-        body.push(h('div', { class: 'pnow' }, h('span', { class: 'pbadge', text: 'ORA' }), h('span', { text: ' ' + fmtClock(nn.now[0]) + '–' + fmtClock(nn.now[1]) + '  ' + nn.now[2] })));
+        body.push(h('div', { class: 'pnow' }, h('span', { class: 'pbadge', text: tr('ORA') }), h('span', { text: ' ' + fmtClock(nn.now[0]) + '–' + fmtClock(nn.now[1]) + '  ' + nn.now[2] })));
         body.push(h('div', { class: 'pbar' }, h('div', { class: 'pfill', style: 'width:' + Math.max(0, Math.min(100, p * 100)) + '%' })));
         if (nn.now[3]) body.push(h('div', { class: 'pdesc', text: nn.now[3] }));
-        if (nn.next) body.push(h('div', { class: 'pnext' }, h('span', { class: 'pbadge dim', text: 'DOPO' }), h('span', { text: ' ' + fmtClock(nn.next[0]) + '  ' + nn.next[2] })));
+        if (nn.next) body.push(h('div', { class: 'pnext' }, h('span', { class: 'pbadge dim', text: tr('DOPO') }), h('span', { text: ' ' + fmtClock(nn.next[0]) + '  ' + nn.next[2] })));
       } else if (r.sub) body.push(h('div', { class: 'psub', text: r.sub }));
       else body.push(h('div', { class: 'psub', text: tr('Guida programmi non disponibile') }));
     } else {
@@ -440,7 +451,7 @@ export class PlayerScreen {
   }
 
   _seek(sec) {
-    const v = this.video; if (!this._d() || !this.engine.canSeek()) { this.say(tr('Questo contenuto non permette di scorrere'), '', 1500); return; }
+    if (!this._d() || !this.engine.canSeek()) { this.say(tr('Questo contenuto non permette di scorrere'), '', 1500); return; }
     // pressioni ripetute accelerano
     const now = Date.now();
     const accel = (this._lastSeek && now - this._lastSeek < 450) ? Math.min(6, (this._seekN = (this._seekN || 1) + 1)) : (this._seekN = 1);

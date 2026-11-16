@@ -1,7 +1,7 @@
 // Sorgente playlist M3U (URL oppure file importato dal telefono/NAS)
 import { fetchText } from '../core/net.js';
 import { parseM3U, buildCatalogFromM3U } from '../core/parsers.js';
-import { idbGet, idbSet, cached } from '../core/store.js';
+import { idbGet, cached } from '../core/store.js';
 import { tr } from '../core/i18n.js';
 
 export class M3USource {

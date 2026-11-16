@@ -54,7 +54,7 @@ export class DetailScreen {
     this.t.textContent = it.name;
     this.m.textContent = [i.year || it.year, i.rating && +i.rating ? '★ ' + i.rating : '', i.genre || it.genre, i.duration ? Math.round(i.duration / 60) + ' min' : ''].filter(Boolean).join('  •  ');
     this.p.textContent = i.plot || it.plot || tr('Nessuna descrizione disponibile.');
-    this.c.textContent = [i.director ? 'Regia: ' + i.director : '', i.cast ? 'Cast: ' + String(i.cast).slice(0, 160) : ''].filter(Boolean).join('   ');
+    this.c.textContent = [i.director ? tr('Regia: ') + i.director : '', i.cast ? 'Cast: ' + String(i.cast).slice(0, 160) : ''].filter(Boolean).join('   ');
     if (i.poster && !this.item.poster) setImg(this.poster, i.poster);
   }
 

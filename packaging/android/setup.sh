@@ -9,6 +9,7 @@ npm init -y >/dev/null
 npm i @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacitor/keyboard
 cp ../packaging/android/capacitor.config.json .
 rm -rf www && cp -r ../www www
+rm -f www/wallpapers/*-4k.jpg   # TV: sfondi solo 1080p
 node ../scripts/shell.js www   # guscio auto-aggiornante
 npx cap add android
 # Indietro tenuto premuto riconosciuto lato nativo (vedi MainActivity.java)

@@ -52,6 +52,7 @@
   load(BASE + 'version.json', 3000, function (txt) {
     clearTimeout(t0);
     var r = null; try { r = txt ? JSON.parse(txt) : null; } catch (e) { r = null; }
+    try { window.__mxLatest = r; } catch (e) { }
     var have = cached() || BUNDLED;
     if (!r || !r.version || cmp(r.version, have) <= 0 || r.version === get('mx.bad') || (r.minShell || 1) > SHELL) { start(); return; }
     msg((EN ? 'Updating MAXENTA to version ' : 'Aggiorno MAXENTA alla versione ') + r.version + '…');

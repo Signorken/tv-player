@@ -18,7 +18,6 @@ function kindOf(name, isDir) {
   return 'other';
 }
 
-function join(base, path) { return base.replace(/\/+$/, '') + path; }
 
 export class DavSource {
   constructor(cfg) {

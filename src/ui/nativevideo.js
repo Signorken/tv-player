@@ -79,6 +79,9 @@ export class NativeVideo {
   _fail(why) { if (this._errd) return; this._errd = true; this.error = { code: 4, message: why }; this._emit('error'); }
   async _poll() {
     if (!this._src || this._busy) return;
+    // in pausa (o con la pagina nascosta) basta un controllo al secondo: meno chiamate al lettore nativo
+    this._n = (this._n || 0) + 1;
+    if (this._meta && (this.paused || document.hidden) && this._n % 4) return;
     this._busy = true;
     let s = null;
     try { s = await this.b.status(); } catch (e) { s = null; }

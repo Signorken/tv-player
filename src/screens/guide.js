@@ -28,7 +28,11 @@ export class GuideScreen {
     this.el = h('div', { class: 'screen guide' }, this.hd.el, this.detail, h('div', { class: 'ghead' }, h('div', { class: 'gcorner' }), this.ruler), this.grid,
       hints([['ok', tr('Guarda')], ['back', tr('Indietro')]]));
   }
+  onHide() { clearInterval(this.tick); }
+  destroy() { clearInterval(this.tick); }
   onShow(first) {
+    // ogni 30 s: linea dell'ora attuale e programma "in onda" aggiornati
+    clearInterval(this.tick); this.tick = setInterval(() => { if (router.current === this) this.render(); }, 30000);
     if (first && this.src.epgUrl) startEpg(this.src, this.chs, () => { if (router.current === this) this.render(); });
     this.layout(); this.render();
   }
@@ -48,18 +52,22 @@ export class GuideScreen {
     }
     this.nowLine = h('div', { class: 'gnow' });
   }
+  // guida del canale; se manca (o è scaduta) la si richiede, al massimo una volta al minuto per canale
   progs(ch) {
-    const l = Epg.list(ch);
-    if (!l && this.src.shortEpg && !this.req[ch.id]) { this.req[ch.id] = 1; this.queue.push(ch); this.pump(); }
+    const l = Epg.list(ch), q = this.req[ch.id];
+    if (!l && this.src.shortEpg && (!q || (q.st !== 'loading' && Date.now() - q.t > 60000))) { this.req[ch.id] = { st: 'loading', t: Date.now() }; this.queue.push(ch); this.pump(); }
     return l || [];
   }
+  loading(ch) { const q = this.req[ch.id]; return !!q && q.st === 'loading'; }
   // al massimo 3 richieste alla volta al server
   pump() {
     while (this.busy < 3 && this.queue.length) {
       const ch = this.queue.shift();
       const vis = this.chs.indexOf(ch); if (vis < this.top || vis >= this.top + this.n) { delete this.req[ch.id]; continue; }
       this.busy++;
-      this.src.shortEpg(ch, 12).then(l => { if (l && l.length) Epg.setShort(ch, l); }).catch(() => {}).then(() => {
+      let ok = false;
+      this.src.shortEpg(ch, 12).then(l => { if (l && l.length) { Epg.setShort(ch, l); ok = true; } }).catch(() => {}).then(() => {
+        this.req[ch.id] = { st: ok ? 'done' : 'fail', t: Date.now() };
         this.busy--; if (router.current === this) this.render(); this.pump();
       });
     }
@@ -83,7 +91,7 @@ export class GuideScreen {
       const ps = this.progs(ch).filter(p => p[1] > t0 && p[0] < t1);
       if (ci === this.row) this.rowProgs = ps;
       if (!ps.length) {
-        const b = h('div', { class: 'gprog empty', style: 'left:0;width:100%' }, h('span', { text: this.req[ch.id] && !Epg.list(ch) ? tr('Caricamento…') : tr('Guida programmi non disponibile') }));
+        const b = h('div', { class: 'gprog empty', style: 'left:0;width:100%' }, h('span', { text: this.loading(ch) ? tr('Caricamento…') : tr('Guida programmi non disponibile') }));
         if (ci === this.row) { b.classList.add('focused'); this.sel = null; }
         r._track.appendChild(b);
       }

@@ -30,7 +30,7 @@ export function goSection(id) {
   if (hm && it) it.go(hm); else if (hm && EXTRA[id]) EXTRA[id](hm);
 }
 
-let rail = null, items = [], sel = 0, prev = null, clockEl = null, clockT = null;
+let rail = null, items = [], sel = 0, prev = null, clockEl = null;
 
 export const Rail = {
   active: false,
@@ -110,7 +110,7 @@ export function initShell() {
   document.body.appendChild(rail); document.body.appendChild(clockEl); document.body.appendChild(ver);
   // aggiorna allo scoccare del minuto, poi ogni minuto
   const now = new Date();
-  setTimeout(() => { tick(); clockT = setInterval(tick, 60000); }, (60 - now.getSeconds()) * 1000 + 50);
+  setTimeout(() => { tick(); setInterval(tick, 60000); }, (60 - now.getSeconds()) * 1000 + 50);
   applyShell();
   router.onChange = () => Rail.sync();
   Rail.sync();
