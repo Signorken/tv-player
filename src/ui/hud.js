@@ -14,8 +14,20 @@ function paint() {
   fps = Math.round(frames * 1000 / Math.max(1, now - last)); frames = 0; last = now;
   const sorted = keys.slice().sort((a, b) => a - b);
   const med = sorted.length ? Math.round(sorted[sorted.length >> 1]) : 0, worst = sorted.length ? Math.round(sorted[sorted.length - 1]) : 0;
+  // video in riproduzione: motore usato, risoluzione e fotogrammi persi dal decoder
+  let vid = '';
+  try {
+    const A = window.__app, cur = A && A.router.current, pl = cur && cur.isPlayer ? cur : A && A.Mini && A.Mini.player;
+    if (pl && pl.engine) {
+      const a = pl.engine.attempts[pl.engine.ai], v = pl.video;
+      const name = a ? ({ native: 'nativo', hls: 'hls.js', mpegts: 'mpegts.js', ts: 'mpegts.js', ff: 'convertitore' }[a.eng] || a.eng) : '-';
+      const q = v.getVideoPlaybackQuality ? v.getVideoPlaybackQuality() : null;
+      const lost = q ? q.droppedVideoFrames : (v.webkitDroppedFrameCount || 0), tot = q ? q.totalVideoFrames : (v.webkitDecodedFrameCount || 0);
+      vid = ' · video ' + name + ' ' + (v.videoHeight ? v.videoHeight + 'p' : '') + ' persi ' + lost + '/' + tot;
+    }
+  } catch (e) { /* */ }
   el.textContent = fps + ' fps · tasti ' + med + '/' + worst + ' ms · ' + (Perf.mode(settings().perf) === 'lite' ? 'leggero' : 'qualità') +
-    ' · ' + (Perf.mem ? Perf.mem + ' GB · ' : '') + (Perf.cores ? Perf.cores + ' core · ' : '') + 'test ' + Perf.score + ' ms';
+    ' · ' + (Perf.mem ? Perf.mem + ' GB · ' : '') + (Perf.cores ? Perf.cores + ' core · ' : '') + 'test ' + Perf.score + ' ms' + vid;
 }
 export const Hud = {
   show(v) {
